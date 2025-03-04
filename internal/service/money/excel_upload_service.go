@@ -9,6 +9,7 @@ import (
 	"mime/multipart"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -49,44 +50,60 @@ func ProcessTransactionExcel(userId int64, csvFile multipart.File) ([]moneydb.Tr
 
 func processWeChatBill(userId int64, records [][]string) []moneydb.Transaction {
 	var transactions []moneydb.Transaction
+	var mu sync.Mutex // 用于保证对 transactions 的并发安全
+	var wg sync.WaitGroup
 	isBillStart := false
 	for _, record := range records {
 		if isBillStart {
-			// 开始获取真正的账单行数据
-			// 第一列：交易时间
-			timeStr := record[0]
-			localTime, _ := time.Parse("2006-01-02 15:04:05", timeStr)
-			// 第三列：交易对方; 第四列：商品
-			description := record[2] + "_" + record[3]
-			// 第五列：收入/支出
-			typeId := 1
-			if record[4] == "收入" {
-				typeId = 1
-			} else {
-				typeId = 2
-			}
+			// 每次启动一个新的goroutine时，计数器加1
+			wg.Add(1)
+			go func(record []string) {
+				defer wg.Done() // 当前 goroutine 执行完后，计数器减 1
 
-			// 先暂且不管
-			category := AnalysisCategory(description)
+				// 开始获取真正的账单行数据
+				// 第一列：交易时间
+				timeStr := record[0]
+				localTime, _ := time.Parse("2006-01-02 15:04:05", timeStr)
+				// 第三列：交易对方; 第四列：商品
+				description := record[2] + "_" + record[3]
+				// 第五列：收入/支出
+				typeId := 1
+				if record[4] == "收入" {
+					typeId = 1
+				} else {
+					typeId = 2
+				}
 
-			// 第六列
-			amount, _ := strconv.ParseFloat(strings.Trim(record[5], "¥ "), 64)
-			transaction := moneydb.Transaction{
-				Amount:      amount,
-				Description: description,
-				UserId:      userId,
-				Type:        typeId,
-				Category:    category,
-				Account:     1,
-				Time:        model.LocalTime(localTime),
-			}
-			transactions = append(transactions, transaction)
+				// 先暂且不管
+				category := AnalysisCategory(description)
+
+				// 第六列
+				amount, _ := strconv.ParseFloat(strings.Trim(record[5], "¥ "), 64)
+				transaction := moneydb.Transaction{
+					Amount:      amount,
+					Description: description,
+					UserId:      userId,
+					Type:        typeId,
+					Category:    category,
+					Account:     1,
+					Time:        model.LocalTime(localTime),
+				}
+
+				// 使用锁确保 transactions 是线程安全的
+				mu.Lock()
+				transactions = append(transactions, transaction)
+				mu.Unlock()
+			}(record)
+
 			continue
 		}
 		if record[0] == "交易时间" {
 			isBillStart = true
 		}
 	}
+
+	// 等待所有 goroutine 完成
+	wg.Wait()
 	return transactions
 }
 
