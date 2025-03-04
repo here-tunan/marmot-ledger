@@ -3,7 +3,6 @@ package moneydb
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"go-my-life/internal/infrastructure"
 	"go-my-life/pkg/model"
@@ -114,14 +113,13 @@ func BatchPutTransaction(transactions []*Transaction) error {
 	_ = session.Begin()
 
 	var err error
-	var num int64
 	for _, transaction := range transactions {
 		if transaction.Id == 0 {
-			num, err = session.Insert(transaction)
-			fmt.Println(num)
+			_, err = session.Insert(transaction)
+			//fmt.Println(num)
 		} else {
-			num, err = session.Omit("GmtCreate").Update(transaction)
-			fmt.Println(num)
+			_, err = session.Omit("GmtCreate").Update(transaction)
+			//fmt.Println(num)
 		}
 		if err != nil {
 			_ = session.Rollback()
@@ -134,19 +132,21 @@ func BatchPutTransaction(transactions []*Transaction) error {
 		return err
 	}
 
-	// 插入数据库成功后进行es的插入
-	for _, transaction := range transactions {
-		// 插入es
-		transactionIndex := TransactionIndex{
-			Id:          transaction.Id,
-			Description: transaction.Description,
-			Type:        transaction.Type,
-			Category:    transaction.Category,
+	// 插入数据库成功后进行es的插入-异步
+	go func(transactions []*Transaction) {
+		for _, transaction := range transactions {
+			// 插入es
+			transactionIndex := TransactionIndex{
+				Id:          transaction.Id,
+				Description: transaction.Description,
+				Type:        transaction.Type,
+				Category:    transaction.Category,
+			}
+			_, err := infrastructure.EsClient.Index(EsIndex).Id(strconv.FormatInt(transaction.Id, 10)).Request(transactionIndex).Do(context.Background())
+			if err != nil {
+				println("batch put es err:", err)
+			}
 		}
-		_, err := infrastructure.EsClient.Index(EsIndex).Id(strconv.FormatInt(transaction.Id, 10)).Request(transactionIndex).Do(context.Background())
-		if err != nil {
-			return err
-		}
-	}
+	}(transactions)
 	return nil
 }
