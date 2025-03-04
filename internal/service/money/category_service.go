@@ -7,7 +7,6 @@ import (
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"go-my-life/internal/domain/repository/moneydb"
 	"go-my-life/internal/infrastructure"
-	"log"
 )
 
 func PutTransactionCategory(category *moneydb.TransactionCategory) error {
@@ -39,10 +38,6 @@ func AnalysisCategory(desc string) int {
 		}).Do(context.Background())
 	if err != nil {
 		return 0
-	}
-
-	if err != nil {
-		log.Fatalf("Error getting response: %s", err)
 	}
 
 	if res.Hits.Total.Value > 0 {
