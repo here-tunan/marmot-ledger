@@ -9,6 +9,8 @@ import (
 type TransactionQueryParam struct {
 	UserIds    []int64 `json:"userIds"`
 	Type       int     `json:"type"`
+	Category   int64   `json:"category"`
+	Account    int64   `json:"account"`
 	StartTime  string  `json:"startTime"`
 	EndTime    string  `json:"endTime"`
 	PageSize   int     `json:"pageSize"`
@@ -21,6 +23,12 @@ func QueryTransaction(param TransactionQueryParam) ([]Transaction, int64) {
 	session := infrastructure.Mysql.Where("is_deleted = 0")
 	if param.Type != 0 {
 		session = session.And("type = ?", param.Type)
+	}
+	if param.Category != 0 {
+		session = session.And("category = ?", param.Category)
+	}
+	if param.Account != 0 {
+		session = session.And("account = ?", param.Account)
 	}
 	if len(param.UserIds) > 0 {
 		session = session.In("user_id", param.UserIds)

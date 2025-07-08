@@ -14,14 +14,34 @@
               value-format="YYYY-MM-DD"
           />
         </el-form-item>
-        <el-form-item label="收/支" style="padding-left: 20px">
+        <el-form-item label="收/支" style="padding-left: 15px">
           <el-radio-group v-model="form.typeId">
-            <el-radio size="default" border
+            <el-radio size="default" border style="margin-right: 3px"
                       v-for="item in transactionTypes"
                       :label="item.id"
             >{{ item.name }}
             </el-radio>
           </el-radio-group>
+        </el-form-item>
+        <el-form-item label="类型" style="padding-left: 20px">
+          <el-select v-model="form.categoryId" placeholder="请选择" style="width: 115px">
+            <el-option
+                v-for="item in categories"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="账户" style="padding-left: 20px">
+          <el-select v-model="form.accountId" placeholder="请选择" style="width: 115px">
+            <el-option
+                v-for="item in accounts"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id"
+            />
+          </el-select>
         </el-form-item>
       </el-row>
 
@@ -332,6 +352,8 @@ const form = reactive({
   userId: '',
   typeId: '',
   dateSelect: '',
+  categoryId: '',
+  accountId: ''
 })
 // 分页信息
 const curPageSize = ref(20)
@@ -427,6 +449,9 @@ const onExcelAdd = () => {
 const clearForm = () => {
   form.userId = '';
   form.dateSelect = '';
+  form.typeId = '';
+  form.categoryId = '';
+  form.accountId = '';
 }
 
 // 单个保存
@@ -497,6 +522,12 @@ const queryTransactionDetail = async () => {
   param.pageIndex = curPageIndex.value
   if (form.typeId !== '') {
     param.type = parseInt(form.typeId)
+  }
+  if (form.categoryId !== '') {
+    param.category = form.categoryId
+  }
+  if (form.accountId !== '') {
+    param.account = form.accountId
   }
 
   queryTransaction(param).then(
