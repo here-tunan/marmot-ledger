@@ -22,7 +22,7 @@ func OssMount() *fiber.App {
 	app.Get("", func(ctx *fiber.Ctx) error {
 		now := time.Now().Unix()
 		expiredEnd := now + 3600
-		var tokenExpire = time.Unix(expiredEnd, 0).UTC().Format("2006-01-2T15:04:05Z")
+		var tokenExpire = time.Unix(expiredEnd, 0).UTC().Format("2006-01-02T15:04:05.000Z")
 
 		// https://help.aliyun.com/zh/oss/developer-reference/postobject#section-d5z-1ww-wdb 注意格式，
 		// 要不然生成的policy在传给阿里云的时候很容易出现 Invalid Json 的报错
