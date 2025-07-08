@@ -113,19 +113,33 @@ func BatchPutTransaction(transactions []*Transaction) error {
 	_ = session.Begin()
 
 	var err error
+	var insertData []*Transaction
+	var updateData []*Transaction
 	for _, transaction := range transactions {
 		if transaction.Id == 0 {
-			_, err = session.Insert(transaction)
-			//fmt.Println(num)
+			insertData = append(insertData, transaction)
 		} else {
-			_, err = session.Omit("GmtCreate").Update(transaction)
-			//fmt.Println(num)
-		}
-		if err != nil {
-			_ = session.Rollback()
-			break
+			updateData = append(updateData, transaction)
 		}
 	}
+	// 批量插入
+	if len(insertData) > 0 {
+		_, err = session.Insert(&insertData)
+		if err != nil {
+			_ = session.Rollback()
+			return err
+		}
+	}
+
+	// 批量更新
+	if len(updateData) > 0 {
+		_, err = session.Omit("GmtCreate").Update(&updateData)
+		if err != nil {
+			_ = session.Rollback()
+			return err
+		}
+	}
+
 	// 事务必须提交才行
 	err = session.Commit()
 	if err != nil {
