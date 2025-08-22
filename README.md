@@ -1,5 +1,8 @@
 # my-life
 一个生活管理系统，目前支持多人一起记账和查账。
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=here-tunan/my-life&type=Date)](https://www.star-history.com/#here-tunan/my-life&Date)
 ## 功能截图
 ### 登录页面
 ![image](https://github.com/user-attachments/assets/77175dc7-0d59-4301-b25f-51dd99763921)
