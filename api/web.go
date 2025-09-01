@@ -3,13 +3,14 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"go-my-life/env"
 	"go-my-life/internal/domain/repository/userdb"
 	"go-my-life/internal/infrastructure"
 	"log"
 	"strings"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 var authWhiteList = []string{"login", "validToken", "refreshToken", "category_analysis", "category_immigrate"}

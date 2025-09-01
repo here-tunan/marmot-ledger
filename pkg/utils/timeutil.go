@@ -47,3 +47,33 @@ func ParseTimeInLoc(formatter string, timeStr string) time.Time {
 	curTime, err := time.ParseInLocation(formatter, timeStr, location)
 	return curTime
 }
+
+// ParseTimeString 解析多种时间格式
+func ParseTimeString(timeStr string) (time.Time, error) {
+	// 常见的时间格式
+	timeFormats := []string{
+		"2006-01-02",          // 2025-08-31
+		"2006/1/2 15:04",      // 2006/1/2 15:04
+		"2006/01/02 15:04",    // 2006/01/02 15:04
+		"2006-01-02 15:04",    // 2006-01-02 15:04
+		"2006/1/2 15:04:05",   // 2006/1/2 15:04:05
+		"2006/01/02 15:04:05", // 2006/01/02 15:04:05
+		"2006-01-02 15:04:05", // 2006-01-02 15:04:05
+		"2006/1/2",            // 2006/1/2
+		"2006/01/02",          // 2006/01/02
+	}
+
+	location, err := time.LoadLocation(Loc)
+	if err != nil {
+		fmt.Println("时区加载错误:", err)
+		location = time.Local // 使用本地时区作为后备
+	}
+
+	for _, format := range timeFormats {
+		if parsedTime, err := time.ParseInLocation(format, timeStr, location); err == nil {
+			return parsedTime, nil
+		}
+	}
+
+	return time.Time{}, fmt.Errorf("不支持的时间格式: %s", timeStr)
+}

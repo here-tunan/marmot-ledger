@@ -1,6 +1,8 @@
 module go-my-life
 
-go 1.21.0
+go 1.23.0
+
+toolchain go1.24.4
 
 require (
 	github.com/go-sql-driver/mysql v1.7.1
@@ -38,6 +40,7 @@ require (
 	go.opentelemetry.io/otel v1.21.0 // indirect
 	go.opentelemetry.io/otel/metric v1.21.0 // indirect
 	go.opentelemetry.io/otel/trace v1.21.0 // indirect
-	golang.org/x/sys v0.14.0 // indirect
-	golang.org/x/tools v0.6.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
+	golang.org/x/text v0.28.0 // indirect
+	golang.org/x/tools v0.35.0 // indirect
 )

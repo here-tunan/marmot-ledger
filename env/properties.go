@@ -2,9 +2,10 @@ package env
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"log"
 	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Properties struct {

@@ -2,8 +2,9 @@ package infrastructure
 
 import (
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
 	"go-my-life/env"
+
+	_ "github.com/go-sql-driver/mysql"
 	"xorm.io/xorm"
 	"xorm.io/xorm/names"
 )

@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"github.com/gofiber/fiber/v2"
 	"go-my-life/internal/domain/entity/money"
 	"go-my-life/internal/domain/repository/moneydb"
 	"go-my-life/internal/infrastructure"
@@ -11,6 +10,8 @@ import (
 	"mime/multipart"
 	"strconv"
 	"strings"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 // MoneyMount 收入支出记账的web层
@@ -238,11 +239,20 @@ func MoneyMount() *fiber.App {
 			}
 		}(csvFile)
 
-		transactions, err := service.ProcessTransactionExcel(ctx.Locals("userId").(int64), csvFile)
+		result, err := service.ProcessTransactionExcel(ctx.Locals("userId").(int64), csvFile)
+		if err != nil {
+			return ctx.Status(400).JSON(&fiber.Map{
+				"success": false,
+				"error":   err.Error(),
+			})
+		}
 
 		return ctx.JSON(&fiber.Map{
-			"success": true,
-			"data":    transactions,
+			"success":     true,
+			"data":        result.Transactions,
+			"warnings":    result.Warnings,
+			"encoding":    result.Encoding,
+			"total_count": len(result.Transactions),
 		})
 	})
 
