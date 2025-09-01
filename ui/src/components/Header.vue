@@ -1,47 +1,29 @@
 <!--首页的Header控件-->
 <template>
   <div class="header">
-    <!--  折叠展开按钮  -->
-    <div class="collapse-btn" @click="collapseChange">
-      <el-icon v-if="sidebar.collapse">
-        <Expand/>
-      </el-icon>
-      <el-icon v-else>
-        <Fold/>
-      </el-icon>
+    <!-- 左侧区域 -->
+    <div class="header-left">
+      <!--  折叠展开按钮  -->
+      <div class="collapse-btn" @click="collapseChange">
+        <el-icon v-if="sidebar.collapse">
+          <Expand/>
+        </el-icon>
+        <el-icon v-else>
+          <Fold/>
+        </el-icon>
+      </div>
+
+      <div class="logo">This is my life!</div>
     </div>
 
-    <div class="logo">This is my life!</div>
-
+    <!-- 右侧区域 -->
     <div class="header-right">
       <div class="header-user-con">
-        <!-- 消息中心 小铃铛图标 -->
-        <div class="btn-bell">
-          <el-tooltip
-              effect="dark"
-              :content="message ? `有${message}条未读消息` : `消息中心`"
-              placement="bottom"
-          >
-            <el-icon class="el-icon-notice"><Bell /></el-icon>
-          </el-tooltip>
-          <span class="btn-bell-badge" v-if="message"></span>
-        </div>
-
-        <div class="header-mode-toggle">
-          <!-- 颜色模式切换 -->
-          <el-switch
-              v-model="darkOpen"
-              :active-action-icon="Moon"
-              :inactive-action-icon="Sunny"
-              @change="modeToggle"
-          />
-        </div>
-
         <!-- 用户头像 -->
         <el-avatar class="user-avatar" :size="30" :src="avatarImg"/>
 
         <!-- 用户名下拉菜单 -->
-        <el-dropdown class="user-name" trigger="click" @command="handleCommand">
+        <el-dropdown class="user-name" trigger="click" @command="handleCommand" placement="bottom-end">
 					<span class="el-dropdown-link">
 						{{ username }}
 						<el-icon class="el-icon--right">
@@ -65,16 +47,14 @@
 
 <script setup>
 import {useSidebarStore} from "@/stores/sidebar";
-import {useConfigStore} from "@/stores/config";
-import {ArrowDown, Bell, Expand, Fold, Moon, Sunny} from "@element-plus/icons-vue";
-import {computed, onMounted, ref} from "vue";
+import {ArrowDown, Expand, Fold} from "@element-plus/icons-vue";
+import {computed, onMounted} from "vue";
 import {useRouter} from "vue-router";
 import {getLoginUserInfo} from "@/api/user/user";
 import {ElMessage} from "element-plus";
 import {useUserStore} from "@/stores/user";
 
 const sidebar = useSidebarStore()
-const config = useConfigStore()
 
 const avatarImg = computed(() => {
   return useUserStore().avatar
@@ -83,14 +63,9 @@ const avatarImg = computed(() => {
 const username = computed(() => {
   return useUserStore().username
 })
-// const username = ref("yaodao")
-const message = ref(2);
 
 // 用户名下拉菜单选择事件
 const router = useRouter();
-
-// 默认关闭黑暗模式
-const darkOpen = ref(true)
 
 onMounted(() => {
   if (document.body.clientWidth < 1000) {
@@ -114,10 +89,6 @@ onMounted(() => {
   )
 })
 
-const modeToggle = () => {
-  console.log(config.mode)
-  config.toggle()
-}
 
 const handleCommand = (command) => {
   if (command === 'loginOut') {
@@ -136,88 +107,79 @@ const collapseChange = () => {
 
 <style scoped>
 .header {
-  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   box-sizing: border-box;
   width: 100%;
   height: 70px;
+  padding: 0 24px;
   font-size: 22px;
   color: #fff;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .collapse-btn {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100%;
-  float: left;
-  padding: 0 21px;
+  height: 50px;
+  padding: 0 15px;
   cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+}
+
+.collapse-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
 }
 
 .header .logo {
-  float: left;
-  width: 250px;
-  line-height: 70px;
+  font-weight: 700;
+  font-size: 24px;
+  background: linear-gradient(45deg, #ffffff, #dbeafe);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-left: 16px;
+  letter-spacing: -0.5px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
 }
 
 .header-right {
-  float: right;
-  padding-right: 50px;
+  display: flex;
+  align-items: center;
 }
 
 .header-user-con {
   display: flex;
-  height: 70px;
   align-items: center;
+  gap: 16px;
 }
 
-.header-mode-toggle {
-  display: flex;
-  height: 70px;
-  align-items: center;
-  margin-right: 10px;
+.user-avatar {
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.btn-fullscreen {
-  transform: rotate(45deg);
-  margin-right: 5px;
-  font-size: 24px;
-}
-
-.btn-bell,
-.btn-fullscreen {
-  right: 10px;
-  position: relative;
-  width: 30px;
-  height: 30px;
-  text-align: center;
-  border-radius: 18px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-}
-
-.btn-bell-badge {
-  position: absolute;
-  right: 4px;
-  top: 0;
-  width: 8px;
-  height: 8px;
-  border-radius: 4px;
-  background: #f56c6c;
-  color: #fff;
-}
-
-.btn-bell .el-icon-notice {
-  color: #fff;
+.user-avatar:hover {
+  border-color: rgba(255, 255, 255, 0.8);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .user-name {
   margin-left: 10px;
-}
-
-.user-avator {
-  margin-left: 20px;
 }
 
 .el-dropdown-link {
@@ -225,9 +187,66 @@ const collapseChange = () => {
   cursor: pointer;
   display: flex;
   align-items: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  font-weight: 500;
 }
 
-.el-dropdown-menu__item {
+.el-dropdown-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+:deep(.el-dropdown-menu__item) {
   text-align: center;
+  transition: all 0.2s ease;
+}
+
+:deep(.el-dropdown-menu__item:hover) {
+  background: var(--primary-color, #409eff);
+  color: #fff;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .header {
+    height: 60px;
+    font-size: 18px;
+    padding: 0 15px;
+  }
+  
+  .header .logo {
+    font-size: 18px;
+    margin-left: 10px;
+  }
+  
+  .collapse-btn {
+    height: 40px;
+    padding: 0 10px;
+  }
+  
+  .header-user-con {
+    gap: 12px;
+  }
+  
+  .user-avatar {
+    width: 28px !important;
+    height: 28px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 0 10px;
+  }
+  
+  .header .logo {
+    font-size: 16px;
+    margin-left: 8px;
+  }
+  
+  .header-user-con {
+    gap: 8px;
+  }
 }
 </style>

@@ -11,28 +11,12 @@
 				<el-icon @click="closeTags(index)"><Close/></el-icon>
 			</li>
 		</ul>
-		<div class="tags-close-box">
-			<el-dropdown @command="handleTags">
-				<el-button size="small" type="primary">
-					标签选项
-					<el-icon class="el-icon--right">
-						<arrow-down/>
-					</el-icon>
-				</el-button>
-				<template #dropdown>
-					<el-dropdown-menu size="small">
-						<el-dropdown-item command="other">关闭其他</el-dropdown-item>
-						<el-dropdown-item command="all">关闭所有</el-dropdown-item>
-					</el-dropdown-menu>
-				</template>
-			</el-dropdown>
-		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { useTagsStore } from '@/stores/tags';
-import {ArrowDown, Close} from "@element-plus/icons-vue";
+import {Close} from "@element-plus/icons-vue";
 
 import { onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router';
 
@@ -77,91 +61,121 @@ onBeforeRouteUpdate(to => {
   setTags(to);
 });
 
-// 关闭全部标签
-const closeAll = () => {
-  tags.clearTags();
-  router.push('/');
-};
-// 关闭其他标签
-const closeOther = () => {
-  const curItem = tags.list.filter(item => {
-    return item.path === route.fullPath;
-  });
-  tags.closeTagsOther(curItem);
-};
-const handleTags = (command: string) => {
-  command === 'other' ? closeOther() : closeAll();
-};
 </script>
 
-<style>
+<style scoped>
 .tags {
-	position: relative;
-	height: 30px;
-	overflow: hidden;
-	background: #fff;
-	padding-right: 120px;
-	box-shadow: 0 5px 10px #ddd;
+	display: flex;
+	align-items: center;
+	height: 48px;
+	background: rgba(248, 250, 252, 0.95);
+	backdrop-filter: blur(10px);
+	border-bottom: 1px solid #e2e8f0;
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	padding: 0 24px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .tags ul {
-	box-sizing: border-box;
-	width: 100%;
-	height: 100%;
+	display: flex;
+	align-items: center;
+	flex: 1;
+	margin: 0;
+	padding: 0;
+	overflow-x: auto;
+	overflow-y: hidden;
 }
 
 .tags-li {
 	display: flex;
 	align-items: center;
-	float: left;
-	margin: 3px 5px 2px 3px;
-	border-radius: 3px;
-	font-size: 12px;
+	margin-right: 8px;
+	border-radius: 16px;
+	font-size: 13px;
 	overflow: hidden;
 	cursor: pointer;
-	height: 23px;
-	border: 1px solid #e9eaec;
-	background: #fff;
-	padding: 0 5px 0 12px;
-	color: #666;
-	-webkit-transition: all 0.3s ease-in;
-	-moz-transition: all 0.3s ease-in;
-	transition: all 0.3s ease-in;
+	height: 32px;
+	border: 1px solid #e2e8f0;
+	background: #ffffff;
+	padding: 0 10px 0 14px;
+	color: #64748b;
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .tags-li:not(.active):hover {
-	background: #f8f8f8;
+	background: #f8fafc;
+	border-color: #cbd5e1;
+	color: #475569;
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .tags-li.active {
-	color: #fff;
+	background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+	border-color: #3b82f6;
+	color: #ffffff;
+	box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .tags-li-title {
-	float: left;
-	max-width: 80px;
+	max-width: 120px;
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
-	margin-right: 5px;
-	color: #666;
+	margin-right: 8px;
+	color: inherit;
+	text-decoration: none;
+	font-weight: 500;
 }
 
-.tags-li.active .tags-li-title {
-	color: #fff;
+.tags-li .el-icon {
+	font-size: 14px;
+	opacity: 0.7;
+	transition: all 0.2s ease;
 }
 
-.tags-close-box {
-	position: absolute;
-	right: 0;
-	top: 0;
-	box-sizing: border-box;
-	padding-top: 1px;
-	text-align: center;
-	width: 110px;
-	height: 30px;
-	background: #fff;
-	box-shadow: -3px 0 15px 3px rgba(0, 0, 0, 0.1);
-	z-index: 10;
+.tags-li .el-icon:hover {
+	opacity: 1;
+	transform: scale(1.1);
+}
+
+.tags-li.active .el-icon {
+	opacity: 0.9;
+}
+
+
+
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+	.tags {
+		height: 35px;
+		padding: 0 15px;
+	}
+	
+	.tags-li {
+		height: 24px;
+		font-size: 12px;
+		padding: 0 6px 0 12px;
+		margin-right: 6px;
+	}
+	
+	.tags-li-title {
+		max-width: 60px;
+		margin-right: 6px;
+	}
+	
+}
+
+@media (max-width: 480px) {
+	.tags {
+		padding: 0 10px;
+	}
+	
+	
+	.tags ul {
+		padding-right: 10px;
+	}
 }
 </style>

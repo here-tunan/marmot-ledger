@@ -111,6 +111,34 @@ a {
     padding-bottom: 0;
 }
 
+/* 修复 el-scrollbar 位置问题 */
+.el-scrollbar {
+    position: relative;
+}
+
+.el-scrollbar__wrap {
+    position: relative;
+}
+
+.el-scrollbar__bar {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+}
+
+.el-scrollbar__bar.is-vertical {
+    right: 0;
+    top: 0;
+    width: 6px;
+}
+
+.el-scrollbar__bar.is-horizontal {
+    bottom: 0;
+    left: 0;
+    height: 6px;
+}
+
 .vxe-input--panel.type--date, .vxe-input--panel.type--datetime, .vxe-input--panel.type--month, .vxe-input--panel.type--week, .vxe-input--panel.type--year {
     z-index: 9998 !important
 }

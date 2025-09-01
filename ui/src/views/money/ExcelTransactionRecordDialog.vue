@@ -4,9 +4,14 @@
     @close="closeDialog" 
     draggable 
     title="账单导入" 
-    width="1200px"
+    width="1000px"
+    top="6vh"
     class="import-dialog"
     :close-on-click-modal="false"
+    center
+    :modal="true"
+    :append-to-body="true"
+    :destroy-on-close="true"
   >
     <div class="import-container">
       <!-- 步骤指引 -->
@@ -95,7 +100,7 @@
           <!-- 数据表格 -->
           <div class="data-table-container">
             <vxe-table
-              height="350"
+              height="280"
               class="data-table"
               border
               stripe
@@ -126,7 +131,7 @@
               <vxe-column field="type" title="type" v-if="false"></vxe-column>
               <vxe-column field="typeName" width="100" title="收/支" :edit-render="{}">
                 <template #default="{ row }">
-                  <el-tag :type="row.type === 1 ? 'success' : 'danger'">
+                  <el-tag :type="row.type === 1 ? 'danger' : 'success'">
                     {{ getTransactionTypeNameById(row.type) }}
                   </el-tag>
                 </template>
@@ -183,7 +188,7 @@
       <!-- 底部按钮区域 -->
       <div class="footer-actions">
         <div class="step-navigation">
-          <el-button v-if="currentStep > 0" @click="prevStep" icon="ArrowLeft">
+          <el-button v-if="currentStep > 0" @click="prevStep" icon="ArrowLeft" class="nav-btn">
             上一步
           </el-button>
           
@@ -193,6 +198,7 @@
               type="primary" 
               @click="submitUpload"
               :loading="uploading"
+              class="main-btn"
             >
               解析文件
             </el-button>
@@ -202,22 +208,24 @@
               type="success" 
               @click="dialogBoxSave"
               :loading="saving"
+              class="main-btn"
             >
               保存数据 ({{ diaLogBoxTableData.length }}条)
             </el-button>
           </div>
 
           <el-button 
-            v-if="currentStep < 2 && (currentStep === 0 ? selectedPlatform : curFile)" 
+            v-if="currentStep < 2 && (currentStep === 0 ? selectedPlatform : (currentStep === 1 ? !curFile : curFile))" 
             type="primary" 
             @click="nextStep"
             icon="ArrowRight"
+            class="nav-btn"
           >
             下一步
           </el-button>
         </div>
         
-        <el-button @click="closeDialog" class="close-btn">关闭</el-button>
+        <el-button @click="closeDialog" class="close-btn nav-btn">关闭</el-button>
       </div>
     </div>
   </el-dialog>
@@ -479,15 +487,19 @@ const dialogBoxSave = () => {
 /* 主容器 */
 .import-container {
   padding: 0;
+  background: #fafbfc;
+  min-height: 420px;
+  border-radius: 20px;
 }
 
 /* 步骤条 */
 .steps-container {
-  margin-bottom: 32px;
-  padding: 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+  margin: 12px 16px 18px 16px;
+  padding: 16px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .steps-container .el-steps {
@@ -495,36 +507,41 @@ const dialogBoxSave = () => {
 }
 
 .steps-container :deep(.el-step__title) {
-  color: white !important;
+  color: #1e293b !important;
   font-weight: 600;
 }
 
 .steps-container :deep(.el-step__description) {
-  color: rgba(255, 255, 255, 0.8) !important;
+  color: #64748b !important;
 }
 
 /* 主内容区域 */
 .main-content {
-  min-height: 400px;
-  margin-bottom: 24px;
+  min-height: 280px;
+  margin: 0 16px 16px 16px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
 }
 
 /* 节标题 */
 .section-header {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 .section-header h3 {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
   color: #2c3e50;
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
 }
 
 .section-header p {
   color: #7f8c8d;
-  font-size: 14px;
+  font-size: 13px;
   margin: 0;
 }
 
@@ -532,45 +549,46 @@ const dialogBoxSave = () => {
 .platform-cards {
   display: flex;
   justify-content: center;
-  gap: 24px;
+  gap: 20px;
   flex-wrap: wrap;
 }
 
 .platform-card {
-  flex: 0 0 280px;
-  padding: 32px 24px;
-  background: white;
-  border: 2px solid #e1e8ed;
+  flex: 0 0 220px;
+  padding: 18px 16px;
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
   border-radius: 16px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
 .platform-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  border-color: #409eff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border-color: #3b82f6;
 }
 
 .platform-card.active {
-  border-color: #409eff;
-  background: linear-gradient(135deg, #409eff 0%, #36a3f7 100%);
+  border-color: #3b82f6;
+  background: #3b82f6;
   color: white;
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(64, 158, 255, 0.3);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.25);
 }
 
 .card-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
+  font-size: 32px;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .card-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .card-format {
@@ -602,16 +620,17 @@ const dialogBoxSave = () => {
 }
 
 .upload-component :deep(.el-upload-dragger) {
-  border: 2px dashed #d0d7de;
+  border: 2px dashed #d1d5db;
   border-radius: 16px;
-  background: #f8fafc;
+  background: #fafbfc;
   transition: all 0.3s ease;
-  padding: 48px 32px;
+  padding: 28px 20px;
 }
 
 .upload-component :deep(.el-upload-dragger:hover) {
-  border-color: #409eff;
-  background: #f0f9ff;
+  border-color: #3b82f6;
+  background: #f8fafc;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
 }
 
 .upload-content {
@@ -619,14 +638,15 @@ const dialogBoxSave = () => {
 }
 
 .upload-icon {
-  font-size: 64px;
-  color: #409eff;
-  margin-bottom: 24px;
+  font-size: 40px;
+  color: #3b82f6;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 2px 8px rgba(59, 130, 246, 0.3));
 }
 
 .upload-text p {
-  margin: 0 0 8px 0;
-  font-size: 16px;
+  margin: 0 0 6px 0;
+  font-size: 15px;
   color: #374151;
 }
 
@@ -642,7 +662,7 @@ const dialogBoxSave = () => {
 
 /* 数据表格 */
 .data-table-container {
-  margin-top: 24px;
+  margin-top: 18px;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
@@ -664,11 +684,11 @@ const dialogBoxSave = () => {
 }
 
 .amount-text.income {
-  color: #10b981;
+  color: #ef4444;
 }
 
 .amount-text.expense {
-  color: #ef4444;
+  color: #10b981;
 }
 
 /* 底部操作区域 */
@@ -676,15 +696,17 @@ const dialogBoxSave = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 0 0 0;
+  padding: 16px 16px 12px 16px;
   border-top: 1px solid #e5e7eb;
-  margin-top: 24px;
+  margin-top: 16px;
+  background: #f9fafb;
+  border-radius: 0 0 20px 20px;
 }
 
 .step-navigation {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
   flex: 1;
 }
 
@@ -696,6 +718,28 @@ const dialogBoxSave = () => {
 
 .close-btn {
   margin-left: auto;
+}
+
+/* 按钮样式优化 */
+.nav-btn {
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.main-btn {
+  padding: 12px 32px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.main-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
 }
 
 /* 响应式设计 */
@@ -736,18 +780,37 @@ const dialogBoxSave = () => {
 }
 
 :deep(.import-dialog .el-dialog__header) {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 8px 8px 0 0;
-  padding: 20px 24px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border: none;
+  border-radius: 12px 12px 0 0;
+  padding: 12px 20px;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
 }
 
 :deep(.import-dialog .el-dialog__title) {
   color: white;
   font-weight: 600;
+  font-size: 16px;
 }
 
 :deep(.import-dialog .el-dialog__close) {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 18px;
+}
+
+:deep(.import-dialog .el-dialog__close:hover) {
   color: white;
+  transform: scale(1.1);
+}
+
+:deep(.import-dialog .el-dialog) {
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+:deep(.import-dialog .el-dialog__body) {
+  padding: 0;
+  background: transparent;
 }
 </style>
