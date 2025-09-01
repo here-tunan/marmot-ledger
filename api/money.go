@@ -208,38 +208,39 @@ func MoneyMount() *fiber.App {
 		})
 	})
 
-	// 解析Excel
-	app.Post("/transaction/excel", func(ctx *fiber.Ctx) error {
-
+	// 微信XLSX账单导入接口
+	app.Post("/transaction/import/wechat", func(ctx *fiber.Ctx) error {
 		file, err := ctx.FormFile("file")
 		if err != nil {
-			print(err)
-			return err
-		}
-		//log.Println(file)
-		filename := file.Filename
-		if !strings.HasSuffix(filename, ".csv") {
-			return ctx.JSON(&fiber.Map{
-				"success":  false,
-				"errorMsg": "错误的文件格式",
+			return ctx.Status(400).JSON(&fiber.Map{
+				"success": false,
+				"error":   "没有找到文件",
 			})
 		}
 
-		csvFile, err := file.Open()
-		if err != nil {
-			print(err)
-			return err
+		// 验证文件扩展名
+		if !strings.HasSuffix(strings.ToLower(file.Filename), ".xlsx") {
+			return ctx.Status(400).JSON(&fiber.Map{
+				"success": false,
+				"error":   "微信账单仅支持XLSX格式文件",
+			})
 		}
 
-		// 延迟关闭文件
-		defer func(csvFile multipart.File) {
-			err := csvFile.Close()
+		xlsxFile, err := file.Open()
+		if err != nil {
+			return ctx.Status(500).JSON(&fiber.Map{
+				"success": false,
+				"error":   "无法打开文件",
+			})
+		}
+		defer func(xlsxFile multipart.File) {
+			err := xlsxFile.Close()
 			if err != nil {
 				log.Print(err)
 			}
-		}(csvFile)
+		}(xlsxFile)
 
-		result, err := service.ProcessTransactionExcel(ctx.Locals("userId").(int64), csvFile)
+		result, err := service.ProcessWeChatXLSX(ctx.Locals("userId").(int64), xlsxFile)
 		if err != nil {
 			return ctx.Status(400).JSON(&fiber.Map{
 				"success": false,
@@ -253,6 +254,57 @@ func MoneyMount() *fiber.App {
 			"warnings":    result.Warnings,
 			"encoding":    result.Encoding,
 			"total_count": len(result.Transactions),
+			"platform":    "wechat",
+		})
+	})
+
+	// 支付宝CSV账单导入接口
+	app.Post("/transaction/import/alipay", func(ctx *fiber.Ctx) error {
+		file, err := ctx.FormFile("file")
+		if err != nil {
+			return ctx.Status(400).JSON(&fiber.Map{
+				"success": false,
+				"error":   "没有找到文件",
+			})
+		}
+
+		// 验证文件扩展名
+		if !strings.HasSuffix(strings.ToLower(file.Filename), ".csv") {
+			return ctx.Status(400).JSON(&fiber.Map{
+				"success": false,
+				"error":   "支付宝账单仅支持CSV格式文件",
+			})
+		}
+
+		csvFile, err := file.Open()
+		if err != nil {
+			return ctx.Status(500).JSON(&fiber.Map{
+				"success": false,
+				"error":   "无法打开文件",
+			})
+		}
+		defer func(csvFile multipart.File) {
+			err := csvFile.Close()
+			if err != nil {
+				log.Print(err)
+			}
+		}(csvFile)
+
+		result, err := service.ProcessAlipayCSV(ctx.Locals("userId").(int64), csvFile)
+		if err != nil {
+			return ctx.Status(400).JSON(&fiber.Map{
+				"success": false,
+				"error":   err.Error(),
+			})
+		}
+
+		return ctx.JSON(&fiber.Map{
+			"success":     true,
+			"data":        result.Transactions,
+			"warnings":    result.Warnings,
+			"encoding":    result.Encoding,
+			"total_count": len(result.Transactions),
+			"platform":    "alipay",
 		})
 	})
 
