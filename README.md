@@ -89,3 +89,8 @@ nohup ./go-my-life &
 npm run build
 ```
 通过nginx做好转发即可。
+
+#### Mac 本地启动
+如果你想在本地启动，又正好是Mac系统，那完全可以自己编排好脚本文件，然后使用mac的Automator去实现这个功能，稍后我会出一篇教程来说明如何实现。
+<img width="688" height="356" alt="image" src="https://github.com/user-attachments/assets/025e5ee2-a0fb-474e-b23b-009c5eba2100" />
+
