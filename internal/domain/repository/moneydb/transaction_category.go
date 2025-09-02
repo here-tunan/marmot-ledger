@@ -1,6 +1,7 @@
 package moneydb
 
 import (
+	"fmt"
 	"go-my-life/internal/infrastructure"
 	"time"
 )
@@ -38,6 +39,19 @@ func (category *TransactionCategory) Insert() error {
 }
 
 func (category *TransactionCategory) Update() error {
-	_, err := infrastructure.Mysql.ID(category.Id).Omit("GmtCreate").Update(category)
+	affected, err := infrastructure.Mysql.ID(category.Id).Omit("GmtCreate").Update(category)
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return fmt.Errorf("更新失败，未找到ID为%d的记录", category.Id)
+	}
+	return nil
+}
+
+func (category *TransactionCategory) Delete() error {
+	// 软删除：设置 is_deleted = true
+	category.IsDeleted = true
+	_, err := infrastructure.Mysql.ID(category.Id).Cols("is_deleted").Update(category)
 	return err
 }

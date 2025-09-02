@@ -161,13 +161,59 @@ func MoneyMount() *fiber.App {
 		param := &moneydb.TransactionCategory{}
 		err := ctx.BodyParser(param)
 		if err != nil {
+			log.Printf("解析请求参数失败: %v", err)
 			return ctx.JSON(&fiber.Map{
 				"success": false,
-				"error":   err.Error(),
+				"error":   "请求参数格式错误: " + err.Error(),
+				"code":    "400",
+			})
+		}
+
+		// 参数验证
+		if strings.TrimSpace(param.Name) == "" {
+			return ctx.JSON(&fiber.Map{
+				"success": false,
+				"error":   "类型名称不能为空",
+				"code":    "400",
+			})
+		}
+
+		if param.Type != 1 && param.Type != 2 {
+			return ctx.JSON(&fiber.Map{
+				"success": false,
+				"error":   "收支类型必须是1（收入）或2（支出）",
+				"code":    "400",
+			})
+		}
+
+		err = service.PutTransactionCategory(param)
+		if err != nil {
+			log.Printf("保存交易类型失败: %v", err)
+			errorMsg := "保存失败"
+			if err.Error() != "" {
+				errorMsg = err.Error()
+			}
+			return ctx.JSON(&fiber.Map{
+				"success": false,
+				"error":   errorMsg,
 				"code":    "500",
 			})
 		}
-		err = service.PutTransactionCategory(param)
+		return ctx.JSON(&fiber.Map{
+			"success": true,
+		})
+	})
+
+	app.Delete("/transactionCategory", func(ctx *fiber.Ctx) error {
+		id := ctx.QueryInt("id")
+		if id == 0 {
+			return ctx.JSON(&fiber.Map{
+				"success": false,
+				"error":   "ID parameter is required",
+				"code":    "400",
+			})
+		}
+		err := service.DeleteTransactionCategory(int64(id))
 		if err != nil {
 			return ctx.JSON(&fiber.Map{
 				"success": false,
@@ -199,12 +245,102 @@ func MoneyMount() *fiber.App {
 		param := &moneydb.TransactionAccount{}
 		err := ctx.BodyParser(param)
 		if err != nil {
-			return err
+			return ctx.JSON(&fiber.Map{
+				"success": false,
+				"error":   err.Error(),
+				"code":    "400",
+			})
 		}
-		res := service.PutTransactionAccount(param)
+		err = service.PutTransactionAccount(param)
+		if err != nil {
+			return ctx.JSON(&fiber.Map{
+				"success": false,
+				"error":   err.Error(),
+				"code":    "500",
+			})
+		}
 		return ctx.JSON(&fiber.Map{
 			"success": true,
-			"data":    res,
+		})
+	})
+
+	app.Delete("/transactionAccount", func(ctx *fiber.Ctx) error {
+		id := ctx.QueryInt("id")
+		if id == 0 {
+			return ctx.JSON(&fiber.Map{
+				"success": false,
+				"error":   "ID parameter is required",
+				"code":    "400",
+			})
+		}
+		err := service.DeleteTransactionAccount(int64(id))
+		if err != nil {
+			return ctx.JSON(&fiber.Map{
+				"success": false,
+				"error":   err.Error(),
+				"code":    "500",
+			})
+		}
+		return ctx.JSON(&fiber.Map{
+			"success": true,
+		})
+	})
+
+	// 检查账户是否被交易记录使用
+	app.Get("/transactionAccount/usage-check", func(ctx *fiber.Ctx) error {
+		accountId := ctx.QueryInt("accountId")
+		if accountId == 0 {
+			return ctx.JSON(&fiber.Map{
+				"success": false,
+				"error":   "accountId parameter is required",
+				"code":    "400",
+			})
+		}
+
+		count, err := service.CheckAccountUsage(int64(accountId))
+		if err != nil {
+			return ctx.JSON(&fiber.Map{
+				"success": false,
+				"error":   err.Error(),
+				"code":    "500",
+			})
+		}
+
+		return ctx.JSON(&fiber.Map{
+			"success": true,
+			"data": &fiber.Map{
+				"isUsed": count > 0,
+				"count":  count,
+			},
+		})
+	})
+
+	// 检查分类是否被交易记录使用
+	app.Get("/transactionCategory/usage-check", func(ctx *fiber.Ctx) error {
+		categoryId := ctx.QueryInt("categoryId")
+		if categoryId == 0 {
+			return ctx.JSON(&fiber.Map{
+				"success": false,
+				"error":   "categoryId parameter is required",
+				"code":    "400",
+			})
+		}
+
+		count, err := service.CheckCategoryUsage(int64(categoryId))
+		if err != nil {
+			return ctx.JSON(&fiber.Map{
+				"success": false,
+				"error":   err.Error(),
+				"code":    "500",
+			})
+		}
+
+		return ctx.JSON(&fiber.Map{
+			"success": true,
+			"data": &fiber.Map{
+				"isUsed": count > 0,
+				"count":  count,
+			},
 		})
 	})
 

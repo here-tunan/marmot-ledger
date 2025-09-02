@@ -23,6 +23,15 @@ func AllCategory() ([]moneydb.TransactionCategory, error) {
 	return moneydb.AllCategory()
 }
 
+func DeleteTransactionCategory(id int64) error {
+	category := &moneydb.TransactionCategory{Id: id}
+	return category.Delete()
+}
+
+func CheckCategoryUsage(categoryId int64) (int64, error) {
+	return moneydb.CountTransactionsByCategory(categoryId)
+}
+
 // AnalysisCategory 根据描述进行分析
 func AnalysisCategory(desc string) int {
 	size := 1

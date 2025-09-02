@@ -39,3 +39,10 @@ func (account *TransactionAccount) Update() error {
 	_, err := infrastructure.Mysql.ID(account.Id).Omit("GmtCreate").Update(account)
 	return err
 }
+
+func (account *TransactionAccount) Delete() error {
+	// 软删除：设置 is_deleted = true
+	account.IsDeleted = true
+	_, err := infrastructure.Mysql.ID(account.Id).Cols("is_deleted").Update(account)
+	return err
+}

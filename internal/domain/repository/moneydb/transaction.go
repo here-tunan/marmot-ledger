@@ -164,3 +164,15 @@ func BatchPutTransaction(transactions []*Transaction) error {
 	}(transactions)
 	return nil
 }
+
+// CountTransactionsByAccount 统计使用指定账户的交易记录数量
+func CountTransactionsByAccount(accountId int64) (int64, error) {
+	count, err := infrastructure.Mysql.Where("account = ? AND is_deleted = 0", accountId).Count(&Transaction{})
+	return count, err
+}
+
+// CountTransactionsByCategory 统计使用指定分类的交易记录数量
+func CountTransactionsByCategory(categoryId int64) (int64, error) {
+	count, err := infrastructure.Mysql.Where("category = ? AND is_deleted = 0", categoryId).Count(&Transaction{})
+	return count, err
+}

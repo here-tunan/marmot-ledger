@@ -136,7 +136,7 @@
                   </el-tag>
                 </template>
                 <template #edit="{ row }">
-                  <vxe-select v-model="row.type" transfer>
+                  <vxe-select v-model="row.type" transfer @change="handleTypeChange(row)">
                     <vxe-option v-for="item in TRANSACTION_TYPES" :key="item.id" :value="item.id"
                                 :label="item.name"></vxe-option>
                   </vxe-select>
@@ -150,7 +150,7 @@
                 </template>
                 <template #edit="{ row }">
                   <vxe-select v-model="row.category" transfer>
-                    <vxe-option v-for="item in categories" :key="item.id" :value="item.id" :label="item.name"></vxe-option>
+                    <vxe-option v-for="item in getFilteredCategories(row.type)" :key="item.id" :value="item.id" :label="item.name"></vxe-option>
                   </vxe-select>
                 </template>
               </vxe-column>
@@ -299,6 +299,14 @@ const tooltipConfig = reactive({
 const accounts = ref([])
 // 下拉分类数据
 const categories = ref([])
+
+// 根据交易类型过滤的分类数据
+const getFilteredCategories = (rowType) => {
+  if (!rowType || rowType === '') {
+    return categories.value
+  }
+  return categories.value.filter(item => item.type === rowType)
+}
 
 // --- 弹出框表数据 END --- //
 
@@ -479,6 +487,12 @@ const dialogBoxSave = () => {
   }).catch(() => {
     // 用户取消，不做任何操作
   })
+}
+
+// 处理交易类型变更，重置分类选择
+const handleTypeChange = (row) => {
+  // 当类型改变时，清空分类选择
+  row.category = ''
 }
 
 </script>

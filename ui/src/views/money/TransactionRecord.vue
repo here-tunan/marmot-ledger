@@ -19,7 +19,7 @@
           </el-form-item>
           
           <el-form-item label="收/支">
-            <el-radio-group v-model="form.typeId">
+            <el-radio-group v-model="form.typeId" @change="onSearchTypeChange">
               <el-radio-button
                   v-for="item in transactionTypes"
                   :key="item.id"
@@ -32,7 +32,7 @@
           <el-form-item label="类型">
             <el-select v-model="form.categoryId" placeholder="请选择" style="width: 140px">
               <el-option
-                  v-for="item in categories"
+                  v-for="item in filteredSearchCategories"
                   :key="item.id"
                   :label="item.name"
                   :value="item.id"
@@ -124,7 +124,7 @@
           </template>
           <template #edit="{ row }">
             <vxe-select v-model="row.category" transfer>
-              <vxe-option v-for="item in categories" :key="item.id" :value="item.id" :label="item.name"></vxe-option>
+              <vxe-option v-for="item in getFilteredCategoriesByType(row.type)" :key="item.id" :value="item.id" :label="item.name"></vxe-option>
             </vxe-select>
           </template>
         </vxe-column>
@@ -193,7 +193,7 @@
             <el-col :span="7">
               <el-form-item label="收/支">
                 <el-select v-model="dialogForm.selectType" value-key="id"
-                           style="width:100px">
+                           style="width:100px" @change="onDialogTypeChange">
                   <el-option
                       v-for="item in TRANSACTION_TYPES"
                       :key="item.id"
@@ -231,7 +231,7 @@
                 <el-select v-model="dialogForm.selectCategory" value-key="id"
                            style="width:100px">
                   <el-option
-                      v-for="item in categories"
+                      v-for="item in filteredDialogCategories"
                       :key="item.id"
                       :label="item.name"
                       :value="item"
@@ -306,7 +306,7 @@
             </template>
             <template #edit="{ row }">
               <vxe-select v-model="row.category" transfer>
-                <vxe-option v-for="item in categories" :key="item.id" :value="item.id" :label="item.name"></vxe-option>
+                <vxe-option v-for="item in getFilteredCategoriesByType(row.type)" :key="item.id" :value="item.id" :label="item.name"></vxe-option>
               </vxe-select>
             </template>
           </vxe-column>
@@ -419,6 +419,30 @@ const tableFooterData = computed(() => {
   }
   return [['合计', '', `${sum1}##${sum2}`, '', '', '', '']]
 })
+
+// 搜索表单中根据收支类型过滤分类
+const filteredSearchCategories = computed(() => {
+  if (!form.typeId || form.typeId === '') {
+    return categories.value
+  }
+  return categories.value.filter(item => item.type === form.typeId)
+})
+
+// 弹窗表单中根据收支类型过滤分类  
+const filteredDialogCategories = computed(() => {
+  if (!dialogForm.selectType || !dialogForm.selectType.id) {
+    return categories.value
+  }
+  return categories.value.filter(item => item.type === dialogForm.selectType.id)
+})
+
+// 根据类型过滤分类的方法（用于表格编辑）
+const getFilteredCategoriesByType = (type) => {
+  if (!type) {
+    return categories.value
+  }
+  return categories.value.filter(item => item.type === type)
+}
 // ------------------- 页面数据 -----------------------
 
 
@@ -496,6 +520,21 @@ const clearForm = () => {
   form.typeId = '';
   form.categoryId = '';
   form.accountId = '';
+}
+
+// 搜索表单收支类型改变时的处理
+const onSearchTypeChange = (typeId) => {
+  // 重置分类选择
+  form.categoryId = '';
+}
+
+// 弹窗收支类型改变时的处理
+const onDialogTypeChange = (typeObj) => {
+  // 重置分类选择
+  dialogForm.selectCategory = {
+    id: '',
+    name: '',
+  };
 }
 
 // 单个保存

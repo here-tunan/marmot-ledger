@@ -111,6 +111,11 @@ const items = [
         index: '/my-bill',
         icon: 'PieChart',
         title: '账单统计',
+      },
+      {
+        index: '/management-panel',
+        icon: 'Setting',
+        title: '记账管理',
       }
     ],
   },

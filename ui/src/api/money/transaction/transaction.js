@@ -33,3 +33,15 @@ export function transactionAggregation(startTime, endTime, aggregationType) {
 export function transactionAnalysis(param) {
     return request.post("/money/transaction/analysis", param)
 }
+
+export function checkAccountUsage(accountId) {
+    return request.get("/money/transactionAccount/usage-check", {
+        params: { accountId: accountId }
+    })
+}
+
+export function checkCategoryUsage(categoryId) {
+    return request.get("/money/transactionCategory/usage-check", {
+        params: { categoryId: categoryId }
+    })
+}

@@ -4,6 +4,7 @@ import Dashboard from "@/views/Dashboard.vue";
 import TransactionRecord from "../views/money/TransactionRecord.vue";
 import TransactionAccount from "@/views/money/TransactionAccount.vue";
 import TransactionCategory from "@/views/money/TransactionCategory.vue";
+import ManagementPanel from "@/views/money/ManagementPanel.vue";
 import MetricRecord from "@/views/health/MetricRecord.vue";
 import Login from "@/views/login/Login.vue"
 import MyBill from "@/views/money/MyBill.vue";
@@ -70,6 +71,14 @@ const router = createRouter({
                     component: TransactionCategory,
                     meta: {
                         title: "账目分类"
+                    }
+                },
+                {
+                    path: '/management-panel',
+                    name: 'management-panel',
+                    component: ManagementPanel,
+                    meta: {
+                        title: "记账管理"
                     }
                 },
                 {

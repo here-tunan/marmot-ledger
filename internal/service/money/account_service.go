@@ -17,3 +17,12 @@ func PutTransactionAccount(account *moneydb.TransactionAccount) error {
 func AllAccounts() ([]moneydb.TransactionAccount, error) {
 	return moneydb.AllAccounts()
 }
+
+func DeleteTransactionAccount(id int64) error {
+	account := &moneydb.TransactionAccount{Id: id}
+	return account.Delete()
+}
+
+func CheckAccountUsage(accountId int64) (int64, error) {
+	return moneydb.CountTransactionsByAccount(accountId)
+}
