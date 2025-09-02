@@ -11,11 +11,18 @@
 ![image](https://github.com/user-attachments/assets/fa22c983-9535-41c6-bf2e-f365d8196104)
 
 ### 记账页面
-![image](https://github.com/user-attachments/assets/40b5e36d-e603-4f94-843c-01cc29aa81f1)
+<img width="1920" height="968" alt="image" src="https://github.com/user-attachments/assets/a45769d3-4318-43ec-85d0-0e3909eba88b" />
+
 
 ### 快速手工记账
+<img width="1920" height="968" alt="image" src="https://github.com/user-attachments/assets/b4bf9445-d119-4b21-afdb-127b439785aa" />
+
 
 ### 支持微信/支付宝账单导入（且导入时会根据描述信息，基于ES的分词功能和历史记账信息匹配出最优类型）
+<img width="1920" height="968" alt="image" src="https://github.com/user-attachments/assets/7538824c-5f59-4680-bbc9-38a521270fed" />
+
+<img width="1920" height="968" alt="image" src="https://github.com/user-attachments/assets/5671c286-d9d6-46fc-a7e8-21bb1e7d902d" />
+
 
 ### 个人收支统计
 ![image](https://github.com/here-tunan/my-life/assets/40956738/d0a0cc80-eadc-4227-8bb9-b34ba27a27bb)
