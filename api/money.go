@@ -457,8 +457,9 @@ func MoneyMount() *fiber.App {
 
 	app.Get("/transaction/category_analysis", func(ctx *fiber.Ctx) error {
 		desc := ctx.Query("desc")
+		transactionType := ctx.QueryInt("type", 1) // 默认为收入类型
 
-		res := service.AnalysisCategory(desc)
+		res := service.AnalysisCategory(desc, transactionType)
 		return ctx.JSON(&fiber.Map{
 			"success": true,
 			"data":    res,

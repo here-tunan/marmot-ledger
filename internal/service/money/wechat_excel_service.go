@@ -9,9 +9,11 @@ import (
 	"io"
 	"log"
 	"mime/multipart"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/xuri/excelize/v2"
 )
@@ -129,7 +131,13 @@ func processWeChatXLSXRows(userId int64, rows [][]string) ([]moneydb.Transaction
 				return
 			}
 
-			category := AnalysisCategory(description)
+			category := AnalysisCategory(description, typeId)
+
+			// 查找或创建微信账户
+			wechatAccountId, err := FindOrCreateAccount(userId, "微信支付")
+			if err != nil {
+				wechatAccountId = 0 // 使用默认值
+			}
 
 			transaction := moneydb.Transaction{
 				Amount:      amount,
@@ -137,7 +145,7 @@ func processWeChatXLSXRows(userId int64, rows [][]string) ([]moneydb.Transaction
 				UserId:      userId,
 				Type:        typeId,
 				Category:    category,
-				Account:     1, // 微信账户
+				Account:     int(wechatAccountId),
 				Time:        model.LocalTime(localTime),
 			}
 
@@ -148,5 +156,11 @@ func processWeChatXLSXRows(userId int64, rows [][]string) ([]moneydb.Transaction
 	}
 
 	wg.Wait()
+
+	// 按支付时间排序（从小到大）
+	sort.Slice(transactions, func(i, j int) bool {
+		return time.Time(transactions[i].Time).Before(time.Time(transactions[j].Time))
+	})
+
 	return transactions, nil
 }

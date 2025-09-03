@@ -10,9 +10,11 @@ import (
 	"io"
 	"log"
 	"mime/multipart"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 // ProcessAlipayCSV 处理支付宝CSV账单文件
@@ -110,9 +112,6 @@ func processAlipayBill(userId int64, records [][]string) []moneydb.Transaction {
 			// 第三列：交易对方; 第五列：商品
 			description := record[2] + "_" + record[4]
 
-			// 先暂且不管
-			category := AnalysisCategory(description)
-
 			// 第六列：收入/支出
 			typeId := 1
 			if record[5] == "收入" {
@@ -121,14 +120,16 @@ func processAlipayBill(userId int64, records [][]string) []moneydb.Transaction {
 				typeId = 2
 			}
 
+			category := AnalysisCategory(description, typeId)
+
 			// 第七列：金额(去除¥符号)
 			amountStr := strings.TrimPrefix(record[6], "¥")
 			amount, _ := strconv.ParseFloat(amountStr, 64)
 
-			// 第八列收付款方式 有一个要特殊处理一下
-			account := 2 // 默认支付宝
-			if strings.Contains(record[7], "关爱通") {
-				account = 12 // 关爱通
+			// 查找或创建对应账户
+			accountId, err := FindOrCreateAccount(userId, "支付宝")
+			if err != nil {
+				accountId = 0 // 使用默认值
 			}
 
 			transaction := moneydb.Transaction{
@@ -137,7 +138,7 @@ func processAlipayBill(userId int64, records [][]string) []moneydb.Transaction {
 				UserId:      userId,
 				Type:        typeId,
 				Category:    category,
-				Account:     account,
+				Account:     int(accountId),
 				Time:        model.LocalTime(localTime),
 			}
 
@@ -148,5 +149,11 @@ func processAlipayBill(userId int64, records [][]string) []moneydb.Transaction {
 	}
 
 	wg.Wait()
+
+	// 按支付时间排序（从小到大）
+	sort.Slice(transactions, func(i, j int) bool {
+		return time.Time(transactions[i].Time).Before(time.Time(transactions[j].Time))
+	})
+
 	return transactions
 }

@@ -36,15 +36,26 @@ func CheckCategoryUsage(categoryId int64) (int64, error) {
 	return moneydb.CountTransactionsByCategory(categoryId)
 }
 
-// AnalysisCategory 根据描述进行分析
-func AnalysisCategory(desc string) int {
+// AnalysisCategory 根据描述和类型进行分析
+func AnalysisCategory(desc string, transactionType int) int {
 	size := 1
 	res, err := infrastructure.EsClient.Search().
 		Index(moneydb.EsIndex).
 		Request(&search.Request{
 			Query: &types.Query{
-				Match: map[string]types.MatchQuery{
-					"description": {Query: desc},
+				Bool: &types.BoolQuery{
+					Must: []types.Query{
+						{
+							Match: map[string]types.MatchQuery{
+								"description": {Query: desc},
+							},
+						},
+						{
+							Term: map[string]types.TermQuery{
+								"type": {Value: transactionType},
+							},
+						},
+					},
 				},
 			},
 			Size: &size,
@@ -54,7 +65,7 @@ func AnalysisCategory(desc string) int {
 	}
 
 	if res.Hits.Total.Value > 0 {
-		// 取第一个
+		// 取第一个匹配的结果
 		jsonRaw := res.Hits.Hits[0].Source_
 		doc := &moneydb.TransactionIndex{}
 		err := json.Unmarshal(jsonRaw, doc)

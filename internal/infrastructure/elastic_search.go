@@ -2,9 +2,10 @@ package infrastructure
 
 import (
 	"fmt"
-	"github.com/elastic/go-elasticsearch/v8"
 	"go-my-life/env"
 	"log"
+
+	"github.com/elastic/go-elasticsearch/v8"
 )
 
 var EsClient *elasticsearch.TypedClient
