@@ -8,6 +8,8 @@ import (
 type TransactionAccount struct {
 	// id
 	Id int64 `json:"id"`
+	// 用户ID
+	UserId int64 `json:"userId"`
 	// 名称
 	Name string `json:"name"`
 	// 描述
@@ -22,6 +24,16 @@ type TransactionAccount struct {
 
 func AllAccounts() ([]TransactionAccount, error) {
 	session := infrastructure.Mysql.Where("is_deleted = 0")
+	var accounts []TransactionAccount
+	err := session.Find(&accounts)
+	if err != nil {
+		return nil, err
+	}
+	return accounts, err
+}
+
+func AllAccountsByUser(userId int64) ([]TransactionAccount, error) {
+	session := infrastructure.Mysql.Where("is_deleted = 0 AND user_id = ?", userId)
 	var accounts []TransactionAccount
 	err := session.Find(&accounts)
 	if err != nil {

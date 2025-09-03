@@ -18,6 +18,10 @@ func AllAccounts() ([]moneydb.TransactionAccount, error) {
 	return moneydb.AllAccounts()
 }
 
+func AllAccountsByUser(userId int64) ([]moneydb.TransactionAccount, error) {
+	return moneydb.AllAccountsByUser(userId)
+}
+
 func DeleteTransactionAccount(id int64) error {
 	account := &moneydb.TransactionAccount{Id: id}
 	return account.Delete()

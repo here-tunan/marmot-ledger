@@ -9,6 +9,8 @@ import (
 type TransactionCategory struct {
 	// id
 	Id int64 `json:"id"`
+	// 用户ID
+	UserId int64 `json:"userId"`
 	// 名称
 	Name string `json:"name"`
 	// 收入/支出
@@ -25,6 +27,16 @@ type TransactionCategory struct {
 
 func AllCategory() ([]TransactionCategory, error) {
 	session := infrastructure.Mysql.Where("is_deleted = 0")
+	var categories []TransactionCategory
+	err := session.Find(&categories)
+	if err != nil {
+		return nil, err
+	}
+	return categories, err
+}
+
+func AllCategoriesByUser(userId int64) ([]TransactionCategory, error) {
+	session := infrastructure.Mysql.Where("is_deleted = 0 AND user_id = ?", userId)
 	var categories []TransactionCategory
 	err := session.Find(&categories)
 	if err != nil {

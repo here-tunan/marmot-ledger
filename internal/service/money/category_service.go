@@ -23,6 +23,10 @@ func AllCategory() ([]moneydb.TransactionCategory, error) {
 	return moneydb.AllCategory()
 }
 
+func AllCategoriesByUser(userId int64) ([]moneydb.TransactionCategory, error) {
+	return moneydb.AllCategoriesByUser(userId)
+}
+
 func DeleteTransactionCategory(id int64) error {
 	category := &moneydb.TransactionCategory{Id: id}
 	return category.Delete()

@@ -130,40 +130,42 @@ func collectUserTransactionAggregation(allTransactions []moneydb.Transaction) []
 }
 
 func collectCategoryTransactionAggregation(allTransactions []moneydb.Transaction) []TransactionsCategoryAggregation {
-	// 使用map进行收集
-	categoryTransactionMap := make(map[int][]moneydb.Transaction)
+	// 按分类名称进行收集，支持家庭成员分类聚合
+	categoryNameMap := make(map[string][]moneydb.Transaction)
+
+	// 获取所有分类信息，建立 categoryId -> categoryName 映射
+	categories, _ := moneydb.AllCategory()
+	categoryIdToNameMap := make(map[int]string)
+	for _, category := range categories {
+		categoryIdToNameMap[int(category.Id)] = category.Name
+	}
 
 	var totalAmount decimal.Decimal
 	for _, transaction := range allTransactions {
-		response, existed := categoryTransactionMap[transaction.Category]
-		if existed {
-			response = append(response, transaction)
-			categoryTransactionMap[transaction.Category] = response
+		// 通过 categoryId 找到分类名称
+		categoryName := categoryIdToNameMap[transaction.Category]
+		if categoryName == "" {
+			categoryName = "未知分类" // 防御性编程：处理找不到分类的情况
+		}
+
+		// 按分类名称分组
+		if transactions, existed := categoryNameMap[categoryName]; existed {
+			categoryNameMap[categoryName] = append(transactions, transaction)
 		} else {
-			var list []moneydb.Transaction
-			list = append(list, transaction)
-			categoryTransactionMap[transaction.Category] = list
+			categoryNameMap[categoryName] = []moneydb.Transaction{transaction}
 		}
 		totalAmount = totalAmount.Add(decimal.NewFromFloat(transaction.Amount))
 	}
 
-	if len(categoryTransactionMap) == 0 {
+	if len(categoryNameMap) == 0 {
 		return nil
 	}
 
-	// find all category
-	categories, _ := moneydb.AllCategory()
-
-	categoriesMap := make(map[int]string)
-	for _, category := range categories {
-		categoriesMap[int(category.Id)] = category.Name
-	}
-
 	var results []TransactionsCategoryAggregation
-	for categoryId, transactions := range categoryTransactionMap {
+	for categoryName, transactions := range categoryNameMap {
 		result := TransactionsCategoryAggregation{
-			CategoryId:   categoryId,
-			CategoryName: categoriesMap[categoryId],
+			CategoryId:   0, // 聚合后不再有单一的 CategoryId
+			CategoryName: categoryName,
 			Percent:      decimal.Decimal{},
 			Amount:       decimal.Decimal{},
 		}

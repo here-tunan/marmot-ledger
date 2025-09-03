@@ -143,7 +143,8 @@ func MoneyMount() *fiber.App {
 	})
 
 	app.Get("/transactionCategory", func(ctx *fiber.Ctx) error {
-		res, err := service.AllCategory()
+		userId := ctx.Locals("userId").(int64)
+		res, err := service.AllCategoriesByUser(userId)
 		if err != nil {
 			return ctx.JSON(&fiber.Map{
 				"success": false,
@@ -168,6 +169,10 @@ func MoneyMount() *fiber.App {
 				"code":    "400",
 			})
 		}
+
+		// 设置用户ID
+		userId := ctx.Locals("userId").(int64)
+		param.UserId = userId
 
 		// 参数验证
 		if strings.TrimSpace(param.Name) == "" {
@@ -227,7 +232,8 @@ func MoneyMount() *fiber.App {
 	})
 
 	app.Get("/transactionAccount", func(ctx *fiber.Ctx) error {
-		res, err := service.AllAccounts()
+		userId := ctx.Locals("userId").(int64)
+		res, err := service.AllAccountsByUser(userId)
 		if err != nil {
 			return ctx.JSON(&fiber.Map{
 				"success": false,
@@ -251,6 +257,11 @@ func MoneyMount() *fiber.App {
 				"code":    "400",
 			})
 		}
+
+		// 设置用户ID
+		userId := ctx.Locals("userId").(int64)
+		param.UserId = userId
+
 		err = service.PutTransactionAccount(param)
 		if err != nil {
 			return ctx.JSON(&fiber.Map{
