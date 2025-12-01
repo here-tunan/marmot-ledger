@@ -120,7 +120,7 @@ func processAlipayBill(userId int64, records [][]string) []moneydb.Transaction {
 				typeId = 2
 			}
 
-			category := AnalysisCategory(description, typeId)
+			category := AnalysisCategory(description, typeId, userId)
 
 			// 第七列：金额(去除¥符号)
 			amountStr := strings.TrimPrefix(record[6], "¥")

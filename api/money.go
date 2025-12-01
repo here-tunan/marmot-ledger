@@ -459,7 +459,7 @@ func MoneyMount() *fiber.App {
 		desc := ctx.Query("desc")
 		transactionType := ctx.QueryInt("type", 1) // 默认为收入类型
 
-		res := service.AnalysisCategory(desc, transactionType)
+		res := service.AnalysisCategory(desc, transactionType, ctx.Locals("userId").(int64))
 		return ctx.JSON(&fiber.Map{
 			"success": true,
 			"data":    res,
@@ -482,6 +482,7 @@ func MoneyMount() *fiber.App {
 					Description: transaction.Description,
 					Type:        transaction.Type,
 					Category:    transaction.Category,
+					UserId:      transaction.UserId,
 				}
 				infrastructure.EsClient.Index(moneydb.EsIndex).Id(strconv.FormatInt(transaction.Id, 10)).Request(doc).Do(context.Background())
 			}

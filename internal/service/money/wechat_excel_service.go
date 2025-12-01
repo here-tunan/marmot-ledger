@@ -131,7 +131,7 @@ func processWeChatXLSXRows(userId int64, rows [][]string) ([]moneydb.Transaction
 				return
 			}
 
-			category := AnalysisCategory(description, typeId)
+			category := AnalysisCategory(description, typeId, userId)
 
 			// 查找或创建微信账户
 			wechatAccountId, err := FindOrCreateAccount(userId, "微信支付")

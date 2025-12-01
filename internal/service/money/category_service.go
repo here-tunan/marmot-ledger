@@ -3,10 +3,11 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
-	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"go-my-life/internal/domain/repository/moneydb"
 	"go-my-life/internal/infrastructure"
+
+	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 )
 
 func PutTransactionCategory(category *moneydb.TransactionCategory) error {
@@ -37,7 +38,7 @@ func CheckCategoryUsage(categoryId int64) (int64, error) {
 }
 
 // AnalysisCategory 根据描述和类型进行分析
-func AnalysisCategory(desc string, transactionType int) int {
+func AnalysisCategory(desc string, transactionType int, userId int64) int {
 	size := 1
 	res, err := infrastructure.EsClient.Search().
 		Index(moneydb.EsIndex).
@@ -53,6 +54,11 @@ func AnalysisCategory(desc string, transactionType int) int {
 						{
 							Term: map[string]types.TermQuery{
 								"type": {Value: transactionType},
+							},
+						},
+						{
+							Term: map[string]types.TermQuery{
+								"userId": {Value: userId},
 							},
 						},
 					},

@@ -3,10 +3,11 @@ package moneydb
 import (
 	"context"
 	"errors"
-	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"go-my-life/internal/infrastructure"
 	"go-my-life/pkg/model"
 	"strconv"
+
+	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"xorm.io/xorm"
 )
 
@@ -44,6 +45,8 @@ type TransactionIndex struct {
 	Type int `json:"type"`
 	// 用途分类
 	Category int `json:"category"`
+	// UserId
+	UserId int64 `json:"userId"`
 }
 
 var EsIndex = "transaction_index"
@@ -61,6 +64,7 @@ func (record *Transaction) Insert() error {
 		Description: record.Description,
 		Type:        record.Type,
 		Category:    record.Category,
+		UserId:      record.UserId,
 	}
 	_, err = infrastructure.EsClient.Index(EsIndex).Id(strconv.FormatInt(record.Id, 10)).Request(transactionIndex).Do(context.Background())
 	return err
@@ -76,6 +80,7 @@ func (record *Transaction) Update() error {
 		Description: record.Description,
 		Type:        record.Type,
 		Category:    record.Category,
+		UserId:      record.UserId,
 	}
 	// 更新es
 	_, err = infrastructure.EsClient.Index(EsIndex).Id(strconv.FormatInt(record.Id, 10)).Request(transactionIndex).Do(context.Background())
@@ -155,6 +160,7 @@ func BatchPutTransaction(transactions []*Transaction) error {
 				Description: transaction.Description,
 				Type:        transaction.Type,
 				Category:    transaction.Category,
+				UserId:      transaction.UserId,
 			}
 			_, err := infrastructure.EsClient.Index(EsIndex).Id(strconv.FormatInt(transaction.Id, 10)).Request(transactionIndex).Do(context.Background())
 			if err != nil {
