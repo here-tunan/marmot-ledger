@@ -45,6 +45,20 @@ func AllCategoriesByUser(userId int64) ([]TransactionCategory, error) {
 	return categories, err
 }
 
+func AllCategoriesByUserIds(userIds []int64) ([]TransactionCategory, error) {
+	if len(userIds) == 0 {
+		return []TransactionCategory{}, nil
+	}
+
+	session := infrastructure.Mysql.In("user_id", userIds).And("is_deleted = 0")
+	var categories []TransactionCategory
+	err := session.Find(&categories)
+	if err != nil {
+		return nil, err
+	}
+	return categories, err
+}
+
 func (category *TransactionCategory) Insert() error {
 	_, err := infrastructure.Mysql.InsertOne(category)
 	return err

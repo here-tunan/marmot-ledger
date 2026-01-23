@@ -244,8 +244,8 @@ import {nextTick, onMounted, reactive, ref, shallowRef, watch} from "vue";
 import * as echarts from "echarts";
 import {queryTransaction, transactionAnalysis} from "@/api/money/transaction/transaction";
 import {getTransactionTypeNameById, TRANSACTION_TYPE_ID, TRANSACTION_TYPES} from "@/enums/transactionType";
-import {allTransactionCategory} from "@/api/money/transaction/transactionCategory";
-import {allTransactionAccount} from "@/api/money/transaction/transactionAccount";
+import {allTransactionCategory, allTransactionCategoryByFamily} from "@/api/money/transaction/transactionCategory";
+import {allTransactionAccount, allTransactionAccountByFamily} from "@/api/money/transaction/transactionAccount";
 import {getAccountNameById, getCategoryNameById} from "@/api/money/money";
 import {getLoginUserInfo, getUserNameById} from "@/api/user/user";
 import {getFamily} from "@/api/family/family";
@@ -359,13 +359,26 @@ onMounted(() => {
   // 初始化
   transactionTypes.value = TRANSACTION_TYPES
 
-  allTransactionCategory().then(res => {
-    categories.value = res.data
-  });
+  // 根据是否有家庭ID来决定获取哪些分类和账户
+  if (props.familyId === 0) {
+    // 单用户模式，获取当前用户的数据
+    allTransactionCategory().then(res => {
+      categories.value = res.data
+    });
 
-  allTransactionAccount().then(res => {
-    accounts.value = res.data
-  })
+    allTransactionAccount().then(res => {
+      accounts.value = res.data
+    })
+  } else {
+    // 家庭模式，获取家庭所有成员的数据
+    allTransactionCategoryByFamily(props.familyId).then(res => {
+      categories.value = res.data
+    });
+
+    allTransactionAccountByFamily(props.familyId).then(res => {
+      accounts.value = res.data
+    })
+  }
 
   // 相关用户信息
   if (props.familyId === 0) {

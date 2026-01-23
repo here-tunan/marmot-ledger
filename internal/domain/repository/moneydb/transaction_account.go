@@ -42,6 +42,20 @@ func AllAccountsByUser(userId int64) ([]TransactionAccount, error) {
 	return accounts, err
 }
 
+func AllAccountsByUserIds(userIds []int64) ([]TransactionAccount, error) {
+	if len(userIds) == 0 {
+		return []TransactionAccount{}, nil
+	}
+
+	session := infrastructure.Mysql.In("user_id", userIds).And("is_deleted = 0")
+	var accounts []TransactionAccount
+	err := session.Find(&accounts)
+	if err != nil {
+		return nil, err
+	}
+	return accounts, err
+}
+
 func (account *TransactionAccount) Insert() error {
 	_, err := infrastructure.Mysql.InsertOne(account)
 	return err

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"go-my-life/internal/domain/entity/family"
 	"go-my-life/internal/domain/repository/moneydb"
 	"go-my-life/internal/infrastructure"
 
@@ -26,6 +27,25 @@ func AllCategory() ([]moneydb.TransactionCategory, error) {
 
 func AllCategoriesByUser(userId int64) ([]moneydb.TransactionCategory, error) {
 	return moneydb.AllCategoriesByUser(userId)
+}
+
+// AllCategoriesByFamily 获取家庭所有成员的分类
+func AllCategoriesByFamily(familyId int64) ([]moneydb.TransactionCategory, error) {
+	// 获取家庭信息
+	familyEntity := &family.Family{Id: familyId}
+	err := familyEntity.GetFamily()
+	if err != nil {
+		return nil, err
+	}
+
+	// 收集家庭成员的用户ID
+	var userIds []int64
+	for _, member := range familyEntity.Members {
+		userIds = append(userIds, member.UserId)
+	}
+
+	// 查询所有家庭成员的分类
+	return moneydb.AllCategoriesByUserIds(userIds)
 }
 
 func DeleteTransactionCategory(id int64) error {

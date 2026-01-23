@@ -1,6 +1,7 @@
 package service
 
 import (
+	"go-my-life/internal/domain/entity/family"
 	"go-my-life/internal/domain/repository/moneydb"
 )
 
@@ -20,6 +21,25 @@ func AllAccounts() ([]moneydb.TransactionAccount, error) {
 
 func AllAccountsByUser(userId int64) ([]moneydb.TransactionAccount, error) {
 	return moneydb.AllAccountsByUser(userId)
+}
+
+// AllAccountsByFamily 获取家庭所有成员的账户
+func AllAccountsByFamily(familyId int64) ([]moneydb.TransactionAccount, error) {
+	// 获取家庭信息
+	familyEntity := &family.Family{Id: familyId}
+	err := familyEntity.GetFamily()
+	if err != nil {
+		return nil, err
+	}
+
+	// 收集家庭成员的用户ID
+	var userIds []int64
+	for _, member := range familyEntity.Members {
+		userIds = append(userIds, member.UserId)
+	}
+
+	// 查询所有家庭成员的账户
+	return moneydb.AllAccountsByUserIds(userIds)
 }
 
 func DeleteTransactionAccount(id int64) error {

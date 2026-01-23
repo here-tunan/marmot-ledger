@@ -158,6 +158,31 @@ func MoneyMount() *fiber.App {
 		})
 	})
 
+	// 获取家庭所有成员的分类
+	app.Get("/transactionCategory/family/:familyId", func(ctx *fiber.Ctx) error {
+		familyId, err := strconv.ParseInt(ctx.Params("familyId"), 10, 64)
+		if err != nil {
+			return ctx.JSON(&fiber.Map{
+				"success": false,
+				"error":   "无效的家庭ID",
+				"code":    "400",
+			})
+		}
+
+		res, err := service.AllCategoriesByFamily(familyId)
+		if err != nil {
+			return ctx.JSON(&fiber.Map{
+				"success": false,
+				"error":   err.Error(),
+				"code":    "500",
+			})
+		}
+		return ctx.JSON(&fiber.Map{
+			"success": true,
+			"data":    res,
+		})
+	})
+
 	app.Put("/transactionCategory", func(ctx *fiber.Ctx) error {
 		param := &moneydb.TransactionCategory{}
 		err := ctx.BodyParser(param)
@@ -234,6 +259,31 @@ func MoneyMount() *fiber.App {
 	app.Get("/transactionAccount", func(ctx *fiber.Ctx) error {
 		userId := ctx.Locals("userId").(int64)
 		res, err := service.AllAccountsByUser(userId)
+		if err != nil {
+			return ctx.JSON(&fiber.Map{
+				"success": false,
+				"error":   err.Error(),
+				"code":    "500",
+			})
+		}
+		return ctx.JSON(&fiber.Map{
+			"success": true,
+			"data":    res,
+		})
+	})
+
+	// 获取家庭所有成员的账户
+	app.Get("/transactionAccount/family/:familyId", func(ctx *fiber.Ctx) error {
+		familyId, err := strconv.ParseInt(ctx.Params("familyId"), 10, 64)
+		if err != nil {
+			return ctx.JSON(&fiber.Map{
+				"success": false,
+				"error":   "无效的家庭ID",
+				"code":    "400",
+			})
+		}
+
+		res, err := service.AllAccountsByFamily(familyId)
 		if err != nil {
 			return ctx.JSON(&fiber.Map{
 				"success": false,
