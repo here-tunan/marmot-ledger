@@ -3,13 +3,10 @@ package myerror
 type Code int
 
 const (
-	OK              Code = 200
-	WrongParam      Code = 400
-	Unauthorized    Code = 401
-	InternalError   Code = 500
-	NoFamily        Code = 601
-	NoFamilyMembers Code = 602
-	NotFamilyMember Code = 603
+	OK            Code = 200
+	WrongParam    Code = 400
+	Unauthorized  Code = 401
+	InternalError Code = 500
 )
 
 func (code Code) String() string {
@@ -22,12 +19,6 @@ func (code Code) String() string {
 		return "鉴权失败"
 	case InternalError:
 		return "服务器内部错误"
-	case NoFamily:
-		return "没找到家庭"
-	case NoFamilyMembers:
-		return "没有家庭成员"
-	case NotFamilyMember:
-		return "不是家庭成员"
 	default:
 		return ""
 	}

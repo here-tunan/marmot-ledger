@@ -31,11 +31,6 @@
                   <el-input v-model="form.desc" type="textarea" :autosize="{ minRows: 4, maxRows: 5 }"/>
                 </el-form-item>
               </el-col>
-              <el-col :span="6">
-                <div style="padding-top: 20px">
-                  <avatar-upload :avatar-img="form.avatar" @newAvatar="getNewAvatar"/>
-                </div>
-              </el-col>
             </el-row>
 
             <el-form-item>
@@ -72,7 +67,6 @@
 
 import {reactive, ref, watch} from "vue";
 import {useUserStore} from "@/stores/user";
-import AvatarUpload from "@/components/AvatarUpload.vue";
 import {putUser} from "@/api/user/user";
 import {ElMessage} from "element-plus";
 
@@ -84,7 +78,6 @@ const activeIndex = ref("1")
 //  --- 个人资料表单 ---
 const form = reactive({
   account: useUserStore().account,
-  avatar: useUserStore().avatar,
   name: useUserStore().username,
   desc: useUserStore().desc
 })
@@ -131,7 +124,6 @@ const passwordRuleRef = ref()
 // 监听userStore的变化
 watch(useUserStore(), () => {
   form.account = useUserStore().account;
-  form.avatar = useUserStore().avatar;
   form.name = useUserStore().username;
   form.desc = useUserStore().desc;
 })
@@ -139,11 +131,6 @@ watch(useUserStore(), () => {
 // 菜单选中
 const handleSelect = (key) => {
   activeIndex.value = key
-}
-
-// 新头像上传的回调
-const getNewAvatar = (newAvatar) => {
-  form.avatar = newAvatar
 }
 
 // 个人资料修改确定
@@ -154,7 +141,6 @@ const submitForm = async (formEl) => {
       console.log('submit!')
       // 执行保存逻辑
       let param = {
-        avatar: form.avatar,
         name: form.name,
         desc: form.desc
       }
@@ -162,7 +148,6 @@ const submitForm = async (formEl) => {
         if (res.success) {
           ElMessage.success('成功更新个人资料！')
           // 更新store的值
-          useUserStore().avatar = res.data.avatar;
           useUserStore().username = res.data.name;
           useUserStore().desc = res.data.desc;
         }

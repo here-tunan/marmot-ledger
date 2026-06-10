@@ -24,23 +24,6 @@ type Properties struct {
 		Db       int    `json:"db"`
 		Password string `json:"password"`
 	} `json:"redis"`
-
-	// 像这种 AaaBbb的 需要使用 yaml 标签对应配置文件中的内容才能被成功解析
-	ElasticSearch struct {
-		Host        string `json:"host"`
-		Port        int    `json:"port"`
-		Username    string `json:"username"`
-		Password    string `json:"password"`
-		Fingerprint string `json:"fingerprint"`
-	} `json:"elasticSearch" yaml:"elasticSearch"`
-
-	AliOss struct {
-		AccessId  string `json:"accessId" yaml:"accessId"`
-		AccessKey string `json:"accessKey" yaml:"accessKey"`
-		Host      string `json:"host"`
-		Dir       string `json:"dir"`
-		Bucket    string `json:"bucket"`
-	} `json:"aliOss" yaml:"aliOss"`
 }
 
 var Prop *Properties
@@ -55,15 +38,15 @@ func readEncProperties() {
 	envFilePath := "./env/dev.yaml"
 
 	// 根据环境变量解析配置文件
-	appEnv := os.Getenv("GO_MY_LIFE_ENV")
+	appEnv := os.Getenv("MARMOT_LEDGER_ENV")
 	if appEnv == "dev" || appEnv == "" {
-		fmt.Println("Start go-my-life app in development environment!")
+		fmt.Println("Start marmot-ledger app in development environment!")
 		envFilePath = "./env/dev.yaml"
 	} else if appEnv == "prod" {
-		fmt.Println("Start go-my-life app in production environment!")
+		fmt.Println("Start marmot-ledger app in production environment!")
 		envFilePath = "./env/prod.yaml"
 	} else {
-		fmt.Println("Start go-my-life app in unknown environment! Maybe cause errors!")
+		fmt.Println("Start marmot-ledger app in unknown environment! Maybe cause errors!")
 	}
 
 	// 读取YAML文件内容

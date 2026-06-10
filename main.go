@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	log.Println("Go my life is starting!")
+	log.Println("Marmot Ledger is starting!")
 	// 启用web服务
 	api.Start()
 }

@@ -1,15 +1,16 @@
 /ui/node_modules/
-.idea
+.idea/
+.DS_Store
 
 # Logs
 logs
 *.log
 
-
 # Editor directories and files
 /ui/.vscode/*
-/ui/.idea
+/ui/.idea/
 /ui/dist/
 
+go-my-life
+marmot-ledger
 README-myself.md
-/ui/package-lock.json

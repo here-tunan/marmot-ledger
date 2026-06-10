@@ -22,7 +22,6 @@
 
 import {computed} from "vue";
 import {useUserStore} from "@/stores/user";
-import {useFamilyStore} from "@/stores/family";
 import router from "@/router";
 
 const username = computed(() => {

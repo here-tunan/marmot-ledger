@@ -1,96 +1,118 @@
-# my-life
-一个生活管理系统，目前支持多人一起记账和查账。
-## Star History
+# Marmot Ledger
 
-[![Star History Chart](https://api.star-history.com/svg?repos=here-tunan/my-life&type=Date)](https://www.star-history.com/#here-tunan/my-life&Date)
-## 功能截图
-### 登录页面
-![image](https://github.com/user-attachments/assets/77175dc7-0d59-4301-b25f-51dd99763921)
+Marmot Ledger（土拨鼠账本）是一个面向个人与家庭的财务账本系统，用于记录现金流、资产、负债、多币种账户、投资、报销、押金以及共享家庭财务。
 
-### 首页 （个人基本信息和家庭基本信息）
-![image](https://github.com/user-attachments/assets/fa22c983-9535-41c6-bf2e-f365d8196104)
+当前仓库已经从旧的 `my-life` 项目中清理出基础框架。旧的 `transaction` 记账、家庭、健康、训练、OSS 上传和 Elasticsearch 业务模块已移除；后续财务能力将基于新的核心模型重新实现。
 
-### 记账页面
-<img width="1920" height="968" alt="image" src="https://github.com/user-attachments/assets/a45769d3-4318-43ec-85d0-0e3909eba88b" />
+## 当前状态
 
+当前保留的是最小可运行基础：
 
-### 快速手工记账
-<img width="1920" height="968" alt="image" src="https://github.com/user-attachments/assets/b4bf9445-d119-4b21-afdb-127b439785aa" />
+- Go + Fiber 后端服务
+- MySQL / Redis 基础设施连接
+- 用户登录、token 校验、用户信息接口
+- Vue 3 + Vite 前端应用
+- Element Plus UI
+- Pinia 状态管理
+- 登录页、系统首页、用户中心
 
+## 领域模型方向
 
-### 支持微信/支付宝账单导入（且导入时会根据描述信息，基于ES的分词功能和历史记账信息匹配出最优类型）
-<img width="1920" height="968" alt="image" src="https://github.com/user-attachments/assets/7538824c-5f59-4680-bbc9-38a521270fed" />
+后续新财务模块应基于以下核心模型实现：
 
-<img width="1920" height="968" alt="image" src="https://github.com/user-attachments/assets/5671c286-d9d6-46fc-a7e8-21bb1e7d902d" />
+- `financial_event`：财务事件，表示发生了什么
+- `ledger_entry`：余额分录，表示事件造成的 Bucket 余额变化
+- `bucket`：资产 / 负债 / 虚拟资金容器
+- `account`：平台 / 机构 / 分组，不保存余额
+- `category`：用户自己的分类
+- `category_group`：系统 / 家庭统计用的聚合分类
+- `channel_template`：收款 / 支付渠道模板
+- `currency`：全平台公共币种字典
+- `exchange_rate`：汇率缓存
+- `investment_snapshot`：投资估值 / 收益快照
 
+> 新项目不要把 `transaction` 作为主表名。账单统计回答“发生了什么”，资产报表回答“我有什么”。
 
-### 个人收支统计
-![image](https://github.com/here-tunan/my-life/assets/40956738/d0a0cc80-eadc-4227-8bb9-b34ba27a27bb)
+详细设计见：
 
-### 家庭收支统计（可以看到家庭内的其他成员的收支明细）
-![image](https://github.com/here-tunan/my-life/assets/40956738/e3c28bef-d02a-474c-b9b1-da3c75a6dac4)
+- [`docs/MARMOT_LEDGER_HANDOFF.md`](docs/MARMOT_LEDGER_HANDOFF.md)
+- [`docs/财务系统升级设计方案.md`](docs/财务系统升级设计方案.md)
+- [`docs/导入识别与规则学习设计方案.md`](docs/导入识别与规则学习设计方案.md)
 
-## 运行
-### 前提
-需要开启 redis、mysql、ElasticSearch服务。
+## 项目结构
 
-ES 索引构建
-```shell
-PUT /transaction_index 
-{
-  "settings": {
-    "number_of_shards": 1
-  },
-  "aliases":{
-    "transaction": {}
-  },
-  "mappings": {
-    "properties": {
-      "id": {"type": "keyword"},
-      "description": {"type": "text"},
-      "category": {"type": "keyword"},
-      "type": {"type": "keyword"}
-    }
-  }
-}
+```text
+.
+├── api/                         # Fiber API 路由
+│   ├── user.go                  # 用户接口
+│   └── web.go                   # Web 服务启动、CORS、token 中间件
+├── env/                         # 环境配置
+├── internal/
+│   ├── domain/                  # 领域实体与仓储
+│   │   ├── entity/user/
+│   │   └── repository/userdb/
+│   ├── infrastructure/          # MySQL / Redis 初始化
+│   └── service/                 # 应用服务
+├── pkg/                         # 通用模型、错误、返回结构、工具
+├── ui/                          # Vue 3 前端
+│   └── src/
+│       ├── api/                 # 前端 API 封装
+│       ├── components/          # 基础布局组件
+│       ├── router/              # 路由
+│       ├── stores/              # Pinia store
+│       └── views/               # 登录、首页、用户中心
+└── docs/                        # 设计与 handoff 文档
 ```
 
-### 本地运行
-#### 服务端
-设置好dev.yaml中的配置，启动go项目即可。
-#### 客户端
-```shell
+## 本地运行
+
+### 后端
+
+准备 MySQL 和 Redis，并根据本地环境修改：
+
+```text
+env/dev.yaml
+```
+
+启动后端：
+
+```bash
+go run main.go
+```
+
+默认读取 `env/dev.yaml`。如需切换环境：
+
+```bash
+export MARMOT_LEDGER_ENV=prod
+```
+
+### 前端
+
+```bash
 cd ui
 npm install
 npm run dev
 ```
 
-### 服务器Linux运行
-#### 服务端
-在带有go环境的机器上进行编译打包上传到服务器上，
-```shell
-CGO_ENABLED=0  GOOS=linux  GOARCH=amd64  go build -o go-my-life main.go
-```
-或者直接使用仓库中的可执行文件。
+## 构建与验证
 
-在可执行文件的同级/env目录下配置prod.yaml文件，然后配置好环境变量：
-```shell
-export GO_MY_LIFE_ENV=prod
+后端：
+
+```bash
+go test ./...
+go build ./...
 ```
 
-启动后台程序
-```shell
-nohup ./go-my-life &
+前端：
+
+```bash
+npm --prefix ui run build
 ```
 
-#### 客户端
-通过vue生成的dist静态文件部署。 创建/ui/.env.production环境配置文件，修改对应的服务端地址。在带有npm的环境中执行命令生成dist，上传到服务器的位置。
-```shell
-npm run build
-```
-通过nginx做好转发即可。
+## 开发约定
 
-#### Mac 本地启动
-如果你想在本地启动，又正好是Mac系统，那完全可以自己编排好脚本文件，然后使用mac的Automator去实现这个功能，稍后我会出一篇教程来说明如何实现。
-<img width="688" height="356" alt="image" src="https://github.com/user-attachments/assets/025e5ee2-a0fb-474e-b23b-009c5eba2100" />
-
+- 后续财务模块从 `financial_event` / `ledger_entry` / `bucket` 开始建模。
+- `account` 不保存余额，余额由其下 Bucket 汇总。
+- `ledger_entry.amount` 使用正负数表示余额变化，不增加 direction 字段。
+- `refund` 抵扣支出，不作为普通收入。
+- 家庭资产报表展示家庭成员各自的账户和 Bucket，不创建家庭共享 Account。

@@ -13,7 +13,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
-var authWhiteList = []string{"login", "validToken", "refreshToken", "category_analysis", "category_immigrate"}
+var authWhiteList = []string{"login", "validToken", "refreshToken"}
 
 func Start() {
 
@@ -69,11 +69,7 @@ func Start() {
 	// 设置根路径
 	root := app.Group("/api")
 
-	root.Mount("/money", MoneyMount())
-	root.Mount("/health", HealthMount())
 	root.Mount("/user", UserMount())
-	root.Mount("/family", FamilyMount())
-	root.Mount("/oss", OssMount())
 
 	log.Fatal(app.Listen(":" + env.Prop.Port))
 }
