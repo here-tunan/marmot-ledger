@@ -33,8 +33,6 @@
           </div>
           <div class="account-meta">
             <span>{{ getTypeLabel(item.type) }}</span>
-            <span>{{ item.providerCode || 'CUSTOM' }}</span>
-            <span v-if="item.bankCode">{{ item.bankCode }}</span>
           </div>
           <div class="card-actions">
             <button class="text-action" @click="openEdit(item)">{{ t('common.actions.edit') }}</button>
@@ -63,21 +61,6 @@
           <el-select v-model="form.type" :placeholder="t('accounts.placeholders.selectType')" class="full-width">
             <el-option v-for="item in accountTypes" :key="item.value" :label="item.label.value || item.label" :value="item.value" />
           </el-select>
-        </el-form-item>
-        <el-row :gutter="12">
-          <el-col :span="12">
-            <el-form-item :label="t('accounts.fields.providerCode')">
-              <el-input v-model="form.providerCode" :placeholder="t('accounts.placeholders.providerCode')" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item :label="t('accounts.fields.bankCode')">
-              <el-input v-model="form.bankCode" :placeholder="t('accounts.placeholders.bankCode')" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-form-item :label="t('common.fields.groupKey')">
-          <el-input v-model="form.accountGroupKey" :placeholder="t('accounts.placeholders.groupKey')" />
         </el-form-item>
         <el-form-item :label="t('common.fields.color')">
           <div class="color-palette">
@@ -201,6 +184,9 @@ async function handleDelete(item) {
       confirmButtonText: t('common.actions.delete'),
       cancelButtonText: t('common.actions.cancel'),
       type: 'warning',
+      customClass: 'calm-marmot-message-box calm-marmot-delete-box',
+      confirmButtonClass: 'calm-marmot-danger-confirm',
+      cancelButtonClass: 'calm-marmot-soft-cancel',
     })
     const res = await deleteAccount(item.id)
     if (res.success) {

@@ -172,3 +172,231 @@ a {
 [hidden]{
     display: none !important;
 }
+
+/* Calm Marmot Dialog */
+.marmot-dialog.el-dialog {
+    width: min(var(--el-dialog-width, 560px), calc(100vw - 32px)) !important;
+    overflow: hidden;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1), 0 22px 58px rgba(15, 23, 42, 0.16);
+}
+
+.marmot-dialog .el-dialog__header {
+    margin: 0;
+    padding: 22px 26px 14px;
+    background: linear-gradient(135deg, #fffaf0 0%, #ffffff 72%);
+}
+
+.marmot-dialog .el-dialog__title {
+    color: #1e293b;
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: -0.018em;
+}
+
+.marmot-dialog .el-dialog__headerbtn {
+    top: 18px;
+    right: 18px;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    transition: background-color 160ms ease, color 160ms ease;
+}
+
+.marmot-dialog .el-dialog__headerbtn:hover {
+    background: rgba(47, 125, 92, 0.1);
+}
+
+.marmot-dialog .el-dialog__headerbtn .el-dialog__close {
+    color: #64748b;
+    font-weight: 900;
+}
+
+.marmot-dialog .el-dialog__headerbtn:hover .el-dialog__close {
+    color: #2f7d5c;
+}
+
+.marmot-dialog .el-dialog__body {
+    padding: 20px 26px 10px;
+    color: #1e293b;
+}
+
+.marmot-dialog .el-dialog__footer {
+    padding: 16px 26px 24px;
+    border-top: 1px solid rgba(100, 116, 139, 0.12);
+}
+
+.marmot-dialog .el-form-item {
+    margin-bottom: 18px;
+}
+
+.marmot-dialog .el-form-item__label {
+    margin-bottom: 6px;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.marmot-dialog .el-input__wrapper,
+.marmot-dialog .el-textarea__inner,
+.marmot-dialog .el-select .el-input__wrapper {
+    border-radius: 12px;
+    box-shadow: 0 0 0 1px rgba(100, 116, 139, 0.18) inset;
+    transition: box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.marmot-dialog .el-input__wrapper:hover,
+.marmot-dialog .el-textarea__inner:hover,
+.marmot-dialog .el-select .el-input__wrapper:hover {
+    box-shadow: 0 0 0 1px rgba(47, 125, 92, 0.28) inset;
+}
+
+.marmot-dialog .el-input__wrapper.is-focus,
+.marmot-dialog .el-textarea__inner:focus,
+.marmot-dialog .el-select .el-input__wrapper.is-focus {
+    box-shadow: 0 0 0 1px #3b82f6 inset, 0 0 0 4px rgba(59, 130, 246, 0.12);
+}
+
+.marmot-dialog .primary-action,
+.marmot-dialog .ghost-action,
+.marmot-dialog .danger-action {
+    min-height: 40px;
+    border: 0;
+    border-radius: 12px;
+    padding: 0 18px;
+    font-weight: 800;
+    cursor: pointer;
+    transition-property: transform, box-shadow, background-color, color;
+    transition-duration: 160ms;
+}
+
+.marmot-dialog .primary-action:active,
+.marmot-dialog .ghost-action:active,
+.marmot-dialog .danger-action:active {
+    transform: scale(0.96);
+}
+
+.marmot-dialog .primary-action {
+    background: #3b82f6;
+    color: #ffffff;
+    box-shadow: 0 10px 24px rgba(59, 130, 246, 0.22);
+}
+
+.marmot-dialog .ghost-action {
+    background: #f8faf7;
+    color: #1e293b;
+}
+
+.marmot-dialog .danger-action {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+/* Calm Marmot MessageBox */
+.calm-marmot-message-box.el-message-box {
+    width: min(420px, calc(100vw - 32px));
+    overflow: hidden;
+    border: 0;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1), 0 22px 58px rgba(15, 23, 42, 0.16);
+}
+
+.calm-marmot-message-box .el-message-box__header {
+    padding: 22px 24px 8px;
+    background: linear-gradient(135deg, #fffaf0 0%, #ffffff 72%);
+}
+
+.calm-marmot-message-box .el-message-box__title {
+    color: #1e293b;
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: -0.014em;
+}
+
+.calm-marmot-message-box .el-message-box__headerbtn {
+    top: 16px;
+    right: 16px;
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+}
+
+.calm-marmot-message-box .el-message-box__headerbtn:hover {
+    background: rgba(47, 125, 92, 0.1);
+}
+
+.calm-marmot-message-box .el-message-box__content {
+    padding: 14px 24px 6px;
+}
+
+.calm-marmot-message-box .el-message-box__message {
+    color: #64748b;
+    line-height: 1.7;
+}
+
+.calm-marmot-delete-box .el-message-box__status.el-icon {
+    color: #ef4444;
+}
+
+.calm-marmot-message-box .el-message-box__btns {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 18px 24px 24px;
+}
+
+.calm-marmot-message-box .el-button {
+    min-height: 38px;
+    margin-left: 0 !important;
+    border: 0;
+    border-radius: 12px;
+    padding: 0 16px;
+    font-weight: 800;
+    transition-property: transform, box-shadow, background-color, color;
+    transition-duration: 160ms;
+}
+
+.calm-marmot-message-box .el-button:active {
+    transform: scale(0.96);
+}
+
+.calm-marmot-soft-cancel {
+    background: #f8faf7 !important;
+    color: #1e293b !important;
+}
+
+.calm-marmot-danger-confirm {
+    background: #ef4444 !important;
+    color: #ffffff !important;
+    box-shadow: 0 10px 22px rgba(239, 68, 68, 0.22) !important;
+}
+
+@media (max-width: 520px) {
+    .marmot-dialog .el-dialog__header,
+    .marmot-dialog .el-dialog__body,
+    .marmot-dialog .el-dialog__footer {
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+
+    .marmot-dialog .el-dialog__footer .dialog-footer,
+    .marmot-dialog .el-dialog__footer {
+        text-align: stretch;
+    }
+
+    .marmot-dialog .el-dialog__footer button {
+        width: 100%;
+        margin-top: 8px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .marmot-dialog .primary-action,
+    .marmot-dialog .ghost-action,
+    .marmot-dialog .danger-action,
+    .calm-marmot-message-box .el-button {
+        transition: none;
+    }
+}

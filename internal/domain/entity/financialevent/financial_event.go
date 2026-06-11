@@ -31,9 +31,14 @@ type FinancialEvent struct {
 }
 
 type FinancialEventQuery struct {
-	EventType string `json:"eventType"`
-	StartTime string `json:"startTime"`
-	EndTime   string `json:"endTime"`
-	Page      int    `json:"page"`
-	PageSize  int    `json:"pageSize"`
+	EventType           string `json:"eventType"`
+	StartTime           string `json:"startTime"`
+	EndTime             string `json:"endTime"`
+	CategoryId          int64  `json:"categoryId"`
+	CategoryGroupId     int64  `json:"categoryGroupId"`
+	BucketId            int64  `json:"bucketId"`
+	Keyword             string `json:"keyword"`
+	IncludeInStatistics *bool  `json:"includeInStatistics"`
+	Page                int    `json:"page"`
+	PageSize            int    `json:"pageSize"`
 }

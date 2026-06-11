@@ -38,6 +38,20 @@ func ListLedgerEntriesByBucket(bucketId int64, userId int64) ([]LedgerEntry, err
 	return entries, err
 }
 
+func ListLedgerEntriesByEventInSession(session *xorm.Session, financialEventId int64, userId int64) ([]LedgerEntry, error) {
+	entries := make([]LedgerEntry, 0)
+	err := session.
+		Where("financial_event_id = ? AND user_id = ?", financialEventId, userId).
+		Asc("id").
+		Find(&entries)
+	return entries, err
+}
+
+func DeleteLedgerEntriesByEvent(session *xorm.Session, financialEventId int64, userId int64) error {
+	_, err := session.Exec("DELETE FROM ledger_entry WHERE financial_event_id = ? AND user_id = ?", financialEventId, userId)
+	return err
+}
+
 func ListLedgerEntriesByEvent(financialEventId int64, userId int64) ([]LedgerEntry, error) {
 	entries := make([]LedgerEntry, 0)
 	err := infrastructure.Mysql.

@@ -12,7 +12,9 @@ VALUES
   ('EUR', '欧元', '€', 2, 1, 40),
   ('JPY', '日元', '¥', 0, 1, 50),
   ('GBP', '英镑', '£', 2, 1, 60),
-  ('SGD', '新加坡元', 'S$', 2, 1, 70)
+  ('SGD', '新加坡元', 'S$', 2, 1, 70),
+  ('AUD', '澳大利亚元', 'A$', 2, 1, 80),
+  ('NZD', '新西兰元', 'NZ$', 2, 1, 90)
 ON DUPLICATE KEY UPDATE
   `name` = VALUES(`name`),
   `symbol` = VALUES(`symbol`),

@@ -80,12 +80,12 @@ const tags = useTagsStore()
   grid-area: main;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  height: calc(100vh - 70px);
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
+  background: #f7f5ef;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   margin: 0;
-  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* 标签栏包装器 */
@@ -96,11 +96,13 @@ const tags = useTagsStore()
 /* 页面内容区域 */
 .page-content {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding: 24px;
-  background: #ffffff;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  max-height: calc(100vh - 118px);
+  box-sizing: border-box;
+  padding: 24px 24px 96px;
+  background: #f7f5ef;
+  transition-property: background-color;
+  transition-duration: 0.3s;
 }
 
 /* 页面组件动画 */
@@ -172,8 +174,7 @@ const tags = useTagsStore()
   }
   
   .page-content {
-    padding: 20px;
-    margin: 0 20px 20px 20px;
+    padding: 20px 20px 88px;
   }
 }
 
@@ -207,21 +208,18 @@ const tags = useTagsStore()
   }
   
   .app-main {
-    border-radius: 16px 16px 0 0;
+    height: calc(100vh - 70px);
   }
-  
+
   .page-content {
-    padding: 16px;
-    margin: 0 16px 16px 16px;
-    border-radius: 0 0 12px 12px;
+    padding: 16px 16px 88px;
   }
 }
 
 /* 小屏手机响应式 */
 @media (max-width: 480px) {
   .page-content {
-    padding: 8px;
-    margin: 0 8px 8px 8px;
+    padding: 10px 10px 80px;
   }
 }
 

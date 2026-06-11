@@ -56,14 +56,29 @@ const items = [
     titleKey: 'routes.record',
   },
   {
+    icon: 'Document',
+    index: '/records',
+    titleKey: 'routes.records',
+  },
+  {
     icon: 'Wallet',
     index: '/accounts',
     titleKey: 'routes.accounts',
   },
   {
+    icon: 'CollectionTag',
+    index: '/categories',
+    titleKey: 'routes.categories',
+  },
+  {
     icon: 'Box',
     index: '/buckets',
     titleKey: 'routes.buckets',
+  },
+  {
+    icon: 'HomeFilled',
+    index: '/family',
+    titleKey: 'routes.family',
   },
   {
     icon: 'User',

@@ -2,82 +2,81 @@
 
 ## 项目概述
 
-Marmot Ledger（土拨鼠账本）是一个面向个人与家庭的财务账本系统，用于记录现金流、资产、负债、多币种账户、投资、报销、押金以及共享家庭财务。
+Marmot Ledger（土拨鼠账本）是面向个人与家庭的财务账本系统，用于记录现金流、资产、负债、多币种账户、报销、押金、投资与共享家庭财务。
 
-当前仓库已经从历史项目中清理出基础框架。历史业务模块已移除。后续财务模块应基于新的 Marmot Ledger 领域模型重新实现。
+当前仓库已从历史项目清理为新项目基础框架。后续开发必须基于 Marmot Ledger 新财务领域模型，不要恢复旧 money / transaction / family / health / train / OSS / Elasticsearch 等历史业务模块。
 
-## 当前进度
+## 当前进度（截至 2026-06-11）
 
-截至 2026-06-11，项目已完成 Marmot Ledger 初始化清理和第一批正式功能开发：
+### 已完成
 
-- 远程仓库已切换到 `https://github.com/here-tunan/marmot-ledger.git`。
-- 已删除历史 money / transaction / family / health / train / OSS / Elasticsearch 业务模块。
-- 已保留最小可运行基础框架：Go + Fiber 后端、MySQL / Redis 基础设施、用户登录与用户中心、Vue 3 + Vite 前端。
-- 已将 handoff 和设计文档整理到 `docs/` 目录。
-- 已新增 `sql/` 初始化脚本，数据库名统一为 `marmot_ledger`。
-- 已新增 `docs/DESIGN.md`，UI 方向为 Calm Marmot Finance。
-- 已加入品牌图 `img/marmot-ledger-1.png` 和 `img/marmot-ledger-2.png`。
-- 已完成 Go module 从历史名称迁移为 `marmot-ledger`。
-- 已完成 Account / Bucket / FinancialEvent / LedgerEntry 后端基础能力。
-- 已完成 Bucket 初始化余额链路：创建 Bucket 自动生成 `balance_adjustment` 事件和 `ledger_entry`。
-- 已完成统一 `POST /api/record`，第一批支持 `income`、`expense`、`transfer`、`refund`。
-- 已完成 Dashboard、Account、Bucket、Record、Login、Header、Sidebar、User Center 前端页面重构。
-- 已加入全局中英文多语言支持，主要页面和交互文案已接入 i18n。
-- 已通过验证：`go test ./...`、`go build ./...`、`npm --prefix ui run build`。
-- 已完成接口 smoke test：Account/Bucket 初始化、income、expense、transfer、refund 均能正确生成事件、分录并更新 Bucket 余额。
+- 远程仓库已切换为 `https://github.com/here-tunan/marmot-ledger.git`。
+- 数据库统一为 `marmot_ledger`，SQL 初始化脚本位于 `sql/`。
+- Go module 已迁移为 `marmot-ledger`，历史 `go-my-life` / `my-life` / `life` 命名已清理。
+- 保留基础框架：Go + Fiber、MySQL、Redis、用户登录/token、Vue 3 + Vite、Element Plus、Pinia、Vue Router、Axios。
+- 设计文档整理至 `docs/`，UI 方向为 `Calm Marmot Finance`。
+- 品牌图位于：`img/marmot-ledger-1.png`、`img/marmot-ledger-2.png`。
+- 已实现后端核心模块：Account、Bucket、FinancialEvent、LedgerEntry、Category、CategoryGroup、Statistics、Family。
+- Bucket 创建会自动生成 `balance_adjustment` financial_event 和 ledger_entry，初始化余额不进入统计。
+- 已实现统一 `POST /api/record`，首批支持：`income`、`expense`、`transfer`、`refund`。
+- Record 创建/编辑/删除使用事务，编辑/删除第一版采用 rollback-and-rebuild。
+- 已加入轻量 Record Strategy：income / expense / transfer / refund 分策略构建事件和分录。
+- 已实现 Records Center：查询、详情、编辑、删除、分页。
+- 已实现统计：个人/家庭 summary、category group 聚合；refund 作为支出抵扣，不作为收入。
+- 已实现 Family：多家庭、成员邀请、接受/拒绝、家庭统计聚合。
+- 已实现前端页面：Dashboard、Accounts、Buckets、Record、Records、Categories、Family、Login、Header、Sidebar、User Center。
+- 已接入全局中英文 i18n；中文 Bucket 术语统一为“资金桶”，英文保留 “Bucket”。
+- 已统一货币前端展示工具 `ui/src/utils/currency.js`，包含国旗、中文名、英文名、符号。
+- 当前支持货币：CNY、USD、HKD、EUR、JPY、GBP、SGD、AUD、NZD。
+- Family / Buckets / Record / Records 的货币下拉已改为统一 currencyOptions，并支持 AUD / NZD。
+- 已验证过：`go test ./...`、`go build ./...`、`npm --prefix ui run build`；接口 smoke test 曾覆盖 Account/Bucket 初始化、income、expense、transfer、refund。
 
-接下来继续开发时，应在现有 `financial_event` / `ledger_entry` / `bucket` 模型上扩展，不要恢复旧 `transaction` 业务模块。
+### 最近完成
 
-## 品牌资源
+- 修复 Records 分页 total 统计问题。
+- 修复全局页面底部空间过窄问题。
+- 修复 refund 统计语义：refund 进入统计，作为 expense offset。
+- 修复 Family route i18n key 和部分 Bucket 术语不一致问题。
+- 新增 AUD / NZD seed：`sql/02_seed_reference_data.sql`。
+- 前端新增统一货币展示映射：`ui/src/utils/currency.js`。
 
-项目品牌头像图片已放在根目录 `img/`：
+### 待继续
 
-- `img/marmot-ledger-1.png`
-- `img/marmot-ledger-2.png`
-
-后续 UI 和 README 中涉及 Marmot Ledger 品牌头像、Logo、项目展示图时，优先使用这两张图片。不要再使用旧项目图片作为品牌图。
-
-## 当前保留的基础能力
-
-### 后端
-
-- Go + Fiber Web 服务
-- MySQL / Redis 基础设施连接
-- Redis token 中间件
-- 用户登录、token 校验、token 刷新、用户信息更新
-- 通用返回结构、错误码、时间模型和工具函数
-
-### 前端
-
-- Vue 3 + Vite
-- Element Plus
-- Pinia
-- Vue Router
-- Axios 请求封装
-- 登录页、系统首页、用户中心
-- Header、Sidebar、Tags 基础布局组件
+- 继续做全局 i18n/硬编码文案扫描：ThemePicker、UserCard、Header aria-label、动态 enum label 等。
+- Dashboard 的 Family 模式需要进一步完善：家庭选择、成员卡片、家庭统计视图、无家庭引导。
+- Records / Record 页面动态事件类型与 entry role 建议使用 `te()` fallback，避免显示 raw i18n key。
+- 可考虑安全清理：`/api/user/info` 和 Redis token payload 不应包含 password。
+- 稳定后再提交当前大批变更；除非用户明确要求，不要 push。
 
 ## 核心设计文档
 
 - `docs/MARMOT_LEDGER_HANDOFF.md`
 - `docs/财务系统升级设计方案.md`
 - `docs/导入识别与规则学习设计方案.md`
+- `docs/DESIGN.md`
 
-这些文档是后续新财务系统设计与实现的依据，不要删除。
+这些文档是新财务系统设计依据，不要删除。
 
-## 新财务领域模型方向
+## 品牌与 UI
 
-核心模型：
+- 品牌图优先使用：`img/marmot-ledger-1.png`、`img/marmot-ledger-2.png`。
+- UI 方向：Calm Marmot Finance。
+- 风格参考：Wise 50% + Linear 35% + Notion 15%。
+- 背景：warm cream；卡片：16px radius、轻阴影；按钮 active scale `0.96`。
+- 收入颜色：红色 `#ef4444`；支出颜色：绿色 `#10b981`。
+- 中文 UI 中 Bucket 统一叫“资金桶”；英文 UI 保留 “Bucket”。
+
+## 核心领域模型
 
 ```text
 financial_event：财务事件，表示发生了什么。
-ledger_entry：余额分录，表示这件事导致哪些 Bucket 余额变化。
-bucket：资产 / 负债 / 虚拟资金池。
+ledger_entry：余额分录，表示事件导致哪些 Bucket 余额变化。
+bucket：资产 / 负债 / 虚拟资金池，保存余额。
 account：平台 / 机构 / 分组，不保存余额。
 category：用户自己的分类。
-category_group：系统 / 家庭统计用的聚合分类。
+category_group：系统 / 家庭统计用聚合分类。
 channel_template：收款 / 支付渠道模板。
-currency：全平台公共币种字典。
+currency：公共币种字典。
 exchange_rate：汇率缓存。
 investment_snapshot：投资估值 / 收益快照。
 ```
@@ -86,84 +85,41 @@ investment_snapshot：投资估值 / 收益快照。
 
 ```text
 User
-  ├── Account
-  │     └── Bucket
-  │           └── LedgerEntry
-  ├── FinancialEvent
-  │     ├── LedgerEntry
-  │     └── ExchangeDetail
-  ├── Category
-  │     └── CategoryGroup
-  ├── InvestmentAsset
-  │     └── InvestmentSnapshot
+  ├── Account -> Bucket -> LedgerEntry
+  ├── FinancialEvent -> LedgerEntry / ExchangeDetail
+  ├── Category -> CategoryGroup
+  ├── InvestmentAsset -> InvestmentSnapshot
   └── ExchangeRate
 ```
 
-## 关键领域决策
+## 关键领域规则
 
 ### 命名
 
-使用：
-
-```text
-financial_event
-ledger_entry
-bucket
-```
-
-不要在新项目中把 `transaction` 作为主表名。
-
-字段命名：
-
-```text
-event_type
-event_group_id
-event_time
-financial_event_id
-```
+- 使用 `financial_event`、`ledger_entry`、`bucket`。
+- 不要把 `transaction` 作为新主领域模型或主表名。
+- 核心字段：`event_type`、`event_group_id`、`event_time`、`financial_event_id`。
 
 ### Account
 
-```text
-Account = platform / institution / grouping.
-Account does not store balance.
-Account total balance is computed from child Buckets.
-Account always belongs to a user.
-No family-shared Account is needed.
-```
+- Account = platform / institution / grouping。
+- Account 不保存余额；账户总余额从子 Bucket 汇总。
+- Account 始终属于用户。
+- 不创建家庭共享 Account。
 
 ### Bucket
 
-```text
-Bucket = asset / liability / virtual funds container.
-Bucket is a core model, not optional.
-Bucket balance is stored in bucket.balance.
-Bucket balance can be recalculated from ledger_entry.
-```
-
-Bucket nature：
-
-```text
-asset
-liability
-```
-
-净资产：
-
-```text
-net_worth = sum(asset bucket balances) - sum(liability bucket balances)
-```
+- Bucket = asset / liability / virtual funds container。
+- `bucket.balance` 保存当前余额，可由 ledger_entry 重算。
+- Bucket nature：`asset` / `liability`。
+- 净资产：`sum(asset bucket balances) - sum(liability bucket balances)`。
 
 ### LedgerEntry
 
-`ledger_entry.amount` 使用正负数表示余额变化，不要增加 direction 字段：
-
-```text
-amount > 0：这个 Bucket 余额增加
-amount < 0：这个 Bucket 余额减少
-```
-
-`ledger_entry.amount` 只表达余额变化。收入/支出的业务含义来自 `financial_event.event_type`。
+- `ledger_entry.amount` 使用正负数表示余额变化，不增加 direction 字段。
+- `amount > 0`：Bucket 余额增加。
+- `amount < 0`：Bucket 余额减少。
+- 业务含义来自 `financial_event.event_type`，不是来自 entry direction。
 
 ### 初始余额
 
@@ -180,9 +136,7 @@ include_in_statistics = false
 
 ### 余额一致性
 
-所有影响 Bucket 余额的操作必须在数据库事务中完成。
-
-同一事务内：
+所有影响 Bucket 余额的操作必须在数据库事务中完成：
 
 ```text
 create/update financial_event
@@ -216,29 +170,21 @@ balance_adjustment
 
 统计口径：
 
-```text
-income / expense 默认进入普通收入支出统计
-refund 用于抵扣支出，不算普通收入
-transfer / exchange / receivable / deposit / loan / investment_buy / investment_sell / balance_adjustment 默认不进入普通收入支出统计
-investment_income 只进入投资统计，不进入普通收入统计
-```
+- income / expense 默认进入普通收支统计。
+- refund 用于抵扣支出，不算普通收入。
+- transfer / exchange / receivable / deposit / loan / investment_buy / investment_sell / balance_adjustment 默认不进入普通收支统计。
+- investment_income 只进入投资统计，不进入普通收入统计。
 
-### Category 和 CategoryGroup
+### Category / CategoryGroup
 
-第一版不要引入 OperationType。
-
-```text
-Category = user-owned category
-CategoryGroup = system/family reporting aggregation category
-```
-
-家庭报表按 `category_group_id` 聚合，不按 `category_id` 聚合。
+- 第一版不要引入 OperationType。
+- Category = user-owned category。
+- CategoryGroup = system/family reporting aggregation category。
+- 家庭报表按 `category_group_id` 聚合，不按 `category_id` 聚合。
 
 ### ChannelTemplate
 
-渠道使用模板表，不要拆分微信收款/微信支付。
-
-使用：
+渠道使用模板表，不拆分微信收款/微信支付：
 
 ```text
 income + WECHAT = 微信收款
@@ -247,104 +193,18 @@ income + ALIPAY = 支付宝收款
 expense + ALIPAY = 支付宝支付
 ```
 
-不要创建：
-
-```text
-WECHAT_PAY
-WECHAT_RECEIVE
-ALIPAY_PAY
-ALIPAY_RECEIVE
-```
+不要创建：`WECHAT_PAY`、`WECHAT_RECEIVE`、`ALIPAY_PAY`、`ALIPAY_RECEIVE`。
 
 ## 报表边界
 
-产品定义：
+- 账单：看我干了啥。
+- 资产：看我有啥。
+- 账单统计使用：`event_type + category/category_group + time range`。
+- 资产报表使用：`bucket.balance + bucket_nature + currency`。
+- 家庭账单统计不按 Account / Bucket / Channel 分组。
+- 家庭资产报表展示每个家庭成员自己的 Account / Bucket，不创建家庭共享 Account。
 
-```text
-账单：看我干了啥
-资产：看我有啥
-```
-
-分离：
-
-```text
-账单统计
-资产报表
-```
-
-账单统计使用：
-
-```text
-event_type + category/category_group + time range
-```
-
-资产报表使用：
-
-```text
-bucket.balance + bucket_nature + currency
-```
-
-家庭账单统计不按 Account / Bucket / Channel 分组。
-
-家庭资产报表展示每个家庭成员自己的 Account / Bucket，不创建家庭共享 Account。
-
-## 当前项目结构
-
-### 前端
-
-- `ui/src/main.js` - 前端入口
-- `ui/src/App.vue` - 根组件
-- `ui/src/router/index.js` - 路由定义
-- `ui/src/permission.js` - 路由鉴权
-- `ui/src/api/request.js` - Axios 请求封装
-- `ui/src/api/auth/auth.js` - 登录和 token API
-- `ui/src/api/user/user.js` - 用户 API
-- `ui/src/views/login/Login.vue` - 登录页
-- `ui/src/views/HomeView.vue` - 后台布局页
-- `ui/src/views/Dashboard.vue` - 系统首页
-- `ui/src/views/User.vue` - 用户中心
-- `ui/src/components/Header.vue` - 顶部栏
-- `ui/src/components/Sidebar.vue` - 侧边栏
-- `ui/src/components/Tags.vue` - 页面标签栏
-- `ui/src/stores/` - Pinia store
-
-### 后端
-
-- `main.go` - 后端入口
-- `api/web.go` - Fiber 服务启动、CORS、token 中间件、路由挂载
-- `api/user.go` - 用户接口
-- `env/properties.go` - 配置读取
-- `env/dev.yaml` - 开发环境配置
-- `internal/infrastructure/mysql.go` - MySQL 初始化
-- `internal/infrastructure/redis.go` - Redis 初始化
-- `internal/service/user_service.go` - 用户服务
-- `internal/domain/entity/user/user.go` - 用户实体
-- `internal/domain/repository/userdb/user.go` - 用户仓储
-- `pkg/myresult/` - API 返回结构
-- `pkg/myerror/` - 错误码
-- `pkg/model/` - 日期时间模型
-- `pkg/utils/` - 通用工具
-
-## 技术栈
-
-### 前端
-
-- Vue 3 + Composition API
-- Vite
-- Element Plus
-- Pinia
-- Vue Router
-- Axios
-
-### 后端
-
-- Go
-- Fiber
-- XORM
-- MySQL
-- Redis
-
-## 验证命令
+## 常用验证命令
 
 后端：
 
@@ -361,8 +221,8 @@ npm --prefix ui run build
 
 ## 开发注意事项
 
-- 新财务模块不要复用旧 `transaction` 作为主领域模型。
-- 不要恢复旧 money/family/health/train/OSS/ES 模块，除非明确是为了查阅历史实现。
-- 涉及余额变化的后端操作必须设计数据库事务。
-- 新 UI 中如果涉及收入/支出颜色，沿用项目约定：收入红色 `#ef4444`，支出绿色 `#10b981`。
+- 新财务模块必须基于 `financial_event` / `ledger_entry` / `bucket` 扩展。
+- 不恢复旧业务模块，除非明确是为了查阅历史实现。
+- 余额变化必须使用数据库事务。
 - `docs/` 下设计文档优先级高于旧 README 或历史代码习惯。
+- 代码风格保持现有 Go / Vue 写法；新增 UI 文案优先接入 i18n。

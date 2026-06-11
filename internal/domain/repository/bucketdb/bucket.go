@@ -98,6 +98,14 @@ func GetBucket(id int64, userId int64) (*Bucket, error) {
 	return GetBucketByIdForUser(session, id, userId)
 }
 
+func UpdateBucket(bucket *Bucket) error {
+	_, err := infrastructure.Mysql.
+		Where("id = ? AND user_id = ? AND is_deleted = ?", bucket.Id, bucket.UserId, 0).
+		Cols("name", "bucket_type", "bucket_nature", "bucket_group_key", "is_active").
+		Update(bucket)
+	return err
+}
+
 func UpdateBucketBalance(session *xorm.Session, id int64, userId int64, balance decimal.Decimal) error {
 	_, err := session.
 		Where("id = ? AND user_id = ? AND is_deleted = ?", id, userId, 0).

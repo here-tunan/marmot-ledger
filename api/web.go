@@ -72,8 +72,12 @@ func Start() {
 	root.Mount("/user", UserMount())
 	root.Mount("/account", AccountMount())
 	root.Mount("/bucket", BucketMount())
+	root.Mount("/category", CategoryMount())
+	root.Mount("/category-group", CategoryGroupMount())
 	root.Mount("/financial-event", FinancialEventMount())
 	root.Mount("/record", RecordMount())
+	root.Mount("/statistics", StatisticsMount())
+	root.Mount("/family", FamilyMount())
 
 	log.Fatal(app.Listen(":" + env.Prop.Port))
 }

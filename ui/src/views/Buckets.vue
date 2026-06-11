@@ -14,7 +14,7 @@
         <el-option v-for="item in accounts" :key="item.id" :label="item.displayName || item.name" :value="item.id" />
       </el-select>
       <el-select v-model="filters.currency" clearable :placeholder="t('buckets.filters.currencyPlaceholder')" class="filter-control" @change="loadBuckets">
-        <el-option v-for="item in currencies" :key="item" :label="item" :value="item" />
+        <el-option v-for="item in currencyOptions" :key="item.code" :label="getCurrencyLabel(item.code, config.locale)" :value="item.code" />
       </el-select>
       <el-select v-model="filters.bucketNature" clearable :placeholder="t('buckets.filters.naturePlaceholder')" class="filter-control" @change="loadBuckets">
         <el-option :label="t('domain.asset')" value="asset" />
@@ -34,7 +34,7 @@
             <span class="nature-pill" :class="item.bucketNature">{{ item.bucketNature === 'liability' ? t('domain.liability') : t('domain.asset') }}</span>
           </div>
           <div class="bucket-balance">
-            <span>{{ item.currency }}</span>
+            <span>{{ getCurrencyDisplay(item.currency).icon }} {{ item.currency }}</span>
             <strong>{{ formatAmount(item.balance) }}</strong>
           </div>
           <div class="bucket-meta">
@@ -60,15 +60,16 @@
         </div>
 
         <div v-if="selectedBucket" class="selected-summary">
-          <span>{{ selectedBucket.currency }}</span>
+          <span>{{ getCurrencyDisplay(selectedBucket.currency).icon }} {{ selectedBucket.currency }}</span>
           <strong>{{ formatAmount(selectedBucket.balance) }}</strong>
           <p>{{ getAccountName(selectedBucket.accountId) }} · {{ getBucketTypeLabel(selectedBucket.bucketType) }}</p>
+          <button class="edit-selected-action" type="button" @click="openEdit(selectedBucket)">{{ t('common.actions.edit') }}</button>
         </div>
 
         <div v-if="ledgerEntries.length" class="entry-list">
           <div v-for="entry in ledgerEntries" :key="entry.id" class="entry-row">
             <div>
-              <strong>{{ entry.entryRole || t('buckets.entryRoleFallback') }}</strong>
+              <strong>{{ entryRoleLabel(entry.entryRole) }}</strong>
               <span>{{ entry.createdAt }}</span>
             </div>
             <div class="entry-amount">{{ entry.currency }} {{ formatAmount(entry.amount) }}</div>
@@ -81,10 +82,10 @@
       </aside>
     </section>
 
-    <el-dialog v-model="dialogVisible" :title="t('buckets.dialog.createTitle')" width="560px" class="marmot-dialog">
+    <el-dialog v-model="dialogVisible" :title="editingId ? t('buckets.dialog.editTitle') : t('buckets.dialog.createTitle')" width="560px" class="marmot-dialog">
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <el-form-item :label="t('buckets.fields.account')" prop="accountId">
-          <el-select v-model="form.accountId" :placeholder="t('buckets.placeholders.selectAccount')" class="full-width">
+          <el-select v-model="form.accountId" :placeholder="t('buckets.placeholders.selectAccount')" class="full-width" :disabled="Boolean(editingId)">
             <el-option v-for="item in accounts" :key="item.id" :label="item.displayName || item.name" :value="item.id" />
           </el-select>
         </el-form-item>
@@ -94,14 +95,14 @@
         <el-row :gutter="12">
           <el-col :span="12">
             <el-form-item :label="t('common.fields.currency')" prop="currency">
-              <el-select v-model="form.currency" class="full-width">
-                <el-option v-for="item in currencies" :key="item" :label="item" :value="item" />
+              <el-select v-model="form.currency" class="full-width" :disabled="Boolean(editingId)">
+                <el-option v-for="item in currencyOptions" :key="item.code" :label="getCurrencyLabel(item.code, config.locale)" :value="item.code" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item :label="t('common.fields.initialBalance')" prop="initialBalance">
-              <el-input v-model="form.initialBalance" :placeholder="t('buckets.placeholders.initialBalance')" />
+              <el-input v-model="form.initialBalance" :placeholder="t('buckets.placeholders.initialBalance')" :disabled="Boolean(editingId)" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -122,13 +123,13 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item :label="t('common.fields.groupKey')">
-          <el-input v-model="form.bucketGroupKey" :placeholder="t('buckets.placeholders.groupKey')" />
+        <el-form-item v-if="editingId" :label="t('common.status.status')">
+          <el-switch v-model="form.isActive" :active-text="t('common.status.enabled')" :inactive-text="t('common.status.disabled')" />
         </el-form-item>
       </el-form>
       <template #footer>
         <button class="ghost-action" @click="dialogVisible = false">{{ t('common.actions.cancel') }}</button>
-        <button class="primary-action" @click="submitForm">{{ t('buckets.actions.create') }}</button>
+        <button class="primary-action" @click="submitForm">{{ editingId ? t('common.actions.save') : t('buckets.actions.create') }}</button>
       </template>
     </el-dialog>
   </main>
@@ -140,11 +141,12 @@ import { useI18n } from 'vue-i18n'
 import { useConfigStore } from '@/stores/config'
 import { ElMessage } from 'element-plus'
 import { listAccounts } from '@/api/account/account'
-import { createBucket, listBucketLedgerEntries, listBuckets } from '@/api/bucket/bucket'
+import { createBucket, listBucketLedgerEntries, listBuckets, updateBucket } from '@/api/bucket/bucket'
 import marmotOne from '../../../img/marmot-ledger-1.png'
 import marmotTwo from '../../../img/marmot-ledger-2.png'
+import { currencyOptions, getCurrencyDisplay, getCurrencyLabel } from '@/utils/currency'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const config = useConfigStore()
 const accounts = ref([])
 const buckets = ref([])
@@ -152,6 +154,7 @@ const ledgerEntries = ref([])
 const selectedBucket = ref(null)
 const loading = ref(false)
 const dialogVisible = ref(false)
+const editingId = ref(0)
 const formRef = ref()
 const filters = reactive({
   accountId: '',
@@ -160,7 +163,6 @@ const filters = reactive({
 })
 const form = reactive(createEmptyForm())
 
-const currencies = ['CNY', 'USD', 'HKD', 'EUR', 'JPY', 'GBP', 'SGD']
 const bucketTypes = [
   { label: computed(() => t('buckets.types.cash')), value: 'cash' },
   { label: computed(() => t('buckets.types.wallet')), value: 'wallet' },
@@ -192,11 +194,12 @@ function createEmptyForm() {
     bucketType: 'cash',
     bucketNature: 'asset',
     bucketGroupKey: '',
+    isActive: true,
   }
 }
 
-function resetForm() {
-  Object.assign(form, createEmptyForm())
+function resetForm(data = createEmptyForm()) {
+  Object.assign(form, createEmptyForm(), data)
 }
 
 function getAccountName(accountId) {
@@ -206,6 +209,11 @@ function getAccountName(accountId) {
 
 function getBucketTypeLabel(type) {
   return bucketTypes.find((item) => item.value === type)?.label.value || type
+}
+
+function entryRoleLabel(role) {
+  const key = `record.entryRoles.${role}`
+  return role && te(key) ? t(key) : t('buckets.entryRoleFallback')
 }
 
 function formatAmount(value) {
@@ -253,13 +261,52 @@ function openCreate() {
     ElMessage.warning(t('buckets.messages.createAccountFirst'))
     return
   }
+  editingId.value = 0
   resetForm()
   form.accountId = accounts.value[0]?.id || ''
   dialogVisible.value = true
 }
 
+function openEdit(item) {
+  editingId.value = item.id
+  resetForm({
+    accountId: item.accountId,
+    name: item.name,
+    currency: item.currency,
+    initialBalance: String(item.initialBalance || '0.0000'),
+    bucketType: item.bucketType,
+    bucketNature: item.bucketNature,
+    bucketGroupKey: item.bucketGroupKey || '',
+    isActive: item.isActive !== false,
+  })
+  dialogVisible.value = true
+}
+
 async function submitForm() {
   await formRef.value?.validate()
+  if (editingId.value) {
+    const payload = {
+      name: form.name,
+      bucketType: form.bucketType,
+      bucketNature: form.bucketNature,
+      bucketGroupKey: form.bucketGroupKey,
+      isActive: form.isActive !== false,
+    }
+    const res = await updateBucket(editingId.value, payload)
+    if (res.success) {
+      ElMessage.success(t('buckets.messages.updated'))
+      dialogVisible.value = false
+      await loadBuckets()
+      const updated = buckets.value.find((item) => item.id === editingId.value)
+      if (updated) {
+        selectedBucket.value = updated
+      }
+    } else {
+      ElMessage.error(res.error || t('buckets.messages.updateFailed'))
+    }
+    return
+  }
+
   const payload = {
     ...form,
     accountId: Number(form.accountId),
@@ -402,6 +449,22 @@ onActivated(refreshAll)
   display: flex;
   justify-content: space-between;
   gap: 14px;
+}
+
+.edit-selected-action {
+  width: 100%;
+  min-height: 38px;
+  margin-top: 14px;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.edit-selected-action:active {
+  transform: scale(0.96);
 }
 
 .bucket-topline h2 {

@@ -6,6 +6,9 @@ import User from "@/views/User.vue";
 import Accounts from "@/views/Accounts.vue";
 import Buckets from "@/views/Buckets.vue";
 import Record from "@/views/Record.vue";
+import Records from "@/views/Records.vue";
+import Categories from "@/views/Categories.vue";
+import Family from "@/views/Family.vue";
 
 const router = createRouter({
     history: createWebHashHistory(),
@@ -41,6 +44,14 @@ const router = createRouter({
                     component: Accounts,
                 },
                 {
+                    path: '/categories',
+                    name: 'categories',
+                    meta: {
+                        titleKey: 'routes.categories',
+                    },
+                    component: Categories,
+                },
+                {
                     path: '/buckets',
                     name: 'buckets',
                     meta: {
@@ -55,6 +66,22 @@ const router = createRouter({
                         titleKey: 'routes.record',
                     },
                     component: Record,
+                },
+                {
+                    path: '/records',
+                    name: 'records',
+                    meta: {
+                        titleKey: 'routes.records',
+                    },
+                    component: Records,
+                },
+                {
+                    path: '/family',
+                    name: 'family',
+                    meta: {
+                        titleKey: 'routes.family',
+                    },
+                    component: Family,
                 },
                 {
                     path: '/user',

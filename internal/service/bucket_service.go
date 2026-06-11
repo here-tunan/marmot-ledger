@@ -136,6 +136,31 @@ func GetBucket(userId int64, id int64) (*bucket.Bucket, error) {
 	return toBucketEntity(bucketDb), nil
 }
 
+func UpdateBucket(userId int64, id int64, bucketInfo *bucket.Bucket) (*bucket.Bucket, error) {
+	if err := validateBucketUpdate(bucketInfo); err != nil {
+		return nil, err
+	}
+
+	if _, err := bucketdb.GetBucket(id, userId); err != nil {
+		return nil, err
+	}
+
+	bucketDb := &bucketdb.Bucket{
+		Id:             id,
+		UserId:         userId,
+		Name:           strings.TrimSpace(bucketInfo.Name),
+		BucketType:     strings.TrimSpace(bucketInfo.BucketType),
+		BucketNature:   strings.TrimSpace(bucketInfo.BucketNature),
+		BucketGroupKey: strings.TrimSpace(bucketInfo.BucketGroupKey),
+		IsActive:       bucketInfo.IsActive,
+	}
+	if err := bucketdb.UpdateBucket(bucketDb); err != nil {
+		return nil, err
+	}
+
+	return GetBucket(userId, id)
+}
+
 func ListBucketLedgerEntries(userId int64, bucketId int64) ([]ledgerentry.LedgerEntry, error) {
 	if _, err := bucketdb.GetBucket(bucketId, userId); err != nil {
 		return nil, err
@@ -154,17 +179,27 @@ func ListBucketLedgerEntries(userId int64, bucketId int64) ([]ledgerentry.Ledger
 }
 
 func validateBucket(bucketInfo *bucket.Bucket) error {
-	if bucketInfo == nil {
-		return errors.New("bucket is required")
+	if err := validateBucketUpdate(bucketInfo); err != nil {
+		return err
 	}
 	if bucketInfo.AccountId == 0 {
 		return errors.New("account id is required")
 	}
-	if strings.TrimSpace(bucketInfo.Name) == "" {
-		return errors.New("bucket name is required")
-	}
 	if strings.TrimSpace(bucketInfo.Currency) == "" {
 		return errors.New("currency is required")
+	}
+	if bucketInfo.InitialBalance.IsNegative() {
+		return errors.New("initial balance must be greater than or equal to 0")
+	}
+	return nil
+}
+
+func validateBucketUpdate(bucketInfo *bucket.Bucket) error {
+	if bucketInfo == nil {
+		return errors.New("bucket is required")
+	}
+	if strings.TrimSpace(bucketInfo.Name) == "" {
+		return errors.New("bucket name is required")
 	}
 	bucketType := strings.TrimSpace(bucketInfo.BucketType)
 	if !validBucketTypes[bucketType] {
@@ -173,9 +208,6 @@ func validateBucket(bucketInfo *bucket.Bucket) error {
 	bucketNature := strings.TrimSpace(bucketInfo.BucketNature)
 	if bucketNature != BucketNatureAsset && bucketNature != BucketNatureLiability {
 		return errors.New("bucket nature is invalid")
-	}
-	if bucketInfo.InitialBalance.IsNegative() {
-		return errors.New("initial balance must be greater than or equal to 0")
 	}
 	return nil
 }

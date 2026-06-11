@@ -5,6 +5,7 @@ import (
 	"marmot-ledger/internal/domain/entity/ledgerentry"
 	"marmot-ledger/internal/domain/entity/record"
 	"marmot-ledger/internal/domain/repository/bucketdb"
+	"marmot-ledger/internal/domain/repository/categorydb"
 	"marmot-ledger/internal/domain/repository/currencydb"
 	"marmot-ledger/internal/domain/repository/financialeventdb"
 	"marmot-ledger/internal/domain/repository/ledgerentrydb"
@@ -40,10 +41,26 @@ func CreateRecord(userId int64, req *record.RecordRequest) (*record.RecordRespon
 		return nil, err
 	}
 
-	eventDb, entries, err := createRecordInSession(session, userId, req, currency)
+	ctx, err := buildRecordContext(session, userId, req, currency)
 	if err != nil {
 		return nil, err
 	}
+
+	strategy, ok := recordStrategies[strings.TrimSpace(req.Scenario)]
+	if !ok {
+		return nil, errors.New("record scenario is unsupported")
+	}
+
+	buildResult, err := strategy.Build(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := persistRecordBuildResult(session, userId, buildResult); err != nil {
+		return nil, err
+	}
+
+	eventDb := buildResult.Event
+	entries := buildResult.Entries
 
 	if err := session.Commit(); err != nil {
 		return nil, err
@@ -58,6 +75,207 @@ func CreateRecord(userId int64, req *record.RecordRequest) (*record.RecordRespon
 	return &record.RecordResponse{
 		FinancialEvent: *toFinancialEventEntity(eventDb, entryEntities),
 	}, nil
+}
+
+func buildRecordContext(session *xorm.Session, userId int64, req *record.RecordRequest, currency string) (*RecordContext, error) {
+	buckets := make(map[int64]*bucketdb.Bucket)
+	loadBucket := func(id int64) error {
+		if id == 0 {
+			return nil
+		}
+		if _, ok := buckets[id]; ok {
+			return nil
+		}
+		bucket, err := bucketdb.GetBucketByIdForUserForUpdate(session, id, userId)
+		if err != nil {
+			return err
+		}
+		if err := validateBucketForRecord(bucket, currency); err != nil {
+			return err
+		}
+		buckets[id] = bucket
+		return nil
+	}
+
+	if req.Scenario == EventTypeTransfer {
+		if err := loadBucket(req.FromBucketId); err != nil {
+			return nil, err
+		}
+		if err := loadBucket(req.ToBucketId); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := loadBucket(req.BucketId); err != nil {
+			return nil, err
+		}
+	}
+
+	categoryView, err := resolveRecordCategory(session, userId, req.CategoryId, req.Scenario)
+	if err != nil {
+		return nil, err
+	}
+
+	eventTime := model.LocalTime(time.Now())
+	if strings.TrimSpace(req.EventTime) != "" {
+		if parsed, err := time.ParseInLocation(model.TimeFormat, strings.TrimSpace(req.EventTime), mustServiceLocation()); err == nil {
+			eventTime = model.LocalTime(parsed)
+		}
+	}
+
+	return &RecordContext{UserId: userId, Request: req, Session: session, Amount: req.Amount, Currency: currency, EventTime: eventTime, Buckets: buckets, Category: categoryView}, nil
+}
+
+func persistRecordBuildResult(session *xorm.Session, userId int64, buildResult *RecordBuildResult) error {
+	if err := financialeventdb.InsertFinancialEvent(session, buildResult.Event); err != nil {
+		return err
+	}
+	return persistLedgerEntriesAndBalances(session, userId, buildResult)
+}
+
+func persistLedgerEntriesAndBalances(session *xorm.Session, userId int64, buildResult *RecordBuildResult) error {
+	for _, entry := range buildResult.Entries {
+		entry.FinancialEventId = buildResult.Event.Id
+		if err := ledgerentrydb.InsertLedgerEntry(session, entry); err != nil {
+			return err
+		}
+	}
+	for bucketId, balance := range buildResult.BucketBalances {
+		if err := bucketdb.UpdateBucketBalance(session, bucketId, userId, balance); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func UpdateRecord(userId int64, id int64, req *record.RecordRequest) (*record.RecordResponse, error) {
+	if err := validateRecordRequest(req); err != nil {
+		return nil, err
+	}
+
+	session := infrastructure.Mysql.NewSession()
+	defer session.Close()
+	if err := session.Begin(); err != nil {
+		return nil, err
+	}
+
+	committed := false
+	defer func() {
+		if !committed {
+			_ = session.Rollback()
+		}
+	}()
+
+	oldEvent, err := financialeventdb.GetFinancialEventForUpdate(session, id, userId)
+	if err != nil {
+		return nil, err
+	}
+	if _, ok := recordStrategies[oldEvent.EventType]; !ok {
+		return nil, errors.New("financial event type does not support edit")
+	}
+
+	oldEntries, err := ledgerentrydb.ListLedgerEntriesByEventInSession(session, id, userId)
+	if err != nil {
+		return nil, err
+	}
+	if err := rollbackLedgerEntries(session, userId, oldEntries); err != nil {
+		return nil, err
+	}
+	if err := ledgerentrydb.DeleteLedgerEntriesByEvent(session, id, userId); err != nil {
+		return nil, err
+	}
+
+	currency := strings.ToUpper(strings.TrimSpace(req.Currency))
+	if _, err := currencydb.GetEnabledCurrency(session, currency); err != nil {
+		return nil, err
+	}
+	ctx, err := buildRecordContext(session, userId, req, currency)
+	if err != nil {
+		return nil, err
+	}
+	strategy, ok := recordStrategies[strings.TrimSpace(req.Scenario)]
+	if !ok {
+		return nil, errors.New("record scenario is unsupported")
+	}
+	buildResult, err := strategy.Build(ctx)
+	if err != nil {
+		return nil, err
+	}
+	buildResult.Event.Id = id
+	if err := financialeventdb.UpdateFinancialEvent(session, buildResult.Event); err != nil {
+		return nil, err
+	}
+	if err := persistLedgerEntriesAndBalances(session, userId, buildResult); err != nil {
+		return nil, err
+	}
+
+	if err := session.Commit(); err != nil {
+		return nil, err
+	}
+	committed = true
+
+	entryEntities := make([]ledgerentry.LedgerEntry, 0, len(buildResult.Entries))
+	for _, item := range buildResult.Entries {
+		entryEntities = append(entryEntities, toLedgerEntryEntity(item))
+	}
+	return &record.RecordResponse{FinancialEvent: *toFinancialEventEntity(buildResult.Event, entryEntities)}, nil
+}
+
+func DeleteRecord(userId int64, id int64) error {
+	session := infrastructure.Mysql.NewSession()
+	defer session.Close()
+	if err := session.Begin(); err != nil {
+		return err
+	}
+
+	committed := false
+	defer func() {
+		if !committed {
+			_ = session.Rollback()
+		}
+	}()
+
+	event, err := financialeventdb.GetFinancialEventForUpdate(session, id, userId)
+	if err != nil {
+		return err
+	}
+	if _, ok := recordStrategies[event.EventType]; !ok {
+		return errors.New("financial event type does not support delete")
+	}
+	entries, err := ledgerentrydb.ListLedgerEntriesByEventInSession(session, id, userId)
+	if err != nil {
+		return err
+	}
+	if err := rollbackLedgerEntries(session, userId, entries); err != nil {
+		return err
+	}
+	if err := ledgerentrydb.DeleteLedgerEntriesByEvent(session, id, userId); err != nil {
+		return err
+	}
+	if err := financialeventdb.SoftDeleteFinancialEvent(session, id, userId); err != nil {
+		return err
+	}
+	if err := session.Commit(); err != nil {
+		return err
+	}
+	committed = true
+	return nil
+}
+
+func rollbackLedgerEntries(session *xorm.Session, userId int64, entries []ledgerentrydb.LedgerEntry) error {
+	for _, entry := range entries {
+		bucket, err := bucketdb.GetBucketByIdForUserForUpdate(session, entry.BucketId, userId)
+		if err != nil {
+			return err
+		}
+		newBalance := bucket.Balance.Sub(entry.Amount)
+		if err := validateBalanceAfter(bucket, newBalance); err != nil {
+			return err
+		}
+		if err := bucketdb.UpdateBucketBalance(session, bucket.Id, userId, newBalance); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func createRecordInSession(session *xorm.Session, userId int64, req *record.RecordRequest, currency string) (*financialeventdb.FinancialEvent, []*ledgerentrydb.LedgerEntry, error) {
@@ -91,7 +309,12 @@ func createSingleBucketRecord(session *xorm.Session, userId int64, req *record.R
 		return nil, nil, err
 	}
 
-	eventDb := buildRecordEvent(userId, req, eventType, currency, eventIncludeInStatistics(eventType))
+	categoryView, err := resolveRecordCategory(session, userId, req.CategoryId, eventType)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	eventDb := buildRecordEvent(userId, req, eventType, currency, eventIncludeInStatistics(eventType), categoryView)
 	if err := financialeventdb.InsertFinancialEvent(session, eventDb); err != nil {
 		return nil, nil, err
 	}
@@ -145,7 +368,7 @@ func createTransferRecord(session *xorm.Session, userId int64, req *record.Recor
 		return nil, nil, err
 	}
 
-	eventDb := buildRecordEvent(userId, req, EventTypeTransfer, currency, false)
+	eventDb := buildRecordEvent(userId, req, EventTypeTransfer, currency, false, nil)
 	if err := financialeventdb.InsertFinancialEvent(session, eventDb); err != nil {
 		return nil, nil, err
 	}
@@ -268,7 +491,28 @@ func validateBalanceAfter(bucket *bucketdb.Bucket, balanceAfter decimal.Decimal)
 	return nil
 }
 
-func buildRecordEvent(userId int64, req *record.RecordRequest, eventType string, currency string, includeInStatistics bool) *financialeventdb.FinancialEvent {
+func resolveRecordCategory(session *xorm.Session, userId int64, categoryId int64, eventType string) (*categorydb.CategoryView, error) {
+	if categoryId == 0 || eventType == EventTypeTransfer {
+		return nil, nil
+	}
+
+	categoryView, err := categorydb.GetCategoryByIdForUser(session, categoryId, userId)
+	if err != nil {
+		return nil, err
+	}
+	if !categoryView.IsActive {
+		return nil, errors.New("category is inactive")
+	}
+	if eventType == EventTypeIncome && categoryView.Type != EventTypeIncome {
+		return nil, errors.New("category type does not match income")
+	}
+	if (eventType == EventTypeExpense || eventType == EventTypeRefund) && categoryView.Type != EventTypeExpense {
+		return nil, errors.New("category type does not match expense")
+	}
+	return categoryView, nil
+}
+
+func buildRecordEvent(userId int64, req *record.RecordRequest, eventType string, currency string, includeInStatistics bool, categoryView *categorydb.CategoryView) *financialeventdb.FinancialEvent {
 	var relatedFinancialEventId *int64
 	if req.RelatedFinancialEventId != 0 {
 		relatedFinancialEventId = &req.RelatedFinancialEventId
@@ -286,11 +530,20 @@ func buildRecordEvent(userId int64, req *record.RecordRequest, eventType string,
 		}
 	}
 
+	var categoryId *int64
+	var categoryGroupId *int64
+	if categoryView != nil {
+		categoryId = &categoryView.Id
+		categoryGroupId = &categoryView.CategoryGroupId
+	}
+
 	return &financialeventdb.FinancialEvent{
 		UserId:                  userId,
 		RelatedFinancialEventId: relatedFinancialEventId,
 		EventType:               eventType,
 		Description:             strings.TrimSpace(req.Description),
+		CategoryId:              categoryId,
+		CategoryGroupId:         categoryGroupId,
 		EventTime:               eventTime,
 		Currency:                currency,
 		Amount:                  req.Amount,

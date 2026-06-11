@@ -11,6 +11,7 @@ type RecordRequest struct {
 	BucketId                int64           `json:"bucketId"`
 	FromBucketId            int64           `json:"fromBucketId"`
 	ToBucketId              int64           `json:"toBucketId"`
+	CategoryId              int64           `json:"categoryId"`
 	Amount                  decimal.Decimal `json:"amount"`
 	Currency                string          `json:"currency"`
 	Description             string          `json:"description"`

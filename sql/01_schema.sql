@@ -331,3 +331,41 @@ CREATE TABLE IF NOT EXISTS `investment_snapshot` (
   CONSTRAINT `fk_investment_snapshot_currency` FOREIGN KEY (`currency`) REFERENCES `currency` (`code`),
   CONSTRAINT `fk_investment_snapshot_base_currency` FOREIGN KEY (`base_currency`) REFERENCES `currency` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='投资估值与收益快照';
+
+CREATE TABLE IF NOT EXISTS `family` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `name` VARCHAR(128) NOT NULL COMMENT '家庭名称',
+  `base_currency` CHAR(3) NOT NULL DEFAULT 'CNY' COMMENT '家庭本位币',
+  `owner_user_id` BIGINT NOT NULL COMMENT '创建者用户ID',
+  `is_deleted` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否删除',
+  `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+  `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_family_owner` (`owner_user_id`, `is_deleted`),
+  KEY `idx_family_base_currency` (`base_currency`),
+  CONSTRAINT `fk_family_owner_user` FOREIGN KEY (`owner_user_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `fk_family_base_currency` FOREIGN KEY (`base_currency`) REFERENCES `currency` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='家庭';
+
+CREATE TABLE IF NOT EXISTS `family_member` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `family_id` BIGINT NOT NULL COMMENT '家庭ID',
+  `user_id` BIGINT NOT NULL COMMENT '成员用户ID',
+  `role` VARCHAR(32) NOT NULL DEFAULT 'member' COMMENT 'owner/admin/member',
+  `status` VARCHAR(32) NOT NULL DEFAULT 'invited' COMMENT 'invited/active/rejected/left',
+  `display_name` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '家庭内展示名',
+  `invited_by_user_id` BIGINT NULL COMMENT '邀请人用户ID',
+  `invited_at` DATETIME(3) NULL COMMENT '邀请时间',
+  `joined_at` DATETIME(3) NULL COMMENT '加入时间',
+  `left_at` DATETIME(3) NULL COMMENT '离开时间',
+  `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+  `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_family_member_family_user` (`family_id`, `user_id`),
+  KEY `idx_family_member_user_status` (`user_id`, `status`),
+  KEY `idx_family_member_family_status` (`family_id`, `status`),
+  KEY `idx_family_member_inviter` (`invited_by_user_id`),
+  CONSTRAINT `fk_family_member_family` FOREIGN KEY (`family_id`) REFERENCES `family` (`id`),
+  CONSTRAINT `fk_family_member_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `fk_family_member_inviter` FOREIGN KEY (`invited_by_user_id`) REFERENCES `user` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='家庭成员';

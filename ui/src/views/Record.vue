@@ -53,6 +53,12 @@
             </el-select>
           </el-form-item>
 
+          <el-form-item v-if="needsCategory" :label="t('record.fields.category')">
+            <el-select v-model="form.categoryId" class="full-width" filterable :placeholder="t('record.placeholders.selectCategory')">
+              <el-option v-for="category in categories" :key="category.id" :label="categoryLabel(category)" :value="category.id" />
+            </el-select>
+          </el-form-item>
+
           <el-row :gutter="12">
             <el-col :span="12">
               <el-form-item :label="t('record.fields.amount')">
@@ -62,7 +68,7 @@
             <el-col :span="12">
               <el-form-item :label="t('record.fields.currency')">
                 <el-select v-model="form.currency" class="full-width">
-                  <el-option v-for="item in currencies" :key="item" :label="item" :value="item" />
+                  <el-option v-for="item in currencyOptions" :key="item.code" :label="getCurrencyLabel(item.code, config.locale)" :value="item.code" />
                 </el-select>
               </el-form-item>
             </el-col>
@@ -96,7 +102,7 @@
         </div>
 
         <div class="event-preview" :class="form.scenario">
-          <span>{{ form.scenario }}</span>
+          <span>{{ eventTypeLabel(form.scenario) }}</span>
           <strong>{{ form.currency }} {{ formatAmount(form.amount) }}</strong>
           <p>{{ includeInStatistics ? t('record.preview.included') : t('record.preview.excluded') }}</p>
         </div>
@@ -115,7 +121,7 @@
         <div class="recent-events">
           <h3>{{ t('dashboard.events.title') }}</h3>
           <div v-for="event in recentEvents" :key="event.id" class="recent-row">
-            <span>{{ event.eventType }}</span>
+            <span>{{ eventTypeLabel(event.eventType) }}</span>
             <strong>{{ event.currency }} {{ formatAmount(event.amount) }}</strong>
           </div>
         </div>
@@ -132,21 +138,24 @@ import { useConfigStore } from '@/stores/config'
 import { listBuckets } from '@/api/bucket/bucket'
 import { listFinancialEvents } from '@/api/financialEvent/financialEvent'
 import { createRecord } from '@/api/record/record'
+import { listCategories } from '@/api/category/category'
 import marmotOne from '../../../img/marmot-ledger-1.png'
+import { currencyOptions, getCurrencyLabel } from '@/utils/currency'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const config = useConfigStore()
 const buckets = ref([])
+const categories = ref([])
 const recentEvents = ref([])
 const submitting = ref(false)
 const formRef = ref()
-const currencies = ['CNY', 'USD', 'HKD', 'EUR', 'JPY', 'GBP', 'SGD']
 
 const form = reactive({
   scenario: 'expense',
   bucketId: '',
   fromBucketId: '',
   toBucketId: '',
+  categoryId: '',
   amount: '',
   currency: 'CNY',
   description: '',
@@ -169,6 +178,7 @@ const scenarios = [
 
 const selectedScenario = computed(() => scenarios.find((item) => item.value === form.scenario) || scenarios[1])
 const isTransfer = computed(() => form.scenario === 'transfer')
+const needsCategory = computed(() => form.scenario === 'income' || form.scenario === 'expense' || form.scenario === 'refund')
 const includeInStatistics = computed(() => form.scenario === 'income' || form.scenario === 'expense')
 
 const previewEntries = computed(() => {
@@ -189,6 +199,15 @@ function formatDateTime(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
 }
 
+function enumLabel(prefix, value) {
+  const key = `${prefix}.${value}`
+  return value && te(key) ? t(key) : value
+}
+
+function eventTypeLabel(type) {
+  return enumLabel('record.scenarios', type)
+}
+
 function formatAmount(value) {
   const number = Number(value || 0)
   return new Intl.NumberFormat(config.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(number)
@@ -202,13 +221,31 @@ function bucketName(id) {
   return buckets.value.find((item) => item.id === Number(id))?.name || '-'
 }
 
+function categoryLabel(category) {
+  return category.categoryGroupName ? `${category.name} · ${category.categoryGroupName}` : category.name
+}
+
 function selectScenario(value) {
   form.scenario = value
+  form.categoryId = ''
+  loadCategories()
 }
 
 async function loadBuckets() {
   const res = await listBuckets({ isActive: true })
   if (res.success) buckets.value = res.data || []
+}
+
+async function loadCategories() {
+  if (!needsCategory.value) {
+    categories.value = []
+    form.categoryId = ''
+    return
+  }
+  const type = form.scenario === 'income' ? 'income' : 'expense'
+  const res = await listCategories({ type, isActive: true })
+  if (res.success) categories.value = res.data || []
+  else ElMessage.error(res.error || t('record.messages.loadCategoriesFailed'))
 }
 
 async function loadRecentEvents() {
@@ -217,7 +254,7 @@ async function loadRecentEvents() {
 }
 
 async function refreshAll() {
-  await Promise.all([loadBuckets(), loadRecentEvents()])
+  await Promise.all([loadBuckets(), loadCategories(), loadRecentEvents()])
 }
 
 function validateForm() {
@@ -236,6 +273,10 @@ function validateForm() {
     ElMessage.warning(t('record.messages.selectBucket'))
     return false
   }
+  if (needsCategory.value && !form.categoryId) {
+    ElMessage.warning(t('record.messages.selectCategory'))
+    return false
+  }
   return true
 }
 
@@ -248,6 +289,7 @@ async function submitRecord() {
       bucketId: Number(form.bucketId || 0),
       fromBucketId: Number(form.fromBucketId || 0),
       toBucketId: Number(form.toBucketId || 0),
+      categoryId: Number(form.categoryId || 0),
       relatedFinancialEventId: Number(form.relatedFinancialEventId || 0),
       amount: String(form.amount),
     }

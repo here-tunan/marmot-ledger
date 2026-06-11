@@ -38,11 +38,16 @@ type FinancialEvent struct {
 }
 
 type FinancialEventQuery struct {
-	EventType string
-	StartTime string
-	EndTime   string
-	Page      int
-	PageSize  int
+	EventType           string
+	StartTime           string
+	EndTime             string
+	CategoryId          int64
+	CategoryGroupId     int64
+	BucketId            int64
+	Keyword             string
+	IncludeInStatistics *bool
+	Page                int
+	PageSize            int
 }
 
 func (FinancialEvent) TableName() string {
@@ -66,16 +71,17 @@ func ListFinancialEvents(userId int64, query FinancialEventQuery) ([]FinancialEv
 		pageSize = 20
 	}
 
+	countEvents := make([]FinancialEvent, 0)
 	countSession := infrastructure.Mysql.Where("user_id = ? AND is_deleted = ?", userId, 0)
-	applyFinancialEventQuery(countSession, query)
-	total, err := countSession.Count(&FinancialEvent{})
-	if err != nil {
+	applyFinancialEventQuery(countSession, query, userId)
+	if err := countSession.Find(&countEvents); err != nil {
 		return nil, 0, err
 	}
+	total := int64(len(countEvents))
 
 	session := infrastructure.Mysql.Where("user_id = ? AND is_deleted = ?", userId, 0)
-	applyFinancialEventQuery(session, query)
-	err = session.Desc("event_time", "id").Limit(pageSize, (page-1)*pageSize).Find(&events)
+	applyFinancialEventQuery(session, query, userId)
+	err := session.Desc("event_time", "id").Limit(pageSize, (page-1)*pageSize).Find(&events)
 	return events, total, err
 }
 
@@ -91,7 +97,35 @@ func GetFinancialEvent(id int64, userId int64) (*FinancialEvent, error) {
 	return &events[0], nil
 }
 
-func applyFinancialEventQuery(session *xorm.Session, query FinancialEventQuery) {
+func GetFinancialEventForUpdate(session *xorm.Session, id int64, userId int64) (*FinancialEvent, error) {
+	event := &FinancialEvent{}
+	has, err := session.SQL("SELECT * FROM financial_event WHERE id = ? AND user_id = ? AND is_deleted = 0 FOR UPDATE", id, userId).Get(event)
+	if err != nil {
+		return nil, err
+	}
+	if !has {
+		return nil, errors.New("financial event not found")
+	}
+	return event, nil
+}
+
+func UpdateFinancialEvent(session *xorm.Session, event *FinancialEvent) error {
+	_, err := session.
+		Where("id = ? AND user_id = ? AND is_deleted = ?", event.Id, event.UserId, 0).
+		Cols("event_type", "description", "category_id", "category_group_id", "event_time", "currency", "amount", "base_currency", "base_amount", "exchange_rate", "include_in_statistics", "source", "status", "remark", "related_financial_event_id").
+		Update(event)
+	return err
+}
+
+func SoftDeleteFinancialEvent(session *xorm.Session, id int64, userId int64) error {
+	_, err := session.
+		Where("id = ? AND user_id = ? AND is_deleted = ?", id, userId, 0).
+		Cols("is_deleted").
+		Update(&FinancialEvent{IsDeleted: true})
+	return err
+}
+
+func applyFinancialEventQuery(session *xorm.Session, query FinancialEventQuery, userId int64) {
 	if strings.TrimSpace(query.EventType) != "" {
 		session.And("event_type = ?", strings.TrimSpace(query.EventType))
 	}
@@ -104,6 +138,22 @@ func applyFinancialEventQuery(session *xorm.Session, query FinancialEventQuery) 
 		if endTime, err := time.ParseInLocation(model.TimeFormat, strings.TrimSpace(query.EndTime), mustLocation()); err == nil {
 			session.And("event_time <= ?", endTime)
 		}
+	}
+	if query.CategoryId != 0 {
+		session.And("category_id = ?", query.CategoryId)
+	}
+	if query.CategoryGroupId != 0 {
+		session.And("category_group_id = ?", query.CategoryGroupId)
+	}
+	if query.BucketId != 0 {
+		session.And("id IN (SELECT financial_event_id FROM ledger_entry WHERE bucket_id = ? AND user_id = ?)", query.BucketId, userId)
+	}
+	if strings.TrimSpace(query.Keyword) != "" {
+		keyword := "%" + strings.TrimSpace(query.Keyword) + "%"
+		session.And("(description LIKE ? OR remark LIKE ?)", keyword, keyword)
+	}
+	if query.IncludeInStatistics != nil {
+		session.And("include_in_statistics = ?", *query.IncludeInStatistics)
 	}
 }
 

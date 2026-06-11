@@ -61,6 +61,36 @@ func parseFinancialEventQuery(ctx *fiber.Ctx) (financialevent.FinancialEventQuer
 		EndTime:   ctx.Query("endTime"),
 	}
 
+	if categoryId := ctx.Query("categoryId"); categoryId != "" {
+		parsed, err := strconv.ParseInt(categoryId, 10, 64)
+		if err != nil {
+			return query, err
+		}
+		query.CategoryId = parsed
+	}
+	if categoryGroupId := ctx.Query("categoryGroupId"); categoryGroupId != "" {
+		parsed, err := strconv.ParseInt(categoryGroupId, 10, 64)
+		if err != nil {
+			return query, err
+		}
+		query.CategoryGroupId = parsed
+	}
+	if bucketId := ctx.Query("bucketId"); bucketId != "" {
+		parsed, err := strconv.ParseInt(bucketId, 10, 64)
+		if err != nil {
+			return query, err
+		}
+		query.BucketId = parsed
+	}
+	query.Keyword = ctx.Query("keyword")
+	if includeInStatistics := ctx.Query("includeInStatistics"); includeInStatistics != "" {
+		parsed, err := strconv.ParseBool(includeInStatistics)
+		if err != nil {
+			return query, err
+		}
+		query.IncludeInStatistics = &parsed
+	}
+
 	if page := ctx.Query("page"); page != "" {
 		parsed, err := strconv.Atoi(page)
 		if err != nil {

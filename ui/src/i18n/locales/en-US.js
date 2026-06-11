@@ -43,11 +43,16 @@ export default {
     accounts: 'Accounts',
     buckets: 'Buckets',
     record: 'Record',
+    records: 'Records',
+    categories: 'Categories',
+    family: 'Family',
     userCenter: 'User center',
   },
   domain: {
     asset: 'Asset',
     liability: 'Liability',
+    income: 'Income',
+    expense: 'Expense',
   },
   auth: {
     welcome: 'Welcome back',
@@ -83,6 +88,11 @@ export default {
       createAccount: 'Create account',
       createBucket: 'Create bucket',
     },
+    viewMode: {
+      personal: 'Personal',
+      family: 'Family',
+      familySoon: 'Family view coming soon',
+    },
     signal: {
       label: 'Current stage',
       title: 'Account / Bucket initialization flow',
@@ -96,7 +106,7 @@ export default {
     },
     buckets: {
       eyebrow: 'Buckets by currency',
-      title: 'Family bucket overview',
+      title: 'Bucket overview',
       count: '{count} bucket(s)',
       emptyAlt: 'No buckets yet',
       emptyText: 'No buckets yet. Create an account first, then create a bucket to hold balances.',
@@ -160,6 +170,8 @@ export default {
       credit: 'Credit card',
       investment: 'Investment',
       liability: 'Liability',
+    income: 'Income',
+    expense: 'Expense',
       other: 'Other',
     },
   },
@@ -188,7 +200,7 @@ export default {
       emptyForSelected: 'This bucket has no entries.',
       emptyNoSelection: 'Select a bucket on the left to view initialization entries.',
     },
-    dialog: { createTitle: 'New bucket' },
+    dialog: { createTitle: 'New bucket', editTitle: 'Edit bucket' },
     fields: {
       account: 'Account',
       bucketName: 'Bucket name',
@@ -215,6 +227,8 @@ export default {
       createAccountFirst: 'Please create an account first',
       loadEntriesFailed: 'Failed to load entries',
       createdWithRefs: 'Bucket created. Event #{eventId}, entry #{entryId}.',
+      updated: 'Bucket updated',
+      updateFailed: 'Failed to update bucket',
     },
     accountFallback: 'Account #{accountId}',
     entryRoleFallback: 'Entry',
@@ -229,6 +243,8 @@ export default {
       deposit: 'Deposit',
       loanOut: 'Loan out',
       liability: 'Liability',
+    income: 'Income',
+    expense: 'Expense',
       virtual: 'Virtual bucket',
     },
   },
@@ -241,15 +257,25 @@ export default {
     scenarios: {
       income: 'Income',
       expense: 'Expense',
-      transfer: 'Transfer',
       refund: 'Refund',
+      transfer: 'Transfer',
       exchange: 'Exchange',
+      receivable_create: 'Create receivable',
+      receivable_collect: 'Collect receivable',
       deposit: 'Deposit',
-      receivable: 'Receivable',
+      deposit_create: 'Create deposit',
+      deposit_refund: 'Refund deposit',
       loan: 'Loan',
+      loan_out: 'Loan out',
+      loan_collect: 'Collect loan',
       investment: 'Investment',
+      investment_buy: 'Buy investment',
+      investment_sell: 'Sell investment',
+      investment_income: 'Investment income',
+      balance_adjustment: 'Balance adjustment',
       comingSoon: 'Coming soon',
     },
+    placeholders: { selectCategory: 'Select category' },
     fields: {
       bucket: 'Bucket',
       fromBucket: 'From bucket',
@@ -260,6 +286,7 @@ export default {
       eventTime: 'Event time',
       relatedEvent: 'Related event ID',
       remark: 'Remark',
+      category: 'Category',
     },
     preview: {
       title: 'Entry preview',
@@ -268,6 +295,15 @@ export default {
       included: 'Included in ordinary stats',
       excluded: 'Excluded from ordinary stats',
       selectScenario: 'Choose a scenario to preview the event and ledger entries.',
+      noCategory: 'No category selected',
+    },
+    entryRoles: {
+      income: 'Income entry',
+      expense: 'Expense entry',
+      refund: 'Refund entry',
+      transfer_out: 'Transfer out',
+      transfer_in: 'Transfer in',
+      adjustment: 'Balance adjustment',
     },
     actions: {
       submit: 'Save record',
@@ -277,8 +313,43 @@ export default {
       createFailed: 'Failed to save record',
       selectBucket: 'Please select a bucket',
       selectTransferBuckets: 'Please select from/to buckets',
+      selectCategory: 'Please select a category',
+      loadCategoriesFailed: 'Failed to load categories',
       amountRequired: 'Please enter an amount greater than 0',
     }
+  },
+
+  categories: {
+    hero: { eyebrow: 'Category mapping', title: 'Manage income and expense categories and map them to reporting groups.', subtitle: 'Personal categories can be named freely. Family reports and charts aggregate by CategoryGroup.' },
+    actions: { new: 'New category' },
+    fields: { name: 'Category name', type: 'Category type', categoryGroup: 'Category group' },
+    dialog: { createTitle: 'New category', editTitle: 'Edit category' },
+    empty: { alt: 'No categories', title: 'Create your first category', text: 'For example, “Takeout” can map to “Food”, and “Groceries” can map to “Grocery”.' },
+    validation: { nameRequired: 'Please enter a category name', typeRequired: 'Please select a category type', groupRequired: 'Please select a category group' },
+    messages: { loadFailed: 'Failed to load categories', loadGroupsFailed: 'Failed to load category groups', saveFailed: 'Failed to save category', deleteFailed: 'Failed to delete category', created: 'Category created', updated: 'Category updated', deleted: 'Category deleted' },
+    delete: { title: 'Delete category', confirm: 'Delete “{name}”? If records already use it, disabling is safer than deleting.' }
+  },
+  statistics: {
+    eyebrow: 'Bill statistics', title: 'Income and expense statistics', income: 'Income', expense: 'Net expense', grossExpense: 'Gross expense', refund: 'Refund offset', net: 'Net', eventCount: 'Records', categoryGroups: 'Category statistics', emptyText: 'No statistics for the selected range.'
+  },
+
+  records: {
+    hero: { eyebrow: 'Records Center', title: 'Search, inspect, and correct every financial record.', subtitle: 'Find records in the list, inspect ledger entries in detail, and edit/delete with automatic balance rollback.' },
+    filters: { eventType: 'Event type', keyword: 'Keyword', category: 'Category', includeStats: 'Included in stats' },
+    detail: { title: 'Record detail', event: 'Financial Event', entries: 'Ledger Entries', empty: 'Select a record to view details.' },
+    actions: { edit: 'Edit record', delete: 'Delete record' },
+    dialog: { editTitle: 'Edit record' },
+    delete: { title: 'Delete record', confirm: 'Deleting will roll back ledger entries and update current bucket balances. Delete “{name}”?' },
+    messages: { loadFailed: 'Failed to load records', updateFailed: 'Failed to update record', deleteFailed: 'Failed to delete record', updated: 'Record updated', deleted: 'Record deleted', unsupported: 'This event type cannot be edited or deleted yet.' }
+  },
+
+  family: {
+    hero: { eyebrow: 'Family finance', title: 'Family view aggregates member ledgers, not shared accounts.', subtitle: 'After invitations are accepted, only active members are included in family statistics.' },
+    actions: { new: 'Create family', invite: 'Invite member', accept: 'Accept', reject: 'Reject' },
+    fields: { name: 'Family name', baseCurrency: 'Base currency', account: 'Member account', displayName: 'Display name' },
+    sections: { myFamilies: 'My families', members: 'Members', invitations: 'Invitations', statistics: 'Family statistics' },
+    messages: { created: 'Family created', invited: 'Invitation sent', accepted: 'Invitation accepted', rejected: 'Invitation rejected', loadFailed: 'Failed to load family data', actionFailed: 'Action failed' },
+    empty: { noFamilies: 'No families yet. Create one or accept an invitation.', noInvitations: 'No pending invitations.' }
   },
   user: {
     title: 'User center',

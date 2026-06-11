@@ -27,11 +27,16 @@ func ListFinancialEvents(userId int64, query financialevent.FinancialEventQuery)
 	query.PageSize = pageSize
 
 	events, total, err := financialeventdb.ListFinancialEvents(userId, financialeventdb.FinancialEventQuery{
-		EventType: query.EventType,
-		StartTime: query.StartTime,
-		EndTime:   query.EndTime,
-		Page:      query.Page,
-		PageSize:  query.PageSize,
+		EventType:           query.EventType,
+		StartTime:           query.StartTime,
+		EndTime:             query.EndTime,
+		CategoryId:          query.CategoryId,
+		CategoryGroupId:     query.CategoryGroupId,
+		BucketId:            query.BucketId,
+		Keyword:             query.Keyword,
+		IncludeInStatistics: query.IncludeInStatistics,
+		Page:                query.Page,
+		PageSize:            query.PageSize,
 	})
 	if err != nil {
 		return nil, err

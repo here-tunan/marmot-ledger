@@ -71,6 +71,30 @@ func BucketMount() *fiber.App {
 		return ctx.JSON(result.OK(*bucketInfo))
 	})
 
+	app.Put("/:id", func(ctx *fiber.Ctx) error {
+		result := &myresult.MyResult[bucket.Bucket]{}
+		userId, ok := getLoginUserId(ctx)
+		if !ok {
+			return ctx.JSON(result.Err(int(myerror.Unauthorized), myerror.Unauthorized.String()))
+		}
+
+		id, err := parseIdParam(ctx)
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.WrongParam), err.Error()))
+		}
+
+		bucketInfo := &bucket.Bucket{}
+		if err := ctx.BodyParser(bucketInfo); err != nil {
+			return ctx.JSON(result.Err(int(myerror.WrongParam), err.Error()))
+		}
+
+		updated, err := service.UpdateBucket(userId, id, bucketInfo)
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.WrongParam), err.Error()))
+		}
+		return ctx.JSON(result.OK(*updated))
+	})
+
 	app.Get("/:id/ledger-entry", func(ctx *fiber.Ctx) error {
 		result := &myresult.MyResult[[]ledgerentry.LedgerEntry]{}
 		userId, ok := getLoginUserId(ctx)
