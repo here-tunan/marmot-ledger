@@ -4,7 +4,38 @@
 
 Marmot Ledger（土拨鼠账本）是一个面向个人与家庭的财务账本系统，用于记录现金流、资产、负债、多币种账户、投资、报销、押金以及共享家庭财务。
 
-当前仓库已经从旧 `my-life` 项目中清理出基础框架。旧的 `transaction` 记账、家庭、健康、训练、OSS 上传和 Elasticsearch 业务模块已移除。后续财务模块应基于新的 Marmot Ledger 领域模型重新实现。
+当前仓库已经从历史项目中清理出基础框架。历史业务模块已移除。后续财务模块应基于新的 Marmot Ledger 领域模型重新实现。
+
+## 当前进度
+
+截至 2026-06-11，项目已完成 Marmot Ledger 初始化清理和第一批正式功能开发：
+
+- 远程仓库已切换到 `https://github.com/here-tunan/marmot-ledger.git`。
+- 已删除历史 money / transaction / family / health / train / OSS / Elasticsearch 业务模块。
+- 已保留最小可运行基础框架：Go + Fiber 后端、MySQL / Redis 基础设施、用户登录与用户中心、Vue 3 + Vite 前端。
+- 已将 handoff 和设计文档整理到 `docs/` 目录。
+- 已新增 `sql/` 初始化脚本，数据库名统一为 `marmot_ledger`。
+- 已新增 `docs/DESIGN.md`，UI 方向为 Calm Marmot Finance。
+- 已加入品牌图 `img/marmot-ledger-1.png` 和 `img/marmot-ledger-2.png`。
+- 已完成 Go module 从历史名称迁移为 `marmot-ledger`。
+- 已完成 Account / Bucket / FinancialEvent / LedgerEntry 后端基础能力。
+- 已完成 Bucket 初始化余额链路：创建 Bucket 自动生成 `balance_adjustment` 事件和 `ledger_entry`。
+- 已完成统一 `POST /api/record`，第一批支持 `income`、`expense`、`transfer`、`refund`。
+- 已完成 Dashboard、Account、Bucket、Record、Login、Header、Sidebar、User Center 前端页面重构。
+- 已加入全局中英文多语言支持，主要页面和交互文案已接入 i18n。
+- 已通过验证：`go test ./...`、`go build ./...`、`npm --prefix ui run build`。
+- 已完成接口 smoke test：Account/Bucket 初始化、income、expense、transfer、refund 均能正确生成事件、分录并更新 Bucket 余额。
+
+接下来继续开发时，应在现有 `financial_event` / `ledger_entry` / `bucket` 模型上扩展，不要恢复旧 `transaction` 业务模块。
+
+## 品牌资源
+
+项目品牌头像图片已放在根目录 `img/`：
+
+- `img/marmot-ledger-1.png`
+- `img/marmot-ledger-2.png`
+
+后续 UI 和 README 中涉及 Marmot Ledger 品牌头像、Logo、项目展示图时，优先使用这两张图片。不要再使用旧项目图片作为品牌图。
 
 ## 当前保留的基础能力
 

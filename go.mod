@@ -1,4 +1,4 @@
-module go-my-life
+module marmot-ledger
 
 go 1.23.0
 
@@ -9,6 +9,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.49.1
 	github.com/google/uuid v1.3.1
 	github.com/redis/go-redis/v9 v9.2.1
+	github.com/shopspring/decimal v1.3.1
 	golang.org/x/text v0.28.0
 	gopkg.in/yaml.v3 v3.0.1
 	xorm.io/xorm v1.3.3

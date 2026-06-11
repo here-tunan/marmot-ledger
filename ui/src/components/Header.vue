@@ -1,99 +1,91 @@
 <!--首页的Header控件-->
 <template>
-  <div class="header">
-    <!-- 左侧区域 -->
+  <header class="header-shell">
     <div class="header-left">
-      <!--  折叠展开按钮  -->
-      <div class="collapse-btn" @click="collapseChange">
-        <el-icon v-if="sidebar.collapse">
-          <Expand/>
-        </el-icon>
-        <el-icon v-else>
-          <Fold/>
-        </el-icon>
+      <button class="collapse-btn" :aria-label="sidebar.collapse ? 'expand' : 'collapse'" @click="collapseChange">
+        <el-icon v-if="sidebar.collapse"><Expand /></el-icon>
+        <el-icon v-else><Fold /></el-icon>
+      </button>
+      <div class="route-title">
+        <span>{{ t('header.currentWorkspace') }}</span>
+        <strong>{{ routeTitle }}</strong>
       </div>
-
-      <div class="logo">This is my life!</div>
     </div>
 
-    <!-- 右侧区域 -->
     <div class="header-right">
-      <div class="header-user-con">
-        <!-- 用户头像 -->
-        <el-avatar class="user-avatar" :size="30" :src="avatarImg"/>
-
-        <!-- 用户名下拉菜单 -->
-        <el-dropdown class="user-name" trigger="click" @command="handleCommand" placement="bottom-end">
-					<span class="el-dropdown-link">
-						{{ username }}
-						<el-icon class="el-icon--right">
-							<arrow-down/>
-						</el-icon>
-					</span>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <a href="https://gitee.com/yaodao666/vue-my-life" target="_blank">
-                <el-dropdown-item>项目仓库</el-dropdown-item>
-              </a>
-              <el-dropdown-item command="user">个人中心</el-dropdown-item>
-              <el-dropdown-item divided command="loginOut">退出登录</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
+      <div class="locale-switch" role="group" aria-label="language switch">
+        <button :class="{ active: config.locale === 'zh-CN' }" @click="config.setLocale('zh-CN')">中文</button>
+        <button :class="{ active: config.locale === 'en-US' }" @click="config.setLocale('en-US')">EN</button>
       </div>
+
+      <el-dropdown class="user-name" trigger="click" @command="handleCommand" placement="bottom-end">
+        <button class="user-trigger">
+          <el-avatar class="user-avatar" :size="34" :src="avatarImg" />
+          <span>{{ username || 'Marmot' }}</span>
+          <el-icon><arrow-down /></el-icon>
+        </button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <a href="https://github.com/here-tunan/marmot-ledger" target="_blank">
+              <el-dropdown-item>{{ t('header.repo') }}</el-dropdown-item>
+            </a>
+            <el-dropdown-item command="user">{{ t('header.profile') }}</el-dropdown-item>
+            <el-dropdown-item divided command="loginOut">{{ t('header.logout') }}</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
     </div>
-  </div>
+  </header>
 </template>
 
 <script setup>
-import {useSidebarStore} from "@/stores/sidebar";
-import {ArrowDown, Expand, Fold} from "@element-plus/icons-vue";
-import {computed, onMounted} from "vue";
-import {useRouter} from "vue-router";
-import {getLoginUserInfo} from "@/api/user/user";
-import {ElMessage} from "element-plus";
-import {useUserStore} from "@/stores/user";
+import { useSidebarStore } from '@/stores/sidebar';
+import { ArrowDown, Expand, Fold } from '@element-plus/icons-vue';
+import { computed, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { getLoginUserInfo } from '@/api/user/user';
+import { removeToken } from '@/api/auth/auth';
+import { ElMessage } from 'element-plus';
+import { useUserStore } from '@/stores/user';
+import { useConfigStore } from '@/stores/config';
+import { useI18n } from 'vue-i18n';
 
-const sidebar = useSidebarStore()
-
-const avatarImg = computed(() => {
-  return useUserStore().avatar
-})
-
-const username = computed(() => {
-  return useUserStore().username
-})
-
-// 用户名下拉菜单选择事件
+const { t } = useI18n();
+const sidebar = useSidebarStore();
+const config = useConfigStore();
 const router = useRouter();
+const route = useRoute();
+const userStore = useUserStore();
+
+const avatarImg = computed(() => userStore.avatar)
+const username = computed(() => userStore.username)
+const routeTitle = computed(() => t(route.meta.titleKey || 'routes.dashboard'))
 
 onMounted(() => {
   if (document.body.clientWidth < 1000) {
-    collapseChange();
+    sidebar.collapse = true;
   }
 });
 
 onMounted(() => {
-  getLoginUserInfo().then(
-      (res) => {
-        if (res.success) {
-          useUserStore().account = res.data.account
-          useUserStore().username = res.data.name
-          useUserStore().desc = res.data.desc
-          useUserStore().avatar = res.data.avatar
-          localStorage.setItem("avatar", res.data.avatar)
-        } else {
-          ElMessage.error("获取用户信息失败")
-        }
-      }
-  )
+  getLoginUserInfo().then((res) => {
+    if (res.success) {
+      userStore.account = res.data.account
+      userStore.username = res.data.name
+      userStore.desc = res.data.desc
+      userStore.avatar = res.data.avatar
+      localStorage.setItem('avatar', res.data.avatar)
+    } else {
+      ElMessage.error(t('header.userInfoFailed'))
+    }
+  })
 })
-
 
 const handleCommand = (command) => {
   if (command === 'loginOut') {
-    localStorage.removeItem('token');
-    ElMessage.success('成功退出，请重新登录')
+    removeToken();
+    localStorage.removeItem('avatar');
+    ElMessage.success(t('header.logoutSuccess'))
     router.push('/login');
   } else if (command === 'user') {
     router.push('/user');
@@ -101,12 +93,16 @@ const handleCommand = (command) => {
 };
 
 const collapseChange = () => {
+  if (window.innerWidth <= 768) {
+    sidebar.toggleMobile();
+    return;
+  }
   sidebar.handleCollapse();
 };
 </script>
 
 <style scoped>
-.header {
+.header-shell {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -114,139 +110,127 @@ const collapseChange = () => {
   width: 100%;
   height: 70px;
   padding: 0 24px;
-  font-size: 22px;
-  color: #fff;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #1e293b;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1), 0 12px 28px rgba(15, 23, 42, 0.04);
+}
+
+.header-left,
+.header-right,
+.user-trigger,
+.locale-switch {
+  display: flex;
+  align-items: center;
+}
+
+.header-left,
+.header-right {
+  gap: 14px;
+}
+
+.collapse-btn,
+.user-trigger,
+.locale-switch button {
+  border: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition-property: transform, background-color, color, box-shadow;
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.collapse-btn:active,
+.user-trigger:active,
+.locale-switch button:active {
+  transform: scale(0.96);
 }
 
 .collapse-btn {
-  display: flex;
   justify-content: center;
-  align-items: center;
-  height: 50px;
-  padding: 0 15px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #f7f5ef;
+  color: #1f2933;
+  font-size: 18px;
 }
 
-.collapse-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  transform: scale(1.05);
-}
-
-.header .logo {
+.route-title span {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
   font-weight: 700;
-  font-size: 24px;
-  background: linear-gradient(45deg, #ffffff, #dbeafe);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-left: 16px;
-  letter-spacing: -0.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
+.route-title strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 20px;
+  letter-spacing: -0.012em;
 }
 
-.header-right {
-  display: flex;
-  align-items: center;
+.locale-switch {
+  gap: 3px;
+  padding: 4px;
+  border-radius: 999px;
+  background: #f7f5ef;
 }
 
-.header-user-con {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+.locale-switch button {
+  min-width: 44px;
+  height: 30px;
+  border-radius: 999px;
+  background: transparent;
+  color: #64748b;
+  font-weight: 800;
+}
+
+.locale-switch button.active {
+  background: #1f2933;
+  color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 16px rgba(31, 41, 51, 0.14);
+}
+
+.user-trigger {
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 10px 0 4px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1e293b;
+  box-shadow: inset 0 0 0 1px rgba(100, 116, 139, 0.14), 0 6px 16px rgba(15, 23, 42, 0.04);
+  font-weight: 700;
 }
 
 .user-avatar {
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #dce9df;
 }
 
-.user-avatar:hover {
-  border-color: rgba(255, 255, 255, 0.8);
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.user-name {
-  margin-left: 10px;
-}
-
-.el-dropdown-link {
-  color: #fff;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-  font-weight: 500;
-}
-
-.el-dropdown-link:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-:deep(.el-dropdown-menu__item) {
-  text-align: center;
-  transition: all 0.2s ease;
-}
-
-:deep(.el-dropdown-menu__item:hover) {
-  background: var(--primary-color, #409eff);
-  color: #fff;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .header {
-    height: 60px;
-    font-size: 18px;
-    padding: 0 15px;
+@media (max-width: 640px) {
+  .header-shell {
+    padding: 0 14px;
   }
-  
-  .header .logo {
-    font-size: 18px;
-    margin-left: 10px;
-  }
-  
-  .collapse-btn {
-    height: 40px;
-    padding: 0 10px;
-  }
-  
-  .header-user-con {
-    gap: 12px;
-  }
-  
-  .user-avatar {
-    width: 28px !important;
-    height: 28px !important;
-  }
-}
 
-@media (max-width: 480px) {
-  .header {
-    padding: 0 10px;
+  .route-title span {
+    display: none;
   }
-  
-  .header .logo {
+
+  .route-title strong {
     font-size: 16px;
-    margin-left: 8px;
   }
-  
-  .header-user-con {
-    gap: 8px;
+
+  .user-trigger span {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collapse-btn,
+  .user-trigger,
+  .locale-switch button {
+    transition: none;
   }
 }
 </style>

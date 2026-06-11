@@ -3,10 +3,10 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"go-my-life/env"
-	"go-my-life/internal/domain/repository/userdb"
-	"go-my-life/internal/infrastructure"
 	"log"
+	"marmot-ledger/env"
+	"marmot-ledger/internal/domain/repository/userdb"
+	"marmot-ledger/internal/infrastructure"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -70,6 +70,10 @@ func Start() {
 	root := app.Group("/api")
 
 	root.Mount("/user", UserMount())
+	root.Mount("/account", AccountMount())
+	root.Mount("/bucket", BucketMount())
+	root.Mount("/financial-event", FinancialEventMount())
+	root.Mount("/record", RecordMount())
 
 	log.Fatal(app.Listen(":" + env.Prop.Port))
 }

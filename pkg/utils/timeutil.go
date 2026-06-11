@@ -2,7 +2,7 @@ package utils
 
 import (
 	"fmt"
-	"go-my-life/pkg/model"
+	"marmot-ledger/pkg/model"
 	"time"
 )
 

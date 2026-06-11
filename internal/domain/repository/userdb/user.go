@@ -2,8 +2,8 @@ package userdb
 
 import (
 	"errors"
-	"go-my-life/internal/infrastructure"
-	"go-my-life/pkg/model"
+	"marmot-ledger/internal/infrastructure"
+	"marmot-ledger/pkg/model"
 )
 
 type User struct {

@@ -2,7 +2,12 @@
 
 Marmot Ledger（土拨鼠账本）是一个面向个人与家庭的财务账本系统，用于记录现金流、资产、负债、多币种账户、投资、报销、押金以及共享家庭财务。
 
-当前仓库已经从旧的 `my-life` 项目中清理出基础框架。旧的 `transaction` 记账、家庭、健康、训练、OSS 上传和 Elasticsearch 业务模块已移除；后续财务能力将基于新的核心模型重新实现。
+<p align="center">
+  <img src="img/marmot-ledger-1.png" alt="Marmot Ledger" width="180" />
+  <img src="img/marmot-ledger-2.png" alt="Marmot Ledger" width="180" />
+</p>
+
+当前仓库已经从历史项目中清理出基础框架。历史业务模块已移除；后续财务能力将基于新的核心模型重新实现。
 
 ## 当前状态
 

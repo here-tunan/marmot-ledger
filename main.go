@@ -1,9 +1,9 @@
 package main
 
 import (
-	"go-my-life/api"
-	_ "go-my-life/internal/infrastructure"
 	"log"
+	"marmot-ledger/api"
+	_ "marmot-ledger/internal/infrastructure"
 )
 
 func main() {

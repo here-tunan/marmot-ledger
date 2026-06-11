@@ -1,8 +1,8 @@
 package service
 
 import (
-	"go-my-life/internal/domain/entity/user"
-	"go-my-life/internal/domain/repository/userdb"
+	"marmot-ledger/internal/domain/entity/user"
+	"marmot-ledger/internal/domain/repository/userdb"
 )
 
 func GetUser(user *userdb.User) (*userdb.User, error) {

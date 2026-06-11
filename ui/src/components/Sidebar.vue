@@ -1,46 +1,45 @@
 <template>
-  <div class="sidebar" :class="{ 'collapsed': sidebar.collapse }">
-    <!-- 侧边栏头部 -->
+  <aside class="sidebar" :class="{ collapsed: sidebar.collapse, show: sidebar.showMobile }">
     <div class="sidebar-header">
-      <div class="logo" v-show="!sidebar.collapse">
-        <div class="logo-icon">📊</div>
-        <div class="logo-text">Marmot Ledger</div>
+      <div class="brand-mark">
+        <img :src="marmotOne" alt="Marmot Ledger" width="42" height="42" />
       </div>
-      <div class="logo-mini" v-show="sidebar.collapse">
-        <div class="logo-icon">📊</div>
-      </div>
-    </div>
-
-    <!-- 菜单列表 -->
-    <div class="sidebar-menu">
-      <div class="menu-section">
-        <div
-          v-for="item in items"
-          :key="item.index"
-          class="menu-item"
-          :class="{ 'active': isActive(item.index) }"
-          @click="navigateTo(item.index)"
-        >
-          <div class="menu-icon">
-            <el-icon><component :is="item.icon"></component></el-icon>
-          </div>
-          <div class="menu-text" v-show="!sidebar.collapse">{{ item.title }}</div>
-          <div class="menu-tooltip" v-show="sidebar.collapse">{{ item.title }}</div>
-        </div>
+      <div class="brand-copy" v-show="!sidebar.collapse">
+        <strong>Marmot Ledger</strong>
+        <span>{{ t('app.tagline') }}</span>
       </div>
     </div>
 
-    <!-- 侧边栏底部 -->
+    <nav class="sidebar-menu">
+      <button
+        v-for="item in items"
+        :key="item.index"
+        class="menu-item"
+        :class="{ active: isActive(item.index) }"
+        @click="navigateTo(item.index)"
+      >
+        <span class="menu-icon">
+          <el-icon><component :is="item.icon"></component></el-icon>
+        </span>
+        <span class="menu-text" v-show="!sidebar.collapse">{{ t(item.titleKey) }}</span>
+        <span class="menu-tooltip" v-show="sidebar.collapse">{{ t(item.titleKey) }}</span>
+      </button>
+    </nav>
+
     <div class="sidebar-footer" v-show="!sidebar.collapse">
-      <div class="footer-text">© 2024 Marmot Ledger</div>
+      <span>Calm Marmot</span>
+      <strong>© 2024</strong>
     </div>
-  </div>
+  </aside>
 </template>
 
 <script setup>
 import { useSidebarStore } from '@/stores/sidebar';
 import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+import marmotOne from '../../../img/marmot-ledger-1.png';
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const sidebar = useSidebarStore();
@@ -49,135 +48,157 @@ const items = [
   {
     icon: 'House',
     index: '/dashboard',
-    title: '系统首页',
+    titleKey: 'routes.dashboard',
+  },
+  {
+    icon: 'EditPen',
+    index: '/record',
+    titleKey: 'routes.record',
+  },
+  {
+    icon: 'Wallet',
+    index: '/accounts',
+    titleKey: 'routes.accounts',
+  },
+  {
+    icon: 'Box',
+    index: '/buckets',
+    titleKey: 'routes.buckets',
   },
   {
     icon: 'User',
     index: '/user',
-    title: '用户中心',
+    titleKey: 'routes.userCenter',
   },
 ];
 
-// 判断菜单项是否激活
-const isActive = (path) => {
-  return route.path === path;
-};
+const isActive = (path) => route.path === path;
 
-// 导航到指定路径
 const navigateTo = (path) => {
   if (path && path.startsWith('/')) {
     router.push(path);
+    sidebar.closeMobile();
   }
 };
 </script>
 
 <style scoped>
-/* 侧边栏主容器 */
 .sidebar {
   display: flex;
   flex-direction: column;
   height: 100vh;
   width: 260px;
-  background: linear-gradient(180deg,
-    #1e293b 0%,
-    #0f172a 100%);
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(180deg, #1f2933 0%, #111827 100%);
+  color: rgba(255, 255, 255, 0.88);
+  transition-property: width, transform;
+  transition-duration: 240ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   user-select: none;
-  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 8px 0 28px rgba(15, 23, 42, 0.18);
 }
 
 .sidebar.collapsed {
   width: 70px;
 }
 
-/* 侧边栏头部 */
 .sidebar-header {
-  padding: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  min-height: 80px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.logo {
+  min-height: 88px;
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 20px;
 }
 
-.logo-mini {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.brand-mark {
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 12px 24px rgba(0, 0, 0, 0.18);
 }
 
-.logo-icon {
-  font-size: 24px;
-  line-height: 1;
+.brand-mark img {
+  width: 38px;
+  height: 38px;
+  object-fit: cover;
+  border-radius: 12px;
 }
 
-.logo-text {
-  font-size: 18px;
-  font-weight: 600;
-  color: #f1f5f9;
+.brand-copy strong,
+.brand-copy span {
+  display: block;
 }
 
-/* 菜单区域 */
+.brand-copy strong {
+  font-size: 16px;
+  letter-spacing: -0.012em;
+}
+
+.brand-copy span {
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 .sidebar-menu {
   flex: 1;
-  padding: 16px 0;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 12px;
   overflow-y: auto;
-  overflow-x: hidden;
 }
 
-.sidebar-menu::-webkit-scrollbar {
-  width: 4px;
-}
-
-.sidebar-menu::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.sidebar-menu::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 2px;
-}
-
-.menu-section {
-  padding: 0 12px;
-}
-
-/* 菜单项 */
 .menu-item {
+  position: relative;
   display: flex;
   align-items: center;
-  padding: 12px 16px;
-  margin: 2px 0;
+  min-height: 46px;
+  width: 100%;
+  border: 0;
   border-radius: 12px;
+  padding: 0 14px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.62);
   cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  color: #94a3b8;
+  text-align: left;
+  transition-property: transform, background-color, color, box-shadow;
+  transition-duration: 160ms;
+  touch-action: manipulation;
+}
+
+.menu-item:active {
+  transform: scale(0.96);
 }
 
 .menu-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #f1f5f9;
-  transform: translateX(4px);
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .menu-item.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-  transform: translateX(4px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 10px 22px rgba(0, 0, 0, 0.12);
+}
+
+.menu-item.active::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #dce9df;
+  position: absolute;
+  left: 8px;
 }
 
 .menu-icon {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 24px;
@@ -189,60 +210,64 @@ const navigateTo = (path) => {
 .menu-text {
   flex: 1;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 700;
   white-space: nowrap;
 }
 
-/* 折叠状态 */
+.collapsed .sidebar-header {
+  padding: 18px 12px;
+  justify-content: center;
+}
+
 .collapsed .menu-item {
   justify-content: center;
-  padding: 12px;
+  padding: 0;
 }
 
 .collapsed .menu-icon {
   margin: 0;
-  font-size: 20px;
 }
 
-/* 工具提示 */
 .menu-tooltip {
   position: absolute;
-  left: 75px;
+  left: 76px;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.9);
-  color: white;
+  background: #1f2933;
+  color: rgba(255, 255, 255, 0.9);
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 700;
   white-space: nowrap;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.3s ease;
+  transition-property: opacity, transform;
+  transition-duration: 160ms;
   z-index: 1000;
   pointer-events: none;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22);
 }
 
 .collapsed .menu-item:hover .menu-tooltip {
   opacity: 1;
   visibility: visible;
+  transform: translateY(-50%) translateX(4px);
 }
 
-/* 侧边栏底部 */
 .sidebar-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 16px 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  text-align: center;
-}
-
-.footer-text {
+  color: rgba(255, 255, 255, 0.46);
   font-size: 12px;
-  color: #64748b;
-  font-weight: 400;
 }
 
-/* 响应式设计 */
+.sidebar-footer strong {
+  color: rgba(255, 255, 255, 0.72);
+}
+
 @media (max-width: 768px) {
   .sidebar {
     position: fixed;
@@ -256,45 +281,13 @@ const navigateTo = (path) => {
   .sidebar.show {
     transform: translateX(0);
   }
-
-  .sidebar-header {
-    padding: 16px;
-    min-height: 70px;
-  }
-
-  .menu-item {
-    padding: 10px 14px;
-  }
 }
 
-@media (max-width: 480px) {
-  .sidebar {
-    width: 100vw;
-  }
-}
-
-/* 动画效果 */
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.menu-item {
-  animation: slideIn 0.3s ease-out;
-}
-
-/* 暗色主题适配 */
-@media (prefers-color-scheme: dark) {
-  .sidebar {
-    background: linear-gradient(180deg,
-      #0f172a 0%,
-      #020617 100%);
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .menu-item,
+  .menu-tooltip {
+    transition: none;
   }
 }
 </style>

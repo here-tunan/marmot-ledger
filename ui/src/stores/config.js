@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia';
+import { LOCALES, getStoredLocale, setI18nLocale } from '@/i18n';
 
 // 预定义的主题颜色
 export const THEMES = {
   blue: {
-    name: '科技蓝',
+    nameKey: 'theme.blue',
     primary: '#409eff',
     primaryLight: '#79bbff',
     primaryDark: '#337ecc',
@@ -12,7 +13,7 @@ export const THEMES = {
     backgroundDark: '#1a1a1a'
   },
   green: {
-    name: '自然绿',
+    nameKey: 'theme.green',
     primary: '#67c23a',
     primaryLight: '#95d475',
     primaryDark: '#529b2e',
@@ -21,7 +22,7 @@ export const THEMES = {
     backgroundDark: '#1a2332'
   },
   purple: {
-    name: '优雅紫',
+    nameKey: 'theme.purple',
     primary: '#9c27b0',
     primaryLight: '#ba68c8',
     primaryDark: '#7b1fa2',
@@ -30,7 +31,7 @@ export const THEMES = {
     backgroundDark: '#2d1b69'
   },
   orange: {
-    name: '活力橙',
+    nameKey: 'theme.orange',
     primary: '#ff9800',
     primaryLight: '#ffcc02',
     primaryDark: '#f57c00',
@@ -39,7 +40,7 @@ export const THEMES = {
     backgroundDark: '#2d1b0f'
   },
   pink: {
-    name: '樱花粉',
+    nameKey: 'theme.pink',
     primary: '#e91e63',
     primaryLight: '#f06292',
     primaryDark: '#c2185b',
@@ -53,12 +54,14 @@ export const useConfigStore = defineStore('config', {
     state: () => {
         return {
             mode: localStorage.getItem('theme-mode') || 'light',
-            theme: localStorage.getItem('theme-color') || 'blue'
+            theme: localStorage.getItem('theme-color') || 'blue',
+            locale: getStoredLocale()
         };
     },
     getters: {
         currentTheme: (state) => THEMES[state.theme] || THEMES.blue,
         isDark: (state) => state.mode === 'dark',
+        isEnglish: (state) => state.locale === LOCALES.enUS,
         themeVars: (state) => {
             const theme = THEMES[state.theme] || THEMES.blue;
             return {
@@ -83,15 +86,23 @@ export const useConfigStore = defineStore('config', {
                 this.applyTheme();
             }
         },
+        setLocale(locale) {
+            if (Object.values(LOCALES).includes(locale)) {
+                this.locale = locale;
+                setI18nLocale(locale);
+            }
+        },
+        toggleLocale() {
+            this.setLocale(this.locale === LOCALES.zhCN ? LOCALES.enUS : LOCALES.zhCN);
+        },
         applyTheme() {
             const root = document.documentElement;
-            const theme = this.currentTheme;
-            
+
             // 应用CSS变量
             Object.entries(this.themeVars).forEach(([key, value]) => {
                 root.style.setProperty(key, value);
             });
-            
+
             // 应用暗色模式类
             if (this.isDark) {
                 document.body.classList.add('dark');
@@ -101,6 +112,7 @@ export const useConfigStore = defineStore('config', {
         },
         initTheme() {
             this.applyTheme();
+            setI18nLocale(this.locale);
         }
     }
 });

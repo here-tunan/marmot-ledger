@@ -3,7 +3,7 @@ package infrastructure
 import (
 	"fmt"
 	"github.com/redis/go-redis/v9"
-	"go-my-life/env"
+	"marmot-ledger/env"
 )
 
 var Redis *redis.Client

@@ -1,12 +1,9 @@
 import { defineStore } from 'pinia';
 
 interface ListItem {
-	// 组件名称
 	name: string;
-	// 路由地址
 	path: string;
-	// 组件标签名称
-	title: string;
+	titleKey: string;
 }
 
 export const useTagsStore = defineStore('tags', {

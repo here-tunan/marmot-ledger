@@ -1,0 +1,652 @@
+<template>
+  <main class="ledger-page">
+    <section class="page-hero reveal-block">
+      <div>
+        <p class="eyebrow">{{ t('buckets.hero.eyebrow') }}</p>
+        <h1>{{ t('buckets.hero.title') }}</h1>
+        <p>{{ t('buckets.hero.subtitle') }}</p>
+      </div>
+      <button class="primary-action" :disabled="!accounts.length" @click="openCreate">{{ t('buckets.actions.new') }}</button>
+    </section>
+
+    <section class="toolbar reveal-block delay-1">
+      <el-select v-model="filters.accountId" clearable :placeholder="t('buckets.filters.accountPlaceholder')" class="filter-control" @change="loadBuckets">
+        <el-option v-for="item in accounts" :key="item.id" :label="item.displayName || item.name" :value="item.id" />
+      </el-select>
+      <el-select v-model="filters.currency" clearable :placeholder="t('buckets.filters.currencyPlaceholder')" class="filter-control" @change="loadBuckets">
+        <el-option v-for="item in currencies" :key="item" :label="item" :value="item" />
+      </el-select>
+      <el-select v-model="filters.bucketNature" clearable :placeholder="t('buckets.filters.naturePlaceholder')" class="filter-control" @change="loadBuckets">
+        <el-option :label="t('domain.asset')" value="asset" />
+        <el-option :label="t('domain.liability')" value="liability" />
+      </el-select>
+      <button class="ghost-action" @click="refreshAll">{{ t('common.actions.refresh') }}</button>
+    </section>
+
+    <section class="bucket-layout reveal-block delay-2">
+      <div v-loading="loading" class="bucket-list">
+        <article v-for="(item, index) in buckets" :key="item.id" class="bucket-card" :class="{ active: selectedBucket?.id === item.id }" :style="{ animationDelay: `${index * 55}ms` }" @click="selectBucket(item)">
+          <div class="bucket-topline">
+            <div>
+              <h2>{{ item.name }}</h2>
+              <p>{{ getAccountName(item.accountId) }}</p>
+            </div>
+            <span class="nature-pill" :class="item.bucketNature">{{ item.bucketNature === 'liability' ? t('domain.liability') : t('domain.asset') }}</span>
+          </div>
+          <div class="bucket-balance">
+            <span>{{ item.currency }}</span>
+            <strong>{{ formatAmount(item.balance) }}</strong>
+          </div>
+          <div class="bucket-meta">
+            <span>{{ getBucketTypeLabel(item.bucketType) }}</span>
+            <span>{{ t('buckets.card.initial', { amount: formatAmount(item.initialBalance) }) }}</span>
+          </div>
+        </article>
+
+        <div v-if="!loading && !buckets.length" class="empty-state">
+          <img :src="marmotTwo" :alt="t('buckets.empty.alt')" width="112" height="112" />
+          <h2>{{ t('buckets.empty.title') }}</h2>
+          <p>{{ t('buckets.empty.text') }}</p>
+          <button class="primary-action" :disabled="!accounts.length" @click="openCreate">{{ t('buckets.actions.new') }}</button>
+        </div>
+      </div>
+
+      <aside class="ledger-panel">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">{{ t('buckets.ledger.eyebrow') }}</p>
+            <h2>{{ selectedBucket ? selectedBucket.name : t('buckets.ledger.selectBucketTitle') }}</h2>
+          </div>
+        </div>
+
+        <div v-if="selectedBucket" class="selected-summary">
+          <span>{{ selectedBucket.currency }}</span>
+          <strong>{{ formatAmount(selectedBucket.balance) }}</strong>
+          <p>{{ getAccountName(selectedBucket.accountId) }} · {{ getBucketTypeLabel(selectedBucket.bucketType) }}</p>
+        </div>
+
+        <div v-if="ledgerEntries.length" class="entry-list">
+          <div v-for="entry in ledgerEntries" :key="entry.id" class="entry-row">
+            <div>
+              <strong>{{ entry.entryRole || t('buckets.entryRoleFallback') }}</strong>
+              <span>{{ entry.createdAt }}</span>
+            </div>
+            <div class="entry-amount">{{ entry.currency }} {{ formatAmount(entry.amount) }}</div>
+          </div>
+        </div>
+        <div v-else class="empty-state compact">
+          <img :src="marmotOne" :alt="t('buckets.ledger.emptyAlt')" width="88" height="88" />
+          <p>{{ selectedBucket ? t('buckets.ledger.emptyForSelected') : t('buckets.ledger.emptyNoSelection') }}</p>
+        </div>
+      </aside>
+    </section>
+
+    <el-dialog v-model="dialogVisible" :title="t('buckets.dialog.createTitle')" width="560px" class="marmot-dialog">
+      <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
+        <el-form-item :label="t('buckets.fields.account')" prop="accountId">
+          <el-select v-model="form.accountId" :placeholder="t('buckets.placeholders.selectAccount')" class="full-width">
+            <el-option v-for="item in accounts" :key="item.id" :label="item.displayName || item.name" :value="item.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item :label="t('buckets.fields.bucketName')" prop="name">
+          <el-input v-model="form.name" :placeholder="t('buckets.placeholders.name')" />
+        </el-form-item>
+        <el-row :gutter="12">
+          <el-col :span="12">
+            <el-form-item :label="t('common.fields.currency')" prop="currency">
+              <el-select v-model="form.currency" class="full-width">
+                <el-option v-for="item in currencies" :key="item" :label="item" :value="item" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item :label="t('common.fields.initialBalance')" prop="initialBalance">
+              <el-input v-model="form.initialBalance" :placeholder="t('buckets.placeholders.initialBalance')" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="12">
+          <el-col :span="12">
+            <el-form-item :label="t('buckets.fields.bucketType')" prop="bucketType">
+              <el-select v-model="form.bucketType" class="full-width">
+                <el-option v-for="item in bucketTypes" :key="item.value" :label="item.label.value || item.label" :value="item.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item :label="t('buckets.fields.bucketNature')" prop="bucketNature">
+              <el-select v-model="form.bucketNature" class="full-width">
+                <el-option :label="t('domain.asset')" value="asset" />
+                <el-option :label="t('domain.liability')" value="liability" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item :label="t('common.fields.groupKey')">
+          <el-input v-model="form.bucketGroupKey" :placeholder="t('buckets.placeholders.groupKey')" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <button class="ghost-action" @click="dialogVisible = false">{{ t('common.actions.cancel') }}</button>
+        <button class="primary-action" @click="submitForm">{{ t('buckets.actions.create') }}</button>
+      </template>
+    </el-dialog>
+  </main>
+</template>
+
+<script setup>
+import { computed, onActivated, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useConfigStore } from '@/stores/config'
+import { ElMessage } from 'element-plus'
+import { listAccounts } from '@/api/account/account'
+import { createBucket, listBucketLedgerEntries, listBuckets } from '@/api/bucket/bucket'
+import marmotOne from '../../../img/marmot-ledger-1.png'
+import marmotTwo from '../../../img/marmot-ledger-2.png'
+
+const { t } = useI18n()
+const config = useConfigStore()
+const accounts = ref([])
+const buckets = ref([])
+const ledgerEntries = ref([])
+const selectedBucket = ref(null)
+const loading = ref(false)
+const dialogVisible = ref(false)
+const formRef = ref()
+const filters = reactive({
+  accountId: '',
+  currency: '',
+  bucketNature: '',
+})
+const form = reactive(createEmptyForm())
+
+const currencies = ['CNY', 'USD', 'HKD', 'EUR', 'JPY', 'GBP', 'SGD']
+const bucketTypes = [
+  { label: computed(() => t('buckets.types.cash')), value: 'cash' },
+  { label: computed(() => t('buckets.types.wallet')), value: 'wallet' },
+  { label: computed(() => t('buckets.types.bank')), value: 'bank' },
+  { label: computed(() => t('buckets.types.credit')), value: 'credit' },
+  { label: computed(() => t('buckets.types.investmentCash')), value: 'investment_cash' },
+  { label: computed(() => t('buckets.types.investmentAsset')), value: 'investment_asset' },
+  { label: computed(() => t('buckets.types.receivable')), value: 'receivable' },
+  { label: computed(() => t('buckets.types.deposit')), value: 'deposit' },
+  { label: computed(() => t('buckets.types.loanOut')), value: 'loan_out' },
+  { label: computed(() => t('buckets.types.liability')), value: 'liability' },
+  { label: computed(() => t('buckets.types.virtual')), value: 'virtual' },
+]
+const rules = {
+  accountId: [{ required: true, message: t('buckets.validation.accountRequired'), trigger: 'change' }],
+  name: [{ required: true, message: t('buckets.validation.nameRequired'), trigger: 'blur' }],
+  currency: [{ required: true, message: t('buckets.validation.currencyRequired'), trigger: 'change' }],
+  initialBalance: [{ required: true, message: t('buckets.validation.initialBalanceRequired'), trigger: 'blur' }],
+  bucketType: [{ required: true, message: t('buckets.validation.typeRequired'), trigger: 'change' }],
+  bucketNature: [{ required: true, message: t('buckets.validation.natureRequired'), trigger: 'change' }],
+}
+
+function createEmptyForm() {
+  return {
+    accountId: '',
+    name: '',
+    currency: 'CNY',
+    initialBalance: '0.0000',
+    bucketType: 'cash',
+    bucketNature: 'asset',
+    bucketGroupKey: '',
+  }
+}
+
+function resetForm() {
+  Object.assign(form, createEmptyForm())
+}
+
+function getAccountName(accountId) {
+  const account = accounts.value.find((item) => item.id === accountId)
+  return account?.displayName || account?.name || t('buckets.accountFallback', { accountId })
+}
+
+function getBucketTypeLabel(type) {
+  return bucketTypes.find((item) => item.value === type)?.label.value || type
+}
+
+function formatAmount(value) {
+  const number = Number(value || 0)
+  return new Intl.NumberFormat(config.locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(number)
+}
+
+async function loadAccounts() {
+  const res = await listAccounts({ isActive: true })
+  if (res.success) accounts.value = res.data || []
+}
+
+async function loadBuckets() {
+  loading.value = true
+  try {
+    const params = {}
+    if (filters.accountId) params.accountId = filters.accountId
+    if (filters.currency) params.currency = filters.currency
+    if (filters.bucketNature) params.bucketNature = filters.bucketNature
+    const res = await listBuckets(params)
+    if (res.success) {
+      buckets.value = res.data || []
+      if (selectedBucket.value && !buckets.value.some((item) => item.id === selectedBucket.value.id)) {
+        selectedBucket.value = null
+        ledgerEntries.value = []
+      }
+    } else {
+      ElMessage.error(res.error || t('buckets.messages.loadFailed'))
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+async function refreshAll() {
+  await loadAccounts()
+  await loadBuckets()
+}
+
+function openCreate() {
+  if (!accounts.value.length) {
+    ElMessage.warning(t('buckets.messages.createAccountFirst'))
+    return
+  }
+  resetForm()
+  form.accountId = accounts.value[0]?.id || ''
+  dialogVisible.value = true
+}
+
+async function submitForm() {
+  await formRef.value?.validate()
+  const payload = {
+    ...form,
+    accountId: Number(form.accountId),
+    initialBalance: String(form.initialBalance),
+  }
+  const res = await createBucket(payload)
+  if (res.success) {
+    ElMessage.success(t('buckets.messages.createdWithRefs', { eventId: res.data.initialFinancialEventId, entryId: res.data.initialLedgerEntryId }))
+    dialogVisible.value = false
+    await loadBuckets()
+    const created = buckets.value.find((item) => item.id === res.data.id)
+    if (created) await selectBucket(created)
+  } else {
+    ElMessage.error(res.error || t('buckets.messages.createFailed'))
+  }
+}
+
+async function selectBucket(item) {
+  selectedBucket.value = item
+  const res = await listBucketLedgerEntries(item.id)
+  if (res.success) {
+    ledgerEntries.value = res.data || []
+  } else {
+    ledgerEntries.value = []
+    ElMessage.error(res.error || t('buckets.messages.loadEntriesFailed'))
+  }
+}
+
+onMounted(refreshAll)
+onActivated(refreshAll)
+</script>
+
+<style scoped>
+.ledger-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  color: #1e293b;
+}
+
+.reveal-block,
+.bucket-card {
+  animation: revealUp 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.delay-1 {
+  animation-delay: 90ms;
+}
+
+.delay-2 {
+  animation-delay: 160ms;
+}
+
+.page-hero,
+.toolbar,
+.bucket-card,
+.ledger-panel,
+.empty-state {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1), 0 12px 30px rgba(15, 23, 42, 0.04);
+}
+
+.page-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+  padding: 26px;
+  background: linear-gradient(135deg, #fffaf0 0%, #ffffff 70%);
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #2f7d5c;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.page-hero h1,
+.section-head h2 {
+  margin: 0;
+  letter-spacing: -0.022em;
+}
+
+.page-hero h1 {
+  max-width: 680px;
+  font-size: 30px;
+  line-height: 1.16;
+  text-wrap: balance;
+}
+
+.page-hero p:last-child {
+  max-width: 620px;
+  margin: 12px 0 0;
+  color: #64748b;
+  line-height: 1.7;
+}
+
+.toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 18px;
+  padding: 14px;
+}
+
+.filter-control {
+  width: 180px;
+}
+
+.bucket-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 18px;
+}
+
+.bucket-list {
+  display: grid;
+  gap: 14px;
+}
+
+.bucket-card {
+  padding: 20px;
+  cursor: pointer;
+  transition-property: transform, box-shadow, background-color;
+  transition-duration: 180ms;
+}
+
+.bucket-card.active {
+  background: #f8faf7;
+  box-shadow: 0 0 0 2px rgba(47, 125, 92, 0.16), 0 14px 34px rgba(47, 125, 92, 0.1);
+}
+
+.bucket-topline,
+.section-head,
+.entry-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.bucket-topline h2 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: -0.012em;
+}
+
+.bucket-topline p,
+.selected-summary p {
+  margin: 6px 0 0;
+  color: #64748b;
+}
+
+.nature-pill,
+.bucket-meta span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border-radius: 999px;
+  padding: 0 10px;
+  background: rgba(47, 125, 92, 0.1);
+  color: #2f7d5c;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.nature-pill.liability {
+  background: rgba(31, 41, 51, 0.1);
+  color: #1f2933;
+}
+
+.bucket-balance {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.bucket-balance span,
+.selected-summary span {
+  color: #64748b;
+  font-weight: 700;
+}
+
+.bucket-balance strong,
+.selected-summary strong,
+.entry-amount {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.bucket-balance strong {
+  font-size: 30px;
+  letter-spacing: -0.022em;
+}
+
+.bucket-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.ledger-panel {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  padding: 22px;
+}
+
+.selected-summary {
+  margin: 18px 0;
+  padding: 18px;
+  border-radius: 14px;
+  background: #f8faf7;
+}
+
+.selected-summary strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 28px;
+}
+
+.entry-list {
+  display: grid;
+  gap: 10px;
+}
+
+.entry-row {
+  align-items: center;
+  padding: 12px;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(100, 116, 139, 0.12);
+}
+
+.entry-row strong,
+.entry-row span {
+  display: block;
+}
+
+.entry-row span {
+  margin-top: 4px;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.entry-amount {
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.primary-action,
+.ghost-action {
+  min-height: 40px;
+  border: 0;
+  border-radius: 12px;
+  padding: 0 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition-property: transform, box-shadow, background-color, color;
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  touch-action: manipulation;
+}
+
+.primary-action:active,
+.ghost-action:active,
+.bucket-card:active {
+  transform: scale(0.96);
+}
+
+.primary-action {
+  background: #3b82f6;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(59, 130, 246, 0.22);
+}
+
+.primary-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.ghost-action {
+  background: #f8faf7;
+  color: #1e293b;
+}
+
+.empty-state {
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  padding: 40px 24px;
+  text-align: center;
+  color: #64748b;
+}
+
+.empty-state.compact {
+  padding: 26px 12px;
+  box-shadow: none;
+  background: #f8faf7;
+}
+
+.empty-state img {
+  border-radius: 22px;
+}
+
+.empty-state h2 {
+  margin: 0;
+  color: #1e293b;
+}
+
+.empty-state p {
+  max-width: 420px;
+  margin: 0;
+  line-height: 1.7;
+}
+
+.full-width {
+  width: 100%;
+}
+
+@media (hover: hover) {
+  .bucket-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(15, 23, 42, 0.12), 0 16px 34px rgba(15, 23, 42, 0.06);
+  }
+}
+
+@media (max-width: 980px) {
+  .page-hero,
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bucket-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ledger-panel {
+    position: static;
+  }
+
+  .filter-control {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .page-hero {
+    padding: 20px;
+  }
+
+  .page-hero h1 {
+    font-size: 24px;
+  }
+
+  .bucket-topline,
+  .entry-row {
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-block,
+  .bucket-card,
+  .primary-action,
+  .ghost-action {
+    animation: none;
+    transition: none;
+  }
+}
+
+@keyframes revealUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+</style>

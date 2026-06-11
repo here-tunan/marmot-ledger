@@ -36,14 +36,7 @@ A personal and family financial ledger for assets, cash flow, liabilities, inves
 
 ## Core documents
 
-Current design docs live in the old project:
-
-```text
-/Users/yaodao/open-project/my-life/财务系统升级设计方案.md
-/Users/yaodao/open-project/my-life/导入识别与规则学习设计方案.md
-```
-
-When creating the new repository, copy them to:
+Current design docs:
 
 ```text
 marmot-ledger/docs/财务系统升级设计方案.md
