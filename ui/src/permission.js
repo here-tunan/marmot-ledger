@@ -2,19 +2,28 @@
 
 import router from './router'
 import {isNeedRefresh, refreshToken, removeToken, validToken2} from './api/auth/auth'
+import {getCurrentUserRole} from './api/user/user'
 import {ElMessage} from 'element-plus'
 import {t} from './i18n'
 
+const publicPages = ['/login', '/register']
+
+async function ensureAdmin() {
+    const res = await getCurrentUserRole()
+    return Boolean(res.success && res.data?.role === 'admin')
+}
+
 router.beforeEach((to, from, next) => {
+    if (publicPages.includes(to.path)) {
+        next()
+        return
+    }
+
     let token = localStorage.getItem("token")
 
     if (token == null || token === '') {
-        if (to.path !== '/login') {
-            ElMessage.warning(t('auth.notLoggedIn'))
-            next('/login')
-        } else {
-            next()
-        }
+        ElMessage.warning(t('auth.notLoggedIn'))
+        next('/login')
         return
     }
 
@@ -30,6 +39,31 @@ router.beforeEach((to, from, next) => {
             return;
         }
 
+        const continueNavigation = () => {
+            if (to.path === '/login') {
+                ElMessage.success(t('auth.alreadyLoggedIn'))
+                next("/")
+                return
+            }
+
+            if (to.meta?.requiresAdmin) {
+                ensureAdmin().then(isAdmin => {
+                    if (isAdmin) {
+                        next()
+                    } else {
+                        ElMessage.warning(t('auth.adminRequired'))
+                        next('/dashboard')
+                    }
+                }).catch(() => {
+                    ElMessage.warning(t('auth.adminRequired'))
+                    next('/dashboard')
+                })
+                return
+            }
+
+            next()
+        }
+
         if (isNeedRefresh()) {
             refreshToken().then(res => {
                 if (res.success) {
@@ -38,12 +72,7 @@ router.beforeEach((to, from, next) => {
                     let now = new Date()
                     now.setTime(now.getTime() + expiredSeconds * 1000)
                     localStorage.setItem("validTime", now.getTime())
-                    if (to.path === '/login') {
-                        ElMessage.success(t('auth.alreadyLoggedIn'))
-                        next("/")
-                    } else {
-                        next()
-                    }
+                    continueNavigation()
                 } else {
                     removeToken()
                     if (to.path === '/login') {
@@ -55,12 +84,7 @@ router.beforeEach((to, from, next) => {
                 }
             })
         } else {
-            if (to.path === '/login') {
-                ElMessage.success(t('auth.alreadyLoggedIn'))
-                next("/")
-            } else {
-                next()
-            }
+            continueNavigation()
         }
     });
 })

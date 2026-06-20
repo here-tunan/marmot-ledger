@@ -57,7 +57,7 @@ service.interceptors.response.use(
 
         if (data.code !== '' && data.code !== 200) {
             if (data.code === 401) {
-                if (!url.endsWith("/validToken")) {
+                if (!url.endsWith("/validToken") && !url.endsWith("/register")) {
                     if (!useAuthStore().isAxios401Failing) {
                         useAuthStore().isAxios401Failing = true
                         ElMessage.warning(t('auth.expired'))

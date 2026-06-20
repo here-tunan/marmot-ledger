@@ -91,8 +91,9 @@ func CategoryMount() *fiber.App {
 		return ctx.JSON(result.OK(*updated))
 	})
 
-	app.Delete("/:id", func(ctx *fiber.Ctx) error {
-		result := &myresult.MyResult[bool]{}
+	// 检查分类使用情况（删除前调用）
+	app.Get("/:id/usage", func(ctx *fiber.Ctx) error {
+		result := &myresult.MyResult[map[string]interface{}]{}
 		userId, ok := getLoginUserId(ctx)
 		if !ok {
 			return ctx.JSON(result.Err(int(myerror.Unauthorized), myerror.Unauthorized.String()))
@@ -101,10 +102,33 @@ func CategoryMount() *fiber.App {
 		if err != nil {
 			return ctx.JSON(result.Err(int(myerror.WrongParam), err.Error()))
 		}
-		if err := service.DeleteCategory(userId, id); err != nil {
+		count, err := service.CheckCategoryUsage(userId, id)
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.InternalError), err.Error()))
+		}
+		return ctx.JSON(result.OK(map[string]interface{}{
+			"eventCount": count,
+		}))
+	})
+
+	app.Delete("/:id", func(ctx *fiber.Ctx) error {
+		result := &myresult.MyResult[map[string]interface{}]{}
+		userId, ok := getLoginUserId(ctx)
+		if !ok {
+			return ctx.JSON(result.Err(int(myerror.Unauthorized), myerror.Unauthorized.String()))
+		}
+		id, err := parseIdParam(ctx)
+		if err != nil {
 			return ctx.JSON(result.Err(int(myerror.WrongParam), err.Error()))
 		}
-		return ctx.JSON(result.OK(true))
+		affectedCount, err := service.DeleteCategory(userId, id)
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.WrongParam), err.Error()))
+		}
+		return ctx.JSON(result.OK(map[string]interface{}{
+			"success":       true,
+			"affectedCount": affectedCount,
+		}))
 	})
 
 	return app

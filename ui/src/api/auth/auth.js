@@ -10,6 +10,14 @@ export function login(account, password) {
     })
 }
 
+export function register(account, password, name) {
+    return request.post("/user/register", {
+        account: account,
+        password: password,
+        name: name
+    })
+}
+
 export function validToken(token) {
     return request.get("/user/validToken", {
         params: {

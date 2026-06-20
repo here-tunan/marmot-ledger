@@ -19,6 +19,15 @@ import (
 )
 
 func CreateRecord(userId int64, req *record.RecordRequest) (*record.RecordResponse, error) {
+	if strings.TrimSpace(req.Scenario) == "split" {
+		return CreateSplitRecord(userId, req)
+	}
+	if strings.TrimSpace(req.Scenario) == EventTypeInvestmentSell {
+		return CreateInvestmentSellRecord(userId, req)
+	}
+	if strings.TrimSpace(req.Scenario) == EventTypeFamilyTransfer {
+		return CreateFamilyTransferRecord(userId, req)
+	}
 	if err := validateRecordRequest(req); err != nil {
 		return nil, err
 	}
@@ -98,6 +107,31 @@ func buildRecordContext(session *xorm.Session, userId int64, req *record.RecordR
 	}
 
 	if req.Scenario == EventTypeTransfer {
+		if err := loadBucket(req.FromBucketId); err != nil {
+			return nil, err
+		}
+		if err := loadBucket(req.ToBucketId); err != nil {
+			return nil, err
+		}
+	} else if req.Scenario == EventTypeExchange {
+		if err := loadBucketForCurrency(session, userId, buckets, req.FromBucketId, currency); err != nil {
+			return nil, err
+		}
+		toCurrency := strings.ToUpper(strings.TrimSpace(req.ToCurrency))
+		if _, err := currencydb.GetEnabledCurrency(session, toCurrency); err != nil {
+			return nil, err
+		}
+		if err := loadBucketForCurrency(session, userId, buckets, req.ToBucketId, toCurrency); err != nil {
+			return nil, err
+		}
+	} else if isPairedScenario(req.Scenario) {
+		if err := loadBucket(req.FromBucketId); err != nil {
+			return nil, err
+		}
+		if err := loadBucket(req.ToBucketId); err != nil {
+			return nil, err
+		}
+	} else if req.Scenario == EventTypeInvestmentBuy {
 		if err := loadBucket(req.FromBucketId); err != nil {
 			return nil, err
 		}
@@ -414,22 +448,67 @@ func validateRecordRequest(req *record.RecordRequest) error {
 	if strings.TrimSpace(req.Scenario) == "" {
 		return errors.New("record scenario is required")
 	}
-	if !req.Amount.IsPositive() {
-		return errors.New("amount must be greater than 0")
-	}
 	if strings.TrimSpace(req.Currency) == "" {
 		return errors.New("currency is required")
 	}
 
 	scenario := strings.TrimSpace(req.Scenario)
+	if scenario == EventTypeBalanceAdjustment || scenario == EventTypeInvestmentRevalue {
+		if req.Amount.IsZero() {
+			return errors.New("amount must not be 0")
+		}
+	} else if !req.Amount.IsPositive() {
+		return errors.New("amount must be greater than 0")
+	}
+
 	switch scenario {
-	case EventTypeIncome, EventTypeExpense, EventTypeRefund:
+	case EventTypeIncome, EventTypeExpense, EventTypeRefund, EventTypeBalanceAdjustment:
 		if req.BucketId == 0 {
 			return errors.New("bucket id is required")
 		}
 	case EventTypeTransfer:
 		if req.FromBucketId == 0 || req.ToBucketId == 0 {
 			return errors.New("from bucket and to bucket are required")
+		}
+	case EventTypeExchange:
+		if req.FromBucketId == 0 || req.ToBucketId == 0 {
+			return errors.New("from bucket and to bucket are required")
+		}
+		if req.FromBucketId == req.ToBucketId {
+			return errors.New("exchange buckets must be different")
+		}
+		if !req.ToAmount.IsPositive() {
+			return errors.New("to amount must be greater than 0")
+		}
+		if strings.TrimSpace(req.ToCurrency) == "" {
+			return errors.New("to currency is required")
+		}
+		if strings.EqualFold(strings.TrimSpace(req.Currency), strings.TrimSpace(req.ToCurrency)) {
+			return errors.New("exchange currencies must differ; use transfer when both sides share the currency")
+		}
+	case EventTypeReceivableCreate, EventTypeReceivableCollect,
+		EventTypeDepositCreate, EventTypeDepositRefund,
+		EventTypeLoanOut, EventTypeLoanCollect:
+		if req.FromBucketId == 0 || req.ToBucketId == 0 {
+			return errors.New("cash bucket and counterparty bucket are required")
+		}
+		if req.FromBucketId == req.ToBucketId {
+			return errors.New("cash bucket and counterparty bucket must differ")
+		}
+	case EventTypeInvestmentBuy:
+		if req.FromBucketId == 0 || req.ToBucketId == 0 {
+			return errors.New("cash bucket and investment bucket are required")
+		}
+		if req.FromBucketId == req.ToBucketId {
+			return errors.New("cash bucket and investment bucket must differ")
+		}
+	case EventTypeInvestmentIncome:
+		if req.BucketId == 0 {
+			return errors.New("cash bucket is required")
+		}
+	case EventTypeInvestmentRevalue:
+		if req.BucketId == 0 {
+			return errors.New("investment bucket is required")
 		}
 	default:
 		return errors.New("record scenario is unsupported")
@@ -444,6 +523,24 @@ func validateBucketForRecord(bucket *bucketdb.Bucket, currency string) error {
 	if !strings.EqualFold(bucket.Currency, currency) {
 		return errors.New("bucket currency does not match record currency")
 	}
+	return nil
+}
+
+func loadBucketForCurrency(session *xorm.Session, userId int64, buckets map[int64]*bucketdb.Bucket, bucketId int64, currency string) error {
+	if bucketId == 0 {
+		return errors.New("bucket id is required")
+	}
+	if _, ok := buckets[bucketId]; ok {
+		return nil
+	}
+	bucket, err := bucketdb.GetBucketByIdForUserForUpdate(session, bucketId, userId)
+	if err != nil {
+		return err
+	}
+	if err := validateBucketForRecord(bucket, currency); err != nil {
+		return err
+	}
+	buckets[bucketId] = bucket
 	return nil
 }
 
@@ -492,7 +589,7 @@ func validateBalanceAfter(bucket *bucketdb.Bucket, balanceAfter decimal.Decimal)
 }
 
 func resolveRecordCategory(session *xorm.Session, userId int64, categoryId int64, eventType string) (*categorydb.CategoryView, error) {
-	if categoryId == 0 || eventType == EventTypeTransfer {
+	if categoryId == 0 || eventType == EventTypeTransfer || eventType == EventTypeExchange || eventType == EventTypeBalanceAdjustment || isPairedScenario(eventType) || isInvestmentScenario(eventType) {
 		return nil, nil
 	}
 
@@ -523,6 +620,12 @@ func buildRecordEvent(userId int64, req *record.RecordRequest, eventType string,
 		remark = &trimmed
 	}
 
+	var channelType *string
+	if strings.TrimSpace(req.ChannelType) != "" {
+		trimmed := strings.TrimSpace(req.ChannelType)
+		channelType = &trimmed
+	}
+
 	eventTime := model.LocalTime(time.Now())
 	if strings.TrimSpace(req.EventTime) != "" {
 		if parsed, err := time.ParseInLocation(model.TimeFormat, strings.TrimSpace(req.EventTime), mustServiceLocation()); err == nil {
@@ -531,10 +634,8 @@ func buildRecordEvent(userId int64, req *record.RecordRequest, eventType string,
 	}
 
 	var categoryId *int64
-	var categoryGroupId *int64
 	if categoryView != nil {
 		categoryId = &categoryView.Id
-		categoryGroupId = &categoryView.CategoryGroupId
 	}
 
 	return &financialeventdb.FinancialEvent{
@@ -543,13 +644,10 @@ func buildRecordEvent(userId int64, req *record.RecordRequest, eventType string,
 		EventType:               eventType,
 		Description:             strings.TrimSpace(req.Description),
 		CategoryId:              categoryId,
-		CategoryGroupId:         categoryGroupId,
+		ChannelType:             channelType,
 		EventTime:               eventTime,
 		Currency:                currency,
 		Amount:                  req.Amount,
-		BaseCurrency:            currency,
-		BaseAmount:              req.Amount,
-		ExchangeRate:            decimal.NewFromInt(1),
 		IncludeInStatistics:     includeInStatistics,
 		Source:                  EventSourceManual,
 		Status:                  EventStatusActive,

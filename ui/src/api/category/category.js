@@ -19,3 +19,8 @@ export function updateCategory(id, data) {
 export function deleteCategory(id) {
   return request.delete(`/category/${id}`)
 }
+
+// 检查分类使用情况（删除前调用）
+export function checkCategoryUsage(id) {
+  return request.get(`/category/${id}/usage`)
+}

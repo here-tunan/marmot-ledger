@@ -9,13 +9,12 @@ import (
 )
 
 type Family struct {
-	Id           int64           `json:"id" xorm:"pk autoincr 'id'"`
-	Name         string          `json:"name" xorm:"'name'"`
-	BaseCurrency string          `json:"baseCurrency" xorm:"'base_currency'"`
-	OwnerUserId  int64           `json:"ownerUserId" xorm:"'owner_user_id'"`
-	IsDeleted    bool            `json:"isDeleted" xorm:"'is_deleted'"`
-	CreatedAt    model.LocalTime `json:"createdAt" xorm:"created 'created_at'"`
-	UpdatedAt    model.LocalTime `json:"updatedAt" xorm:"updated 'updated_at'"`
+	Id          int64           `json:"id" xorm:"pk autoincr 'id'"`
+	Name        string          `json:"name" xorm:"'name'"`
+	OwnerUserId int64           `json:"ownerUserId" xorm:"'owner_user_id'"`
+	IsDeleted   bool            `json:"isDeleted" xorm:"'is_deleted'"`
+	CreatedAt   model.LocalTime `json:"createdAt" xorm:"created 'created_at'"`
+	UpdatedAt   model.LocalTime `json:"updatedAt" xorm:"updated 'updated_at'"`
 }
 
 type FamilyView struct {

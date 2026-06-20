@@ -173,6 +173,105 @@ a {
     display: none !important;
 }
 
+/* Calm Marmot Select */
+.el-select {
+    --el-select-input-focus-border-color: #2f7d5c;
+}
+
+.el-select .el-input__wrapper {
+    min-height: 40px;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 0 0 1px rgba(100, 116, 139, 0.16) inset;
+    transition-property: transform, box-shadow, background-color;
+    transition-duration: 160ms;
+    touch-action: manipulation;
+}
+
+.el-select .el-input__wrapper:hover {
+    background: #fffaf0;
+    box-shadow: 0 6px 18px rgba(47, 125, 92, 0.08), 0 0 0 1px rgba(47, 125, 92, 0.28) inset;
+}
+
+.el-select .el-input__wrapper.is-focus {
+    background: #ffffff;
+    box-shadow: 0 0 0 1px #2f7d5c inset, 0 0 0 4px rgba(47, 125, 92, 0.12), 0 10px 24px rgba(47, 125, 92, 0.10);
+}
+
+.el-select .el-input__inner {
+    color: #1e293b;
+    font-weight: 700;
+}
+
+.el-select .el-input__inner::placeholder {
+    color: #94a3b8;
+    font-weight: 700;
+}
+
+.el-select .el-input .el-select__caret,
+.el-select .el-input__suffix {
+    color: #2f7d5c;
+}
+
+.el-select .el-input__wrapper:active {
+    transform: scale(0.98);
+}
+
+.el-select-dropdown.el-popper {
+    overflow: hidden;
+    border: 0;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.10), 0 18px 44px rgba(15, 23, 42, 0.14);
+}
+
+.el-select-dropdown .el-popper__arrow {
+    display: none;
+}
+
+.el-select-dropdown__wrap {
+    max-height: 300px;
+}
+
+.el-select-dropdown__list {
+    padding: 8px;
+}
+
+.el-select-dropdown__item {
+    min-height: 38px;
+    margin: 2px 0;
+    border-radius: 12px;
+    color: #1e293b;
+    font-weight: 700;
+    transition-property: background-color, color, transform;
+    transition-duration: 120ms;
+}
+
+.el-select-dropdown__item.hover,
+.el-select-dropdown__item:hover {
+    background: #f8faf7;
+    color: #2f7d5c;
+}
+
+.el-select-dropdown__item.selected {
+    background: rgba(47, 125, 92, 0.12);
+    color: #2f7d5c;
+    font-weight: 900;
+}
+
+.el-select-dropdown__empty {
+    padding: 18px;
+    color: #64748b;
+    font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .el-select .el-input__wrapper,
+    .el-select-dropdown__item {
+        transition: none;
+    }
+}
+
 /* Calm Marmot Dialog */
 .marmot-dialog.el-dialog {
     width: min(var(--el-dialog-width, 560px), calc(100vw - 32px)) !important;
@@ -291,6 +390,93 @@ a {
 .marmot-dialog .danger-action {
     background: rgba(239, 68, 68, 0.1);
     color: #ef4444;
+}
+
+/* Calm Marmot Pagination */
+.el-pagination {
+    gap: 8px;
+    color: #64748b;
+    font-weight: 800;
+}
+
+.el-pagination .el-pagination__total,
+.el-pagination .el-pagination__sizes,
+.el-pagination .el-pagination__jump {
+    margin: 0;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.el-pagination .btn-prev,
+.el-pagination .btn-next,
+.el-pagination .el-pager li {
+    min-width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #64748b;
+    font-weight: 900;
+    box-shadow: inset 0 0 0 1px rgba(100, 116, 139, 0.14);
+    transition-property: transform, box-shadow, background-color, color;
+    transition-duration: 160ms;
+}
+
+.el-pagination .btn-prev:hover,
+.el-pagination .btn-next:hover,
+.el-pagination .el-pager li:hover {
+    background: #f8faf7;
+    color: #2f7d5c;
+    box-shadow: inset 0 0 0 1px rgba(47, 125, 92, 0.22);
+}
+
+.el-pagination .btn-prev:active,
+.el-pagination .btn-next:active,
+.el-pagination .el-pager li:active {
+    transform: scale(0.96);
+}
+
+.el-pagination .el-pager li.is-active {
+    background: #2f7d5c;
+    color: #ffffff;
+    box-shadow: 0 8px 18px rgba(47, 125, 92, 0.20);
+}
+
+.el-pagination button:disabled,
+.el-pagination .btn-prev:disabled,
+.el-pagination .btn-next:disabled {
+    background: #f8faf7;
+    color: #cbd5e1;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.el-pagination .el-select .el-input__wrapper,
+.el-pagination .el-input__wrapper {
+    min-height: 34px;
+    border-radius: 999px;
+    background: #ffffff;
+}
+
+@media (max-width: 640px) {
+    .el-pagination {
+        justify-content: flex-start;
+        overflow-x: auto;
+        padding-bottom: 4px;
+    }
+}
+
+@media (max-width: 768px) {
+    .content-box {
+        left: 0;
+        top: 64px;
+        padding-bottom: 18px;
+    }
+
+    .content {
+        padding: 10px;
+    }
 }
 
 /* Calm Marmot MessageBox */

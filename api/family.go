@@ -2,6 +2,7 @@ package api
 
 import (
 	"marmot-ledger/internal/domain/entity/family"
+	"marmot-ledger/internal/domain/entity/financialevent"
 	"marmot-ledger/internal/domain/entity/statistics"
 	"marmot-ledger/internal/domain/repository/statisticsdb"
 	"marmot-ledger/internal/service"
@@ -146,6 +147,44 @@ func FamilyMount() *fiber.App {
 		return ctx.JSON(result.OK(*member))
 	})
 
+	app.Get("/:id/financial-events", func(ctx *fiber.Ctx) error {
+		result := &myresult.MyResult[service.PageResult[financialevent.FinancialEvent]]{}
+		userId, ok := getLoginUserId(ctx)
+		if !ok {
+			return ctx.JSON(result.Err(int(myerror.Unauthorized), myerror.Unauthorized.String()))
+		}
+		id, err := parseIdParam(ctx)
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.WrongParam), err.Error()))
+		}
+		query, err := parseFinancialEventQuery(ctx)
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.WrongParam), err.Error()))
+		}
+		data, err := service.ListFamilyFinancialEvents(userId, id, query)
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.WrongParam), err.Error()))
+		}
+		return ctx.JSON(result.OK(*data))
+	})
+
+	app.Get("/:id/assets", func(ctx *fiber.Ctx) error {
+		result := &myresult.MyResult[statistics.FamilyAssets]{}
+		userId, ok := getLoginUserId(ctx)
+		if !ok {
+			return ctx.JSON(result.Err(int(myerror.Unauthorized), myerror.Unauthorized.String()))
+		}
+		id, err := parseIdParam(ctx)
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.WrongParam), err.Error()))
+		}
+		data, err := service.GetFamilyAssets(userId, id)
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.WrongParam), err.Error()))
+		}
+		return ctx.JSON(result.OK(*data))
+	})
+
 	app.Get("/:id/statistics/summary", func(ctx *fiber.Ctx) error {
 		result := &myresult.MyResult[statistics.Summary]{}
 		userId, ok := getLoginUserId(ctx)
@@ -178,6 +217,61 @@ func FamilyMount() *fiber.App {
 			return ctx.JSON(result.Err(int(myerror.WrongParam), err.Error()))
 		}
 		return ctx.JSON(result.OK(*data))
+	})
+
+	app.Get("/:id/statistics/summaries", func(ctx *fiber.Ctx) error {
+		result := &myresult.MyResult[[]statistics.Summary]{}
+		userId, ok := getLoginUserId(ctx)
+		if !ok {
+			return ctx.JSON(result.Err(int(myerror.Unauthorized), myerror.Unauthorized.String()))
+		}
+		id, err := parseIdParam(ctx)
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.WrongParam), err.Error()))
+		}
+		data, err := service.GetFamilyStatisticsSummaries(userId, id, parseStatisticsQuery(ctx))
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.WrongParam), err.Error()))
+		}
+		return ctx.JSON(result.OK(data))
+	})
+
+	app.Get("/:id/statistics/category-groups", func(ctx *fiber.Ctx) error {
+		result := &myresult.MyResult[[]statistics.CategoryGroupStats]{}
+		userId, ok := getLoginUserId(ctx)
+		if !ok {
+			return ctx.JSON(result.Err(int(myerror.Unauthorized), myerror.Unauthorized.String()))
+		}
+		id, err := parseIdParam(ctx)
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.WrongParam), err.Error()))
+		}
+		data, err := service.GetFamilyStatisticsCategoryGroups(userId, id, parseStatisticsQuery(ctx))
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.WrongParam), err.Error()))
+		}
+		return ctx.JSON(result.OK(data))
+	})
+
+	app.Get("/:id/net-worth-trend", func(ctx *fiber.Ctx) error {
+		result := &myresult.MyResult[[]statistics.NetWorthTrendPoint]{}
+		userId, ok := getLoginUserId(ctx)
+		if !ok {
+			return ctx.JSON(result.Err(int(myerror.Unauthorized), myerror.Unauthorized.String()))
+		}
+		id, err := parseIdParam(ctx)
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.WrongParam), err.Error()))
+		}
+		granularity := ctx.Query("granularity")
+		if granularity != "week" {
+			granularity = "month"
+		}
+		data, err := service.GetFamilyNetWorthTrend(userId, id, parseStatisticsQuery(ctx), granularity)
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.WrongParam), err.Error()))
+		}
+		return ctx.JSON(result.OK(data))
 	})
 
 	_ = statisticsdb.StatisticsQuery{}

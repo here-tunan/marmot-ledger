@@ -1,16 +1,11 @@
 package account
 
 type Account struct {
-	Id                int64  `json:"id"`
-	UserId            int64  `json:"userId"`
-	Name              string `json:"name"`
-	Type              string `json:"type"`
-	ProviderCode      string `json:"providerCode"`
-	AccountGroupKey   string `json:"accountGroupKey"`
-	StandardAccountId int64  `json:"standardAccountId"`
-	BankCode          string `json:"bankCode"`
-	DisplayName       string `json:"displayName"`
-	Icon              string `json:"icon"`
-	Color             string `json:"color"`
-	IsActive          bool   `json:"isActive"`
+	Id       int64  `json:"id"`
+	UserId   int64  `json:"userId"`
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	Icon     string `json:"icon"`
+	Color    string `json:"color"`
+	IsActive bool   `json:"isActive"`
 }

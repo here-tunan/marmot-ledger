@@ -4,13 +4,12 @@ import (
 	"errors"
 	"marmot-ledger/internal/domain/entity/category"
 	"marmot-ledger/internal/domain/repository/categorydb"
-	"marmot-ledger/internal/domain/repository/categorygroupdb"
-	"marmot-ledger/internal/infrastructure"
+	"marmot-ledger/internal/domain/repository/familycategorygroupdb"
 	"strings"
 )
 
 func CreateCategory(userId int64, categoryInfo *category.Category) (*category.Category, error) {
-	if err := validateCategory(userId, categoryInfo); err != nil {
+	if err := validateCategory(categoryInfo); err != nil {
 		return nil, err
 	}
 
@@ -19,6 +18,18 @@ func CreateCategory(userId int64, categoryInfo *category.Category) (*category.Ca
 	if err := categorydb.InsertCategory(categoryDb); err != nil {
 		return nil, err
 	}
+
+	// 如果指定了家庭分组，添加成员关系
+	if len(categoryInfo.GroupIds) > 0 {
+		for _, groupId := range categoryInfo.GroupIds {
+			member := &familycategorygroupdb.FamilyCategoryGroupMember{
+				FamilyGroupId: groupId,
+				CategoryId:    categoryDb.Id,
+			}
+			_ = familycategorygroupdb.InsertGroupMember(member)
+		}
+	}
+
 	return GetCategory(userId, categoryDb.Id)
 }
 
@@ -44,12 +55,19 @@ func GetCategory(userId int64, id int64) (*category.Category, error) {
 		return nil, err
 	}
 	entity := toCategoryEntity(categoryDb)
+
+	// 填充所属家庭分组ID
+	groupIds, err := familycategorygroupdb.ListGroupsForCategory(id)
+	if err == nil {
+		entity.GroupIds = groupIds
+	}
+
 	return &entity, nil
 }
 
 func UpdateCategory(userId int64, id int64, categoryInfo *category.Category) (*category.Category, error) {
 	categoryInfo.Id = id
-	if err := validateCategory(userId, categoryInfo); err != nil {
+	if err := validateCategory(categoryInfo); err != nil {
 		return nil, err
 	}
 
@@ -58,14 +76,36 @@ func UpdateCategory(userId int64, id int64, categoryInfo *category.Category) (*c
 	if err := categorydb.UpdateCategory(categoryDb); err != nil {
 		return nil, err
 	}
+
+	// 更新家庭分组成员关系（先删后加）
+	// TODO: 更高效的更新方式：对比差异只改变化的
+
 	return GetCategory(userId, id)
 }
 
-func DeleteCategory(userId int64, id int64) error {
-	return categorydb.SoftDeleteCategory(id, userId)
+// DeleteCategory 删除分类，返回被影响的账单数量
+func DeleteCategory(userId int64, id int64) (int64, error) {
+	// 先统计该分类下的账单数量
+	count, err := categorydb.CountEventsByCategory(userId, id)
+	if err != nil {
+		return 0, err
+	}
+
+	// 执行软删除
+	err = categorydb.SoftDeleteCategory(id, userId)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
-func validateCategory(userId int64, categoryInfo *category.Category) error {
+// CheckCategoryUsage 检查分类的使用情况
+func CheckCategoryUsage(userId int64, id int64) (int64, error) {
+	return categorydb.CountEventsByCategory(userId, id)
+}
+
+func validateCategory(categoryInfo *category.Category) error {
 	if categoryInfo == nil {
 		return errors.New("category is required")
 	}
@@ -76,47 +116,36 @@ func validateCategory(userId int64, categoryInfo *category.Category) error {
 	if categoryType != EventTypeIncome && categoryType != EventTypeExpense {
 		return errors.New("category type is invalid")
 	}
-	if categoryInfo.CategoryGroupId == 0 {
-		return errors.New("category group is required")
-	}
-
-	session := infrastructure.Mysql.NewSession()
-	defer session.Close()
-	group, err := categorygroupdb.GetCategoryGroupById(session, categoryInfo.CategoryGroupId)
-	if err != nil {
-		return err
-	}
-	if !group.Enabled {
-		return errors.New("category group is disabled")
-	}
-	if group.Type != categoryType {
-		return errors.New("category group type does not match category type")
-	}
 	return nil
 }
 
 func toCategoryDb(userId int64, categoryInfo *category.Category) *categorydb.Category {
+	var templateId int64
+	if categoryInfo.TemplateId > 0 {
+		templateId = categoryInfo.TemplateId
+	}
+
 	return &categorydb.Category{
-		Id:              categoryInfo.Id,
-		UserId:          userId,
-		Name:            strings.TrimSpace(categoryInfo.Name),
-		Type:            strings.TrimSpace(categoryInfo.Type),
-		CategoryGroupId: categoryInfo.CategoryGroupId,
-		IsActive:        categoryInfo.IsActive,
+		Id:         categoryInfo.Id,
+		UserId:     userId,
+		Name:       strings.TrimSpace(categoryInfo.Name),
+		Type:       strings.TrimSpace(categoryInfo.Type),
+		TemplateId: templateId,
+		Icon:       categoryInfo.Icon,
+		Color:      categoryInfo.Color,
+		IsActive:   categoryInfo.IsActive,
 	}
 }
 
 func toCategoryEntity(categoryDb *categorydb.CategoryView) category.Category {
 	return category.Category{
-		Id:                 categoryDb.Id,
-		UserId:             categoryDb.UserId,
-		Name:               categoryDb.Name,
-		Type:               categoryDb.Type,
-		CategoryGroupId:    categoryDb.CategoryGroupId,
-		CategoryGroupCode:  categoryDb.CategoryGroupCode,
-		CategoryGroupName:  categoryDb.CategoryGroupName,
-		CategoryGroupColor: categoryDb.CategoryGroupColor,
-		CategoryGroupIcon:  categoryDb.CategoryGroupIcon,
-		IsActive:           categoryDb.IsActive,
+		Id:         categoryDb.Id,
+		UserId:     categoryDb.UserId,
+		Name:       categoryDb.Name,
+		Type:       categoryDb.Type,
+		TemplateId: categoryDb.TemplateId,
+		Icon:       categoryDb.Icon,
+		Color:      categoryDb.Color,
+		IsActive:   categoryDb.IsActive,
 	}
 }

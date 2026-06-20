@@ -34,10 +34,21 @@ type RecordBuildResult struct {
 }
 
 var recordStrategies = map[string]RecordStrategy{
-	EventTypeIncome:   IncomeRecordStrategy{},
-	EventTypeExpense:  ExpenseRecordStrategy{},
-	EventTypeRefund:   RefundRecordStrategy{},
-	EventTypeTransfer: TransferRecordStrategy{},
+	EventTypeIncome:            IncomeRecordStrategy{},
+	EventTypeExpense:           ExpenseRecordStrategy{},
+	EventTypeRefund:            RefundRecordStrategy{},
+	EventTypeTransfer:          TransferRecordStrategy{},
+	EventTypeExchange:          ExchangeRecordStrategy{},
+	EventTypeBalanceAdjustment: BalanceAdjustmentRecordStrategy{},
+	EventTypeReceivableCreate:  ReceivableCreateRecordStrategy{},
+	EventTypeReceivableCollect: ReceivableCollectRecordStrategy{},
+	EventTypeDepositCreate:     DepositCreateRecordStrategy{},
+	EventTypeDepositRefund:     DepositRefundRecordStrategy{},
+	EventTypeLoanOut:           LoanOutRecordStrategy{},
+	EventTypeLoanCollect:       LoanCollectRecordStrategy{},
+	EventTypeInvestmentBuy:     InvestmentBuyRecordStrategy{},
+	EventTypeInvestmentIncome:  InvestmentIncomeRecordStrategy{},
+	EventTypeInvestmentRevalue: InvestmentRevalueRecordStrategy{},
 }
 
 func singleBalance(bucketId int64, balance decimal.Decimal) map[int64]decimal.Decimal {

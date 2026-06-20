@@ -15,6 +15,8 @@ type User struct {
 	Password string `json:"password"`
 	// 名称
 	Name string `json:"name"`
+	// 用户角色: user/admin
+	Role string `json:"role"`
 	// 描述
 	Desc string `json:"desc"`
 	// 头像
@@ -69,4 +71,21 @@ func (user *User) PutUser() error {
 		}
 	}
 	return nil
+}
+
+// GetUserRoleById 获取用户角色
+func GetUserRoleById(userId int64) (string, error) {
+	user := &User{}
+	has, err := infrastructure.Mysql.Where("id = ? AND is_deleted = ?", userId, 0).Cols("role").Get(user)
+	if err != nil {
+		return "", err
+	}
+	if !has {
+		return "", errors.New("user not found")
+	}
+	// 默认返回 user 角色
+	if user.Role == "" {
+		return "user", nil
+	}
+	return user.Role, nil
 }

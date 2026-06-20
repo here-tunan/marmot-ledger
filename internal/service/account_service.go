@@ -11,6 +11,7 @@ func CreateAccount(userId int64, accountInfo *account.Account) (*account.Account
 	if err := validateAccount(accountInfo); err != nil {
 		return nil, err
 	}
+	fillAccountDefaults(accountInfo)
 
 	accountDb := toAccountDb(userId, accountInfo)
 	accountDb.IsActive = true
@@ -49,6 +50,7 @@ func UpdateAccount(userId int64, id int64, accountInfo *account.Account) (*accou
 	if err := validateAccount(accountInfo); err != nil {
 		return nil, err
 	}
+	fillAccountDefaults(accountInfo)
 
 	accountDb := toAccountDb(userId, accountInfo)
 	accountDb.Id = id
@@ -83,46 +85,72 @@ func validateAccount(accountInfo *account.Account) error {
 	return nil
 }
 
-func toAccountDb(userId int64, accountInfo *account.Account) *accountdb.Account {
-	var standardAccountId *int64
-	if accountInfo.StandardAccountId != 0 {
-		standardAccountId = &accountInfo.StandardAccountId
+func fillAccountDefaults(accountInfo *account.Account) {
+	accountInfo.Type = strings.ToLower(strings.TrimSpace(accountInfo.Type))
+	if strings.TrimSpace(accountInfo.Icon) == "" {
+		accountInfo.Icon = defaultAccountIcon(accountInfo.Type)
 	}
+	if strings.TrimSpace(accountInfo.Color) == "" {
+		accountInfo.Color = defaultAccountColor(accountInfo.Type)
+	}
+}
 
+func defaultAccountIcon(accountType string) string {
+	switch strings.ToLower(strings.TrimSpace(accountType)) {
+	case "cash":
+		return "Money"
+	case "wallet":
+		return "Wallet"
+	case "bank", "credit":
+		return "CreditCard"
+	case "investment":
+		return "TrendCharts"
+	case "liability":
+		return "Warning"
+	default:
+		return "Wallet"
+	}
+}
+
+func defaultAccountColor(accountType string) string {
+	switch strings.ToLower(strings.TrimSpace(accountType)) {
+	case "cash":
+		return "#f59e0b"
+	case "wallet":
+		return "#22c55e"
+	case "bank":
+		return "#3b82f6"
+	case "credit":
+		return "#ef4444"
+	case "investment":
+		return "#1f2933"
+	case "liability":
+		return "#f97316"
+	default:
+		return "#2f7d5c"
+	}
+}
+
+func toAccountDb(userId int64, accountInfo *account.Account) *accountdb.Account {
 	return &accountdb.Account{
-		Id:                accountInfo.Id,
-		UserId:            userId,
-		Name:              strings.TrimSpace(accountInfo.Name),
-		Type:              strings.TrimSpace(accountInfo.Type),
-		ProviderCode:      strings.TrimSpace(accountInfo.ProviderCode),
-		AccountGroupKey:   strings.TrimSpace(accountInfo.AccountGroupKey),
-		StandardAccountId: standardAccountId,
-		BankCode:          strings.TrimSpace(accountInfo.BankCode),
-		DisplayName:       strings.TrimSpace(accountInfo.DisplayName),
-		Icon:              strings.TrimSpace(accountInfo.Icon),
-		Color:             strings.TrimSpace(accountInfo.Color),
-		IsActive:          accountInfo.IsActive,
+		Id:       accountInfo.Id,
+		UserId:   userId,
+		Name:     strings.TrimSpace(accountInfo.Name),
+		Type:     strings.ToLower(strings.TrimSpace(accountInfo.Type)),
+		Icon:     strings.TrimSpace(accountInfo.Icon),
+		Color:    strings.TrimSpace(accountInfo.Color),
+		IsActive: accountInfo.IsActive,
 	}
 }
 
 func toAccountEntity(accountDb *accountdb.Account) *account.Account {
-	var standardAccountId int64
-	if accountDb.StandardAccountId != nil {
-		standardAccountId = *accountDb.StandardAccountId
-	}
-
 	return &account.Account{
-		Id:                accountDb.Id,
-		UserId:            accountDb.UserId,
-		Name:              accountDb.Name,
-		Type:              accountDb.Type,
-		ProviderCode:      accountDb.ProviderCode,
-		AccountGroupKey:   accountDb.AccountGroupKey,
-		StandardAccountId: standardAccountId,
-		BankCode:          accountDb.BankCode,
-		DisplayName:       accountDb.DisplayName,
-		Icon:              accountDb.Icon,
-		Color:             accountDb.Color,
-		IsActive:          accountDb.IsActive,
+		Id:       accountDb.Id,
+		UserId:   accountDb.UserId,
+		Name:     accountDb.Name,
+		Type:     accountDb.Type,
+		Icon:     accountDb.Icon,
+		Color:    accountDb.Color,
+		IsActive: accountDb.IsActive,
 	}
 }

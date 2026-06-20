@@ -34,17 +34,20 @@
 </template>
 
 <script setup>
+import { computed, onMounted, ref } from 'vue';
 import { useSidebarStore } from '@/stores/sidebar';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import { getCurrentUserRole } from '@/api/user/user';
 import marmotOne from '../../../img/marmot-ledger-1.png';
 
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const sidebar = useSidebarStore();
+const isAdmin = ref(false);
 
-const items = [
+const baseItems = [
   {
     icon: 'House',
     index: '/dashboard',
@@ -59,6 +62,11 @@ const items = [
     icon: 'Document',
     index: '/records',
     titleKey: 'routes.records',
+  },
+  {
+    icon: 'Tickets',
+    index: '/outstanding',
+    titleKey: 'routes.outstanding',
   },
   {
     icon: 'Wallet',
@@ -85,7 +93,24 @@ const items = [
     index: '/user',
     titleKey: 'routes.userCenter',
   },
+  {
+    icon: 'Setting',
+    index: '/admin/templates',
+    titleKey: 'routes.templateManagement',
+    adminOnly: true,
+  },
 ];
+
+const items = computed(() => baseItems.filter((item) => !item.adminOnly || isAdmin.value));
+
+onMounted(async () => {
+  try {
+    const res = await getCurrentUserRole();
+    isAdmin.value = Boolean(res.success && res.data?.role === 'admin');
+  } catch (err) {
+    isAdmin.value = false;
+  }
+});
 
 const isActive = (path) => route.path === path;
 

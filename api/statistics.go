@@ -41,6 +41,84 @@ func StatisticsMount() *fiber.App {
 		return ctx.JSON(result.OK(*stats))
 	})
 
+	app.Get("/summaries", func(ctx *fiber.Ctx) error {
+		result := &myresult.MyResult[[]statistics.Summary]{}
+		userId, ok := getLoginUserId(ctx)
+		if !ok {
+			return ctx.JSON(result.Err(int(myerror.Unauthorized), myerror.Unauthorized.String()))
+		}
+
+		summaries, err := service.GetStatisticsSummaries(userId, parseStatisticsQuery(ctx))
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.InternalError), err.Error()))
+		}
+		return ctx.JSON(result.OK(summaries))
+	})
+
+	app.Get("/category-groups", func(ctx *fiber.Ctx) error {
+		result := &myresult.MyResult[[]statistics.CategoryGroupStats]{}
+		userId, ok := getLoginUserId(ctx)
+		if !ok {
+			return ctx.JSON(result.Err(int(myerror.Unauthorized), myerror.Unauthorized.String()))
+		}
+
+		stats, err := service.GetStatisticsCategoryGroups(userId, parseStatisticsQuery(ctx))
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.InternalError), err.Error()))
+		}
+		return ctx.JSON(result.OK(stats))
+	})
+
+	app.Get("/trend", func(ctx *fiber.Ctx) error {
+		result := &myresult.MyResult[[]statistics.TrendPoint]{}
+		userId, ok := getLoginUserId(ctx)
+		if !ok {
+			return ctx.JSON(result.Err(int(myerror.Unauthorized), myerror.Unauthorized.String()))
+		}
+
+		granularity := ctx.Query("granularity")
+		if granularity != "week" {
+			granularity = "month"
+		}
+		points, err := service.GetStatisticsTrend(userId, parseStatisticsQuery(ctx), granularity)
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.InternalError), err.Error()))
+		}
+		return ctx.JSON(result.OK(points))
+	})
+
+	app.Get("/investment", func(ctx *fiber.Ctx) error {
+		result := &myresult.MyResult[[]statistics.InvestmentSummary]{}
+		userId, ok := getLoginUserId(ctx)
+		if !ok {
+			return ctx.JSON(result.Err(int(myerror.Unauthorized), myerror.Unauthorized.String()))
+		}
+
+		items, err := service.GetInvestmentSummaries(userId, parseStatisticsQuery(ctx))
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.InternalError), err.Error()))
+		}
+		return ctx.JSON(result.OK(items))
+	})
+
+	app.Get("/net-worth-trend", func(ctx *fiber.Ctx) error {
+		result := &myresult.MyResult[[]statistics.NetWorthTrendPoint]{}
+		userId, ok := getLoginUserId(ctx)
+		if !ok {
+			return ctx.JSON(result.Err(int(myerror.Unauthorized), myerror.Unauthorized.String()))
+		}
+
+		granularity := ctx.Query("granularity")
+		if granularity != "week" {
+			granularity = "month"
+		}
+		points, err := service.GetNetWorthTrend(userId, parseStatisticsQuery(ctx), granularity)
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.InternalError), err.Error()))
+		}
+		return ctx.JSON(result.OK(points))
+	})
+
 	return app
 }
 

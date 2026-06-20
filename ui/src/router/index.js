@@ -2,13 +2,16 @@ import {createRouter, createWebHashHistory} from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import Dashboard from "@/views/Dashboard.vue";
 import Login from "@/views/login/Login.vue"
+import Register from "@/views/login/Register.vue"
 import User from "@/views/User.vue";
 import Accounts from "@/views/Accounts.vue";
 import Buckets from "@/views/Buckets.vue";
 import Record from "@/views/Record.vue";
 import Records from "@/views/Records.vue";
+import Outstanding from "@/views/Outstanding.vue";
 import Categories from "@/views/Categories.vue";
 import Family from "@/views/Family.vue";
+import TemplateManagement from "@/views/admin/TemplateManagement.vue"
 
 const router = createRouter({
     history: createWebHashHistory(),
@@ -21,6 +24,11 @@ const router = createRouter({
             path: '/login',
             name: 'login',
             component: Login,
+        },
+        {
+            path: '/register',
+            name: 'register',
+            component: Register,
         },
         {
             path: '/',
@@ -76,6 +84,14 @@ const router = createRouter({
                     component: Records,
                 },
                 {
+                    path: '/outstanding',
+                    name: 'outstanding',
+                    meta: {
+                        titleKey: 'routes.outstanding',
+                    },
+                    component: Outstanding,
+                },
+                {
                     path: '/family',
                     name: 'family',
                     meta: {
@@ -89,6 +105,15 @@ const router = createRouter({
                     component: User,
                     meta: {
                         titleKey: "routes.userCenter"
+                    }
+                },
+                {
+                    path: '/admin/templates',
+                    name: 'templateManagement',
+                    component: TemplateManagement,
+                    meta: {
+                        titleKey: "routes.templateManagement",
+                        requiresAdmin: true,
                     }
                 },
             ]

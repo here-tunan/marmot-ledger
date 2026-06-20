@@ -34,6 +34,9 @@
         <button class="primary-action" :disabled="loading" @click="handleLogin">
           {{ loading ? '...' : t('auth.login') }}
         </button>
+        <p class="switch-link">
+          没有账号？<router-link to="/register">去注册</router-link>
+        </p>
       </div>
     </section>
   </main>
@@ -242,6 +245,23 @@ const handleLogin = async () => {
 .primary-action:disabled {
   cursor: not-allowed;
   opacity: 0.62;
+}
+
+.switch-link {
+  text-align: center;
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}
+
+.switch-link a {
+  color: #2f7d5c;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.switch-link a:hover {
+  text-decoration: underline;
 }
 
 @media (max-width: 900px) {

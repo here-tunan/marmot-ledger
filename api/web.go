@@ -13,7 +13,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
-var authWhiteList = []string{"login", "validToken", "refreshToken"}
+var authWhiteList = []string{"login", "validToken", "refreshToken", "register"}
 
 func Start() {
 
@@ -71,13 +71,19 @@ func Start() {
 
 	root.Mount("/user", UserMount())
 	root.Mount("/account", AccountMount())
+	root.Mount("/account-template", AccountTemplateMount())
 	root.Mount("/bucket", BucketMount())
 	root.Mount("/category", CategoryMount())
 	root.Mount("/category-group", CategoryGroupMount())
+	root.Mount("/category-template", CategoryTemplateMount())
 	root.Mount("/financial-event", FinancialEventMount())
+	root.Mount("/export", ExportMount())
+	root.Mount("/outstanding", OutstandingMount())
 	root.Mount("/record", RecordMount())
 	root.Mount("/statistics", StatisticsMount())
 	root.Mount("/family", FamilyMount())
+	root.Mount("/", FamilyCategoryGroupMount())
+	root.Mount("/channel-template", ChannelTemplateMount())
 
 	log.Fatal(app.Listen(":" + env.Prop.Port))
 }

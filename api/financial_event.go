@@ -25,11 +25,67 @@ func FinancialEventMount() *fiber.App {
 			return ctx.JSON(result.Err(int(myerror.WrongParam), err.Error()))
 		}
 
-		events, err := service.ListFinancialEvents(userId, query)
+		var events *service.PageResult[financialevent.FinancialEvent]
+		if ctx.QueryBool("groupMode", false) {
+			events, err = service.ListGroupedFinancialEvents(userId, query)
+		} else {
+			events, err = service.ListFinancialEvents(userId, query)
+		}
 		if err != nil {
 			return ctx.JSON(result.Err(int(myerror.InternalError), err.Error()))
 		}
 		return ctx.JSON(result.OK(*events))
+	})
+
+	app.Get("/outstanding", func(ctx *fiber.Ctx) error {
+		result := &myresult.MyResult[[]financialevent.OutstandingItem]{}
+		userId, ok := getLoginUserId(ctx)
+		if !ok {
+			return ctx.JSON(result.Err(int(myerror.Unauthorized), myerror.Unauthorized.String()))
+		}
+
+		bucketIdStr := ctx.Query("bucketId")
+		var bucketId int64
+		if bucketIdStr != "" {
+			parsed, parseErr := strconv.ParseInt(bucketIdStr, 10, 64)
+			if parseErr != nil {
+				return ctx.JSON(result.Err(int(myerror.WrongParam), "bucketId is invalid"))
+			}
+			bucketId = parsed
+		}
+		eventType := ctx.Query("eventType")
+		if eventType == "" {
+			return ctx.JSON(result.Err(int(myerror.WrongParam), "eventType is required"))
+		}
+
+		items, err := service.ListOutstandingForBucket(userId, bucketId, eventType)
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.InternalError), err.Error()))
+		}
+		return ctx.JSON(result.OK(items))
+	})
+
+	app.Get("/group/:groupId", func(ctx *fiber.Ctx) error {
+		result := &myresult.MyResult[[]service.GroupedEvent]{}
+		userId, ok := getLoginUserId(ctx)
+		if !ok {
+			return ctx.JSON(result.Err(int(myerror.Unauthorized), myerror.Unauthorized.String()))
+		}
+
+		groupId, err := strconv.ParseInt(ctx.Params("groupId"), 10, 64)
+		if err != nil || groupId == 0 {
+			return ctx.JSON(result.Err(int(myerror.WrongParam), "groupId is required"))
+		}
+		var currentId int64
+		if currentIdStr := ctx.Query("currentId"); currentIdStr != "" {
+			currentId, _ = strconv.ParseInt(currentIdStr, 10, 64)
+		}
+
+		events, err := service.GetEventGroup(userId, groupId, currentId)
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.InternalError), err.Error()))
+		}
+		return ctx.JSON(result.OK(events))
 	})
 
 	app.Get("/:id", func(ctx *fiber.Ctx) error {
@@ -59,6 +115,7 @@ func parseFinancialEventQuery(ctx *fiber.Ctx) (financialevent.FinancialEventQuer
 		EventType: ctx.Query("eventType"),
 		StartTime: ctx.Query("startTime"),
 		EndTime:   ctx.Query("endTime"),
+		Currency:  ctx.Query("currency"),
 	}
 
 	if categoryId := ctx.Query("categoryId"); categoryId != "" {

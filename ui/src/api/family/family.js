@@ -32,10 +32,30 @@ export function rejectFamilyInvitation(invitationId) {
   return request.post(`/family/invitations/${invitationId}/reject`)
 }
 
+export function listFamilyFinancialEvents(id, params = {}) {
+  return request.get(`/family/${id}/financial-events`, { params })
+}
+
+export function getFamilyAssets(id) {
+  return request.get(`/family/${id}/assets`)
+}
+
 export function getFamilyStatisticsSummary(id, params = {}) {
   return request.get(`/family/${id}/statistics/summary`, { params })
 }
 
 export function getFamilyStatisticsCategoryGroups(id, params = {}) {
   return request.get(`/family/${id}/statistics/category-group`, { params })
+}
+
+export function getFamilyStatisticsSummaries(id, params = {}) {
+  return request.get(`/family/${id}/statistics/summaries`, { params })
+}
+
+export function getFamilyStatisticsCategoryGroupsByCurrency(id, params = {}) {
+  return request.get(`/family/${id}/statistics/category-groups`, { params })
+}
+
+export function getFamilyNetWorthTrend(id, params = {}) {
+  return request.get(`/family/${id}/net-worth-trend`, { params })
 }

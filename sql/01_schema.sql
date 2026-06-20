@@ -43,10 +43,11 @@ CREATE TABLE IF NOT EXISTS `currency` (
 
 CREATE TABLE IF NOT EXISTS `account_template` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键',
-  `provider_code` VARCHAR(64) NOT NULL COMMENT '平台或机构代码',
+  `provider_code` VARCHAR(64) NOT NULL COMMENT '模板代码',
   `name` VARCHAR(64) NOT NULL COMMENT '模板名称',
   `type` VARCHAR(32) NOT NULL COMMENT '账户类型',
-  `icon` VARCHAR(255) NOT NULL DEFAULT '' COMMENT '图标',
+  `icon` VARCHAR(64) NOT NULL DEFAULT '' COMMENT 'Element Plus 图标 key',
+  `color` VARCHAR(32) NOT NULL DEFAULT '' COMMENT '颜色',
   `sort` INT NOT NULL DEFAULT 0 COMMENT '排序',
   `enabled` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
   `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
@@ -115,12 +116,7 @@ CREATE TABLE IF NOT EXISTS `account` (
   `user_id` BIGINT NOT NULL COMMENT '用户ID',
   `name` VARCHAR(128) NOT NULL COMMENT '账户名称',
   `type` VARCHAR(32) NOT NULL COMMENT '账户类型',
-  `provider_code` VARCHAR(64) NULL COMMENT '平台或机构代码',
-  `account_group_key` VARCHAR(64) NULL COMMENT '账户聚合键',
-  `standard_account_id` BIGINT NULL COMMENT '标准账户模板ID',
-  `bank_code` VARCHAR(64) NULL COMMENT '银行代码',
-  `display_name` VARCHAR(128) NOT NULL DEFAULT '' COMMENT '展示名称',
-  `icon` VARCHAR(255) NOT NULL DEFAULT '' COMMENT '图标',
+  `icon` VARCHAR(64) NOT NULL DEFAULT '' COMMENT 'Element Plus 图标 key',
   `color` VARCHAR(32) NOT NULL DEFAULT '' COMMENT '颜色',
   `is_active` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
   `is_deleted` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否删除',
@@ -129,10 +125,7 @@ CREATE TABLE IF NOT EXISTS `account` (
   PRIMARY KEY (`id`),
   KEY `idx_account_user_active` (`user_id`, `is_deleted`, `is_active`),
   KEY `idx_account_user_type` (`user_id`, `type`),
-  KEY `idx_account_provider_code` (`provider_code`),
-  KEY `idx_account_standard_account_id` (`standard_account_id`),
-  CONSTRAINT `fk_account_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`),
-  CONSTRAINT `fk_account_template` FOREIGN KEY (`standard_account_id`) REFERENCES `account_template` (`id`)
+  CONSTRAINT `fk_account_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='账户，不保存余额';
 
 CREATE TABLE IF NOT EXISTS `bucket` (
@@ -192,9 +185,6 @@ CREATE TABLE IF NOT EXISTS `financial_event` (
   `event_time` DATETIME(3) NOT NULL COMMENT '事件发生时间',
   `currency` CHAR(3) NOT NULL COMMENT '原始币种',
   `amount` DECIMAL(20,4) NOT NULL DEFAULT 0.0000 COMMENT '原始金额',
-  `base_currency` CHAR(3) NOT NULL COMMENT '本位币',
-  `base_amount` DECIMAL(20,4) NOT NULL DEFAULT 0.0000 COMMENT '本位币金额',
-  `exchange_rate` DECIMAL(24,12) NOT NULL DEFAULT 1.000000000000 COMMENT '事件使用汇率快照',
   `include_in_statistics` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否进入普通收支统计',
   `source` VARCHAR(32) NOT NULL DEFAULT 'manual' COMMENT '来源',
   `status` VARCHAR(32) NOT NULL DEFAULT 'active' COMMENT '状态',
@@ -211,15 +201,13 @@ CREATE TABLE IF NOT EXISTS `financial_event` (
   KEY `idx_financial_event_channel_time` (`channel_type`, `event_time`),
   KEY `idx_financial_event_user_deleted_time` (`user_id`, `is_deleted`, `event_time`),
   KEY `idx_financial_event_currency` (`currency`),
-  KEY `idx_financial_event_base_currency` (`base_currency`),
   CONSTRAINT `fk_financial_event_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`),
   CONSTRAINT `fk_financial_event_related` FOREIGN KEY (`related_financial_event_id`) REFERENCES `financial_event` (`id`),
   CONSTRAINT `fk_financial_event_category` FOREIGN KEY (`category_id`) REFERENCES `category` (`id`),
   CONSTRAINT `fk_financial_event_category_group` FOREIGN KEY (`category_group_id`) REFERENCES `category_group` (`id`),
   CONSTRAINT `fk_financial_event_channel` FOREIGN KEY (`channel_type`) REFERENCES `channel_template` (`channel_code`),
   CONSTRAINT `fk_financial_event_channel_account` FOREIGN KEY (`channel_account_id`) REFERENCES `account` (`id`),
-  CONSTRAINT `fk_financial_event_currency` FOREIGN KEY (`currency`) REFERENCES `currency` (`code`),
-  CONSTRAINT `fk_financial_event_base_currency` FOREIGN KEY (`base_currency`) REFERENCES `currency` (`code`)
+  CONSTRAINT `fk_financial_event_currency` FOREIGN KEY (`currency`) REFERENCES `currency` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='财务事件';
 
 CREATE TABLE IF NOT EXISTS `ledger_entry` (
@@ -335,16 +323,13 @@ CREATE TABLE IF NOT EXISTS `investment_snapshot` (
 CREATE TABLE IF NOT EXISTS `family` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键',
   `name` VARCHAR(128) NOT NULL COMMENT '家庭名称',
-  `base_currency` CHAR(3) NOT NULL DEFAULT 'CNY' COMMENT '家庭本位币',
   `owner_user_id` BIGINT NOT NULL COMMENT '创建者用户ID',
   `is_deleted` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否删除',
   `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
   `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
   PRIMARY KEY (`id`),
   KEY `idx_family_owner` (`owner_user_id`, `is_deleted`),
-  KEY `idx_family_base_currency` (`base_currency`),
-  CONSTRAINT `fk_family_owner_user` FOREIGN KEY (`owner_user_id`) REFERENCES `user` (`id`),
-  CONSTRAINT `fk_family_base_currency` FOREIGN KEY (`base_currency`) REFERENCES `currency` (`code`)
+  CONSTRAINT `fk_family_owner_user` FOREIGN KEY (`owner_user_id`) REFERENCES `user` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='家庭';
 
 CREATE TABLE IF NOT EXISTS `family_member` (

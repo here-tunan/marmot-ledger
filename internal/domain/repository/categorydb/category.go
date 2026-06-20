@@ -15,6 +15,9 @@ type Category struct {
 	Name            string          `json:"name" xorm:"'name'"`
 	Type            string          `json:"type" xorm:"'type'"`
 	CategoryGroupId int64           `json:"categoryGroupId" xorm:"'category_group_id'"`
+	TemplateId      int64           `json:"templateId" xorm:"'template_id'"`
+	Icon            string          `json:"icon" xorm:"'icon'"`
+	Color           string          `json:"color" xorm:"'color'"`
 	IsActive        bool            `json:"isActive" xorm:"'is_active'"`
 	IsDeleted       bool            `json:"isDeleted" xorm:"'is_deleted'"`
 	CreatedAt       model.LocalTime `json:"createdAt" xorm:"created 'created_at'"`
@@ -22,11 +25,7 @@ type Category struct {
 }
 
 type CategoryView struct {
-	Category           `xorm:"extends"`
-	CategoryGroupCode  string `json:"categoryGroupCode" xorm:"'category_group_code'"`
-	CategoryGroupName  string `json:"categoryGroupName" xorm:"'category_group_name'"`
-	CategoryGroupColor string `json:"categoryGroupColor" xorm:"'category_group_color'"`
-	CategoryGroupIcon  string `json:"categoryGroupIcon" xorm:"'category_group_icon'"`
+	Category `xorm:"extends"`
 }
 
 type CategoryQuery struct {
@@ -46,8 +45,7 @@ func InsertCategory(category *Category) error {
 func ListCategories(userId int64, query CategoryQuery) ([]CategoryView, error) {
 	categories := make([]CategoryView, 0)
 	session := infrastructure.Mysql.Table("category").Alias("c").
-		Select("c.*, cg.group_code AS category_group_code, cg.name AS category_group_name, cg.color AS category_group_color, cg.icon AS category_group_icon").
-		Join("LEFT", "category_group cg", "c.category_group_id = cg.id").
+		Select("c.*").
 		Where("c.user_id = ? AND c.is_deleted = ?", userId, 0)
 
 	if strings.TrimSpace(query.Type) != "" {
@@ -57,15 +55,14 @@ func ListCategories(userId int64, query CategoryQuery) ([]CategoryView, error) {
 		session.And("c.is_active = ?", *query.IsActive)
 	}
 
-	err := session.Asc("c.type", "cg.sort", "c.id").Find(&categories)
+	err := session.Asc("c.type", "c.id").Find(&categories)
 	return categories, err
 }
 
 func GetCategoryByIdForUser(session *xorm.Session, id int64, userId int64) (*CategoryView, error) {
 	categories := make([]CategoryView, 0, 1)
 	err := session.Table("category").Alias("c").
-		Select("c.*, cg.group_code AS category_group_code, cg.name AS category_group_name, cg.color AS category_group_color, cg.icon AS category_group_icon").
-		Join("LEFT", "category_group cg", "c.category_group_id = cg.id").
+		Select("c.*").
 		Where("c.id = ? AND c.user_id = ? AND c.is_deleted = ?", id, userId, 0).
 		Limit(1).
 		Find(&categories)
@@ -87,7 +84,7 @@ func GetCategory(id int64, userId int64) (*CategoryView, error) {
 func UpdateCategory(category *Category) error {
 	_, err := infrastructure.Mysql.
 		Where("id = ? AND user_id = ? AND is_deleted = ?", category.Id, category.UserId, 0).
-		Cols("name", "type", "category_group_id", "is_active").
+		Cols("name", "type", "category_group_id", "icon", "color", "is_active").
 		Update(category)
 	return err
 }
@@ -98,4 +95,11 @@ func SoftDeleteCategory(id int64, userId int64) error {
 		Cols("is_deleted").
 		Update(&Category{IsDeleted: true})
 	return err
+}
+
+// CountEventsByCategory 统计该分类下有多少条财务事件
+func CountEventsByCategory(userId int64, categoryId int64) (int64, error) {
+	return infrastructure.Mysql.
+		Where("user_id = ? AND category_id = ? AND is_deleted = ?", userId, categoryId, 0).
+		Count(&map[string]interface{}{})
 }

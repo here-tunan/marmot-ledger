@@ -20,13 +20,14 @@ type FinancialEvent struct {
 	EventTime               string                    `json:"eventTime"`
 	Currency                string                    `json:"currency"`
 	Amount                  decimal.Decimal           `json:"amount"`
-	BaseCurrency            string                    `json:"baseCurrency"`
-	BaseAmount              decimal.Decimal           `json:"baseAmount"`
-	ExchangeRate            decimal.Decimal           `json:"exchangeRate"`
 	IncludeInStatistics     bool                      `json:"includeInStatistics"`
 	Source                  string                    `json:"source"`
 	Status                  string                    `json:"status"`
 	Remark                  string                    `json:"remark"`
+	GroupKey                int64                     `json:"groupKey"`
+	GroupSize               int                       `json:"groupSize"`
+	DisplayAmount           decimal.Decimal           `json:"displayAmount"`
+	Children                []FinancialEvent          `json:"children,omitempty"`
 	LedgerEntries           []ledgerentry.LedgerEntry `json:"ledgerEntries,omitempty"`
 }
 
@@ -34,6 +35,7 @@ type FinancialEventQuery struct {
 	EventType           string `json:"eventType"`
 	StartTime           string `json:"startTime"`
 	EndTime             string `json:"endTime"`
+	Currency            string `json:"currency"`
 	CategoryId          int64  `json:"categoryId"`
 	CategoryGroupId     int64  `json:"categoryGroupId"`
 	BucketId            int64  `json:"bucketId"`

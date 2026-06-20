@@ -11,7 +11,7 @@
 
     <section class="toolbar reveal-block delay-1">
       <el-select v-model="filters.accountId" clearable :placeholder="t('buckets.filters.accountPlaceholder')" class="filter-control" @change="loadBuckets">
-        <el-option v-for="item in accounts" :key="item.id" :label="item.displayName || item.name" :value="item.id" />
+        <el-option v-for="item in accounts" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
       <el-select v-model="filters.currency" clearable :placeholder="t('buckets.filters.currencyPlaceholder')" class="filter-control" @change="loadBuckets">
         <el-option v-for="item in currencyOptions" :key="item.code" :label="getCurrencyLabel(item.code, config.locale)" :value="item.code" />
@@ -21,6 +21,7 @@
         <el-option :label="t('domain.liability')" value="liability" />
       </el-select>
       <button class="ghost-action" @click="refreshAll">{{ t('common.actions.refresh') }}</button>
+      <button class="export-action" type="button" @click="handleExportBuckets">{{ t('records.actions.exportBuckets') }}</button>
     </section>
 
     <section class="bucket-layout reveal-block delay-2">
@@ -28,7 +29,7 @@
         <article v-for="(item, index) in buckets" :key="item.id" class="bucket-card" :class="{ active: selectedBucket?.id === item.id }" :style="{ animationDelay: `${index * 55}ms` }" @click="selectBucket(item)">
           <div class="bucket-topline">
             <div>
-              <h2>{{ item.name }}</h2>
+              <h2>{{ getBucketEmoji(item.bucketType) }} {{ item.name }}</h2>
               <p>{{ getAccountName(item.accountId) }}</p>
             </div>
             <span class="nature-pill" :class="item.bucketNature">{{ item.bucketNature === 'liability' ? t('domain.liability') : t('domain.asset') }}</span>
@@ -55,7 +56,7 @@
         <div class="section-head">
           <div>
             <p class="eyebrow">{{ t('buckets.ledger.eyebrow') }}</p>
-            <h2>{{ selectedBucket ? selectedBucket.name : t('buckets.ledger.selectBucketTitle') }}</h2>
+            <h2>{{ selectedBucket ? `${getBucketEmoji(selectedBucket.bucketType)} ${selectedBucket.name}` : t('buckets.ledger.selectBucketTitle') }}</h2>
           </div>
         </div>
 
@@ -63,7 +64,11 @@
           <span>{{ getCurrencyDisplay(selectedBucket.currency).icon }} {{ selectedBucket.currency }}</span>
           <strong>{{ formatAmount(selectedBucket.balance) }}</strong>
           <p>{{ getAccountName(selectedBucket.accountId) }} · {{ getBucketTypeLabel(selectedBucket.bucketType) }}</p>
-          <button class="edit-selected-action" type="button" @click="openEdit(selectedBucket)">{{ t('common.actions.edit') }}</button>
+          <div class="selected-actions">
+            <button class="edit-selected-action" type="button" @click="openEdit(selectedBucket)">{{ t('common.actions.edit') }}</button>
+            <button v-if="isInvestmentBucket(selectedBucket)" class="adjust-selected-action" type="button" :disabled="selectedBucket.isActive === false" @click="openRevalue(selectedBucket)">{{ t('buckets.actions.revalue') }}</button>
+            <button v-else class="adjust-selected-action" type="button" :disabled="selectedBucket.isActive === false" @click="openAdjust(selectedBucket)">{{ t('buckets.actions.adjustBalance') }}</button>
+          </div>
         </div>
 
         <div v-if="ledgerEntries.length" class="entry-list">
@@ -86,7 +91,7 @@
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <el-form-item :label="t('buckets.fields.account')" prop="accountId">
           <el-select v-model="form.accountId" :placeholder="t('buckets.placeholders.selectAccount')" class="full-width" :disabled="Boolean(editingId)">
-            <el-option v-for="item in accounts" :key="item.id" :label="item.displayName || item.name" :value="item.id" />
+            <el-option v-for="item in accounts" :key="item.id" :label="item.name" :value="item.id" />
           </el-select>
         </el-form-item>
         <el-form-item :label="t('buckets.fields.bucketName')" prop="name">
@@ -132,6 +137,54 @@
         <button class="primary-action" @click="submitForm">{{ editingId ? t('common.actions.save') : t('buckets.actions.create') }}</button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="adjustDialogVisible" :title="t('buckets.adjustDialog.title')" width="520px" class="marmot-dialog">
+      <el-form label-position="top">
+        <div v-if="selectedBucket" class="adjust-summary">
+          <span>{{ getBucketEmoji(selectedBucket.bucketType) }} {{ selectedBucket.name }}</span>
+          <strong>{{ getCurrencyDisplay(selectedBucket.currency).icon }} {{ selectedBucket.currency }} {{ formatAmount(selectedBucket.balance) }}</strong>
+        </div>
+        <el-form-item :label="t('buckets.adjustDialog.targetBalance')">
+          <el-input v-model="adjustForm.targetBalance" :placeholder="t('buckets.placeholders.targetBalance')" />
+        </el-form-item>
+        <div class="adjust-diff" :class="adjustmentDeltaClass">
+          <span>{{ t('buckets.adjustDialog.difference') }}</span>
+          <strong>{{ signedAdjustmentText }}</strong>
+          <small>{{ adjustmentDeltaHint }}</small>
+        </div>
+        <el-form-item :label="t('buckets.adjustDialog.remark')">
+          <el-input v-model="adjustForm.remark" type="textarea" :placeholder="t('buckets.adjustDialog.remarkPlaceholder')" :autosize="{ minRows: 2, maxRows: 4 }" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <button class="ghost-action" @click="adjustDialogVisible = false">{{ t('common.actions.cancel') }}</button>
+        <button class="primary-action" @click="submitAdjustment">{{ t('common.actions.save') }}</button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="revalueDialogVisible" :title="t('buckets.revalueDialog.title')" width="520px" class="marmot-dialog">
+      <el-form label-position="top">
+        <div v-if="selectedBucket" class="adjust-summary">
+          <span>{{ getBucketEmoji(selectedBucket.bucketType) }} {{ selectedBucket.name }}</span>
+          <strong>{{ getCurrencyDisplay(selectedBucket.currency).icon }} {{ selectedBucket.currency }} {{ formatAmount(selectedBucket.balance) }}</strong>
+        </div>
+        <el-form-item :label="t('buckets.revalueDialog.targetMarketValue')">
+          <el-input v-model="revalueForm.targetMarketValue" :placeholder="t('buckets.placeholders.targetMarketValue')" />
+        </el-form-item>
+        <div class="adjust-diff" :class="revalueDeltaClass">
+          <span>{{ t('buckets.revalueDialog.pnl') }}</span>
+          <strong>{{ signedRevalueText }}</strong>
+          <small>{{ revalueDeltaHint }}</small>
+        </div>
+        <el-form-item :label="t('buckets.revalueDialog.remark')">
+          <el-input v-model="revalueForm.remark" type="textarea" :placeholder="t('buckets.revalueDialog.remarkPlaceholder')" :autosize="{ minRows: 2, maxRows: 4 }" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <button class="ghost-action" @click="revalueDialogVisible = false">{{ t('common.actions.cancel') }}</button>
+        <button class="primary-action" @click="submitRevalue">{{ t('common.actions.save') }}</button>
+      </template>
+    </el-dialog>
   </main>
 </template>
 
@@ -142,9 +195,12 @@ import { useConfigStore } from '@/stores/config'
 import { ElMessage } from 'element-plus'
 import { listAccounts } from '@/api/account/account'
 import { createBucket, listBucketLedgerEntries, listBuckets, updateBucket } from '@/api/bucket/bucket'
+import { createRecord } from '@/api/record/record'
+import { exportBuckets } from '@/api/export/export'
 import marmotOne from '../../../img/marmot-ledger-1.png'
 import marmotTwo from '../../../img/marmot-ledger-2.png'
 import { currencyOptions, getCurrencyDisplay, getCurrencyLabel } from '@/utils/currency'
+import { getBucketEmoji } from '@/utils/bucketEmoji'
 
 const { t, te } = useI18n()
 const config = useConfigStore()
@@ -154,6 +210,8 @@ const ledgerEntries = ref([])
 const selectedBucket = ref(null)
 const loading = ref(false)
 const dialogVisible = ref(false)
+const adjustDialogVisible = ref(false)
+const revalueDialogVisible = ref(false)
 const editingId = ref(0)
 const formRef = ref()
 const filters = reactive({
@@ -162,6 +220,8 @@ const filters = reactive({
   bucketNature: '',
 })
 const form = reactive(createEmptyForm())
+const adjustForm = reactive({ targetBalance: '', remark: '' })
+const revalueForm = reactive({ targetMarketValue: '', remark: '' })
 
 const bucketTypes = [
   { label: computed(() => t('buckets.types.cash')), value: 'cash' },
@@ -185,6 +245,57 @@ const rules = {
   bucketNature: [{ required: true, message: t('buckets.validation.natureRequired'), trigger: 'change' }],
 }
 
+const adjustmentDelta = computed(() => {
+  if (!selectedBucket.value || adjustForm.targetBalance === '') return 0
+  const target = Number(adjustForm.targetBalance)
+  if (!Number.isFinite(target)) return 0
+  return roundMoney(target - Number(selectedBucket.value.balance || 0))
+})
+
+const adjustmentDeltaClass = computed(() => {
+  if (!adjustmentDelta.value) return 'neutral'
+  return adjustmentDelta.value > 0 ? 'positive' : 'negative'
+})
+
+const signedAdjustmentText = computed(() => {
+  const delta = adjustmentDelta.value
+  const sign = delta > 0 ? '+' : ''
+  return `${sign}${formatAmount(delta)}`
+})
+
+const adjustmentDeltaHint = computed(() => {
+  if (!adjustmentDelta.value) return t('buckets.adjustDialog.noChange')
+  return adjustmentDelta.value > 0 ? t('buckets.adjustDialog.increase') : t('buckets.adjustDialog.decrease')
+})
+
+const revalueDelta = computed(() => {
+  if (!selectedBucket.value || revalueForm.targetMarketValue === '') return 0
+  const target = Number(revalueForm.targetMarketValue)
+  if (!Number.isFinite(target)) return 0
+  return target - Number(selectedBucket.value.balance)
+})
+
+const revalueDeltaClass = computed(() => {
+  if (!revalueDelta.value) return 'neutral'
+  return revalueDelta.value > 0 ? 'positive' : 'negative'
+})
+
+const signedRevalueText = computed(() => {
+  const delta = revalueDelta.value
+  if (!delta) return formatAmount(0)
+  return (delta > 0 ? '+' : '−') + formatAmount(Math.abs(delta))
+})
+
+const revalueDeltaHint = computed(() => {
+  if (!revalueDelta.value) return t('buckets.revalueDialog.pnlEqual')
+  return revalueDelta.value > 0 ? t('buckets.revalueDialog.pnlGain') : t('buckets.revalueDialog.pnlLoss')
+})
+
+function isInvestmentBucket(bucket) {
+  if (!bucket) return false
+  return bucket.bucketType === 'investment_asset' || bucket.bucketType === 'investment_cash'
+}
+
 function createEmptyForm() {
   return {
     accountId: '',
@@ -204,7 +315,7 @@ function resetForm(data = createEmptyForm()) {
 
 function getAccountName(accountId) {
   const account = accounts.value.find((item) => item.id === accountId)
-  return account?.displayName || account?.name || t('buckets.accountFallback', { accountId })
+  return account?.name || t('buckets.accountFallback', { accountId })
 }
 
 function getBucketTypeLabel(type) {
@@ -222,6 +333,14 @@ function formatAmount(value) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(number)
+}
+
+function roundMoney(value) {
+  return Math.round(Number(value || 0) * 10000) / 10000
+}
+
+function formatPlainAmount(value) {
+  return roundMoney(value).toFixed(4)
 }
 
 async function loadAccounts() {
@@ -256,6 +375,11 @@ async function refreshAll() {
   await loadBuckets()
 }
 
+async function handleExportBuckets() {
+  try { await exportBuckets() }
+  catch (err) { console.warn(err); ElMessage.error(t('records.messages.exportFailed')) }
+}
+
 function openCreate() {
   if (!accounts.value.length) {
     ElMessage.warning(t('buckets.messages.createAccountFirst'))
@@ -280,6 +404,20 @@ function openEdit(item) {
     isActive: item.isActive !== false,
   })
   dialogVisible.value = true
+}
+
+function openAdjust(item) {
+  selectedBucket.value = item
+  adjustForm.targetBalance = formatPlainAmount(item.balance)
+  adjustForm.remark = ''
+  adjustDialogVisible.value = true
+}
+
+function openRevalue(item) {
+  selectedBucket.value = item
+  revalueForm.targetMarketValue = formatPlainAmount(item.balance)
+  revalueForm.remark = ''
+  revalueDialogVisible.value = true
 }
 
 async function submitForm() {
@@ -332,6 +470,82 @@ async function selectBucket(item) {
   } else {
     ledgerEntries.value = []
     ElMessage.error(res.error || t('buckets.messages.loadEntriesFailed'))
+  }
+}
+
+async function submitAdjustment() {
+  if (!selectedBucket.value) return
+  if (adjustForm.targetBalance === '') {
+    ElMessage.warning(t('buckets.validation.targetBalanceRequired'))
+    return
+  }
+  const target = Number(adjustForm.targetBalance)
+  if (!Number.isFinite(target) || target < 0) {
+    ElMessage.warning(t('buckets.validation.targetBalanceInvalid'))
+    return
+  }
+  const delta = adjustmentDelta.value
+  if (!delta) {
+    ElMessage.warning(t('buckets.validation.targetBalanceUnchanged'))
+    return
+  }
+
+  const bucketId = selectedBucket.value.id
+  const payload = {
+    scenario: 'balance_adjustment',
+    bucketId,
+    amount: formatPlainAmount(delta),
+    currency: selectedBucket.value.currency,
+    description: t('buckets.adjustDialog.description', { from: formatAmount(selectedBucket.value.balance), to: formatAmount(target) }),
+    remark: adjustForm.remark,
+  }
+  const res = await createRecord(payload)
+  if (res.success) {
+    ElMessage.success(t('buckets.messages.adjusted'))
+    adjustDialogVisible.value = false
+    await loadBuckets()
+    const updated = buckets.value.find((item) => item.id === bucketId)
+    if (updated) await selectBucket(updated)
+  } else {
+    ElMessage.error(res.error || t('buckets.messages.adjustFailed'))
+  }
+}
+
+async function submitRevalue() {
+  if (!selectedBucket.value) return
+  if (revalueForm.targetMarketValue === '') {
+    ElMessage.warning(t('buckets.validation.targetBalanceRequired'))
+    return
+  }
+  const target = Number(revalueForm.targetMarketValue)
+  if (!Number.isFinite(target) || target < 0) {
+    ElMessage.warning(t('buckets.validation.targetBalanceInvalid'))
+    return
+  }
+  const delta = revalueDelta.value
+  if (!delta || Math.abs(delta) < 0.001) {
+    ElMessage.warning(t('buckets.validation.targetBalanceUnchanged'))
+    return
+  }
+
+  const bucketId = selectedBucket.value.id
+  const payload = {
+    scenario: 'investment_revalue',
+    bucketId,
+    amount: formatPlainAmount(delta),
+    currency: selectedBucket.value.currency,
+    description: t('buckets.revalueDialog.description', { from: formatAmount(selectedBucket.value.balance), to: formatAmount(target) }),
+    remark: revalueForm.remark,
+  }
+  const res = await createRecord(payload)
+  if (res.success) {
+    ElMessage.success(t('buckets.messages.revalued'))
+    revalueDialogVisible.value = false
+    await loadBuckets()
+    const updated = buckets.value.find((item) => item.id === bucketId)
+    if (updated) await selectBucket(updated)
+  } else {
+    ElMessage.error(res.error || t('buckets.messages.revalueFailed'))
   }
 }
 
@@ -416,6 +630,21 @@ onActivated(refreshAll)
   padding: 14px;
 }
 
+.export-action {
+  min-height: 40px;
+  border: 0;
+  border-radius: 12px;
+  padding: 0 14px;
+  background: rgba(47, 125, 92, 0.10);
+  color: #2f7d5c;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(47, 125, 92, 0.22);
+}
+
+.export-action:active { transform: scale(0.96); }
+
 .filter-control {
   width: 180px;
 }
@@ -451,19 +680,39 @@ onActivated(refreshAll)
   gap: 14px;
 }
 
-.edit-selected-action {
-  width: 100%;
-  min-height: 38px;
+.selected-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
   margin-top: 14px;
+}
+
+.edit-selected-action,
+.adjust-selected-action {
+  min-height: 38px;
   border: 0;
   border-radius: 12px;
-  background: rgba(59, 130, 246, 0.1);
-  color: #2563eb;
   font-weight: 800;
   cursor: pointer;
 }
 
-.edit-selected-action:active {
+.edit-selected-action {
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+}
+
+.adjust-selected-action {
+  background: rgba(47, 125, 92, 0.1);
+  color: #2f7d5c;
+}
+
+.adjust-selected-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.edit-selected-action:active,
+.adjust-selected-action:active:not(:disabled) {
   transform: scale(0.96);
 }
 
@@ -578,6 +827,49 @@ onActivated(refreshAll)
   font-weight: 700;
 }
 
+.adjust-summary,
+.adjust-diff {
+  margin-bottom: 18px;
+  padding: 16px;
+  border-radius: 14px;
+  background: #f8faf7;
+}
+
+.adjust-summary span,
+.adjust-diff span,
+.adjust-diff small {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.adjust-summary strong,
+.adjust-diff strong {
+  display: block;
+  margin-top: 8px;
+  color: #1e293b;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 22px;
+}
+
+.adjust-diff.positive strong {
+  color: #ef4444;
+}
+
+.adjust-diff.negative strong {
+  color: #f97316;
+}
+
+.adjust-diff.neutral strong {
+  color: #64748b;
+}
+
+.adjust-diff small {
+  margin-top: 6px;
+  font-weight: 700;
+}
+
 .primary-action,
 .ghost-action {
   min-height: 40px;
@@ -671,6 +963,12 @@ onActivated(refreshAll)
   }
 
   .filter-control {
+    width: 100%;
+  }
+
+  .export-action,
+  .ghost-action,
+  .primary-action {
     width: 100%;
   }
 }

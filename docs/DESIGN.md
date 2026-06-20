@@ -104,14 +104,15 @@ img/marmot-ledger-2.png
 
 ### Financial semantic colors
 
-**项目硬性规则：收入红色，支出绿色。**
+**项目硬性规则：品牌/focus 使用苔绿，收入红色，支出橙色。**
 
 ```css
+--brand-green:      #2f7d5c;  /* 苔绿 = 品牌 / focus / 当前状态 */
 --income-color:     #ef4444;  /* 红色 = 收入 */
---expense-color:    #10b981;  /* 绿色 = 支出 */
+--expense-color:    #f97316;  /* 橙色 = 支出 / 消费 / 流出 */
 ```
 
-不要使用常规的“红色支出 / 绿色收入”认知。
+不要使用绿色表达支出，避免和品牌绿色、focus 状态混淆。
 
 应用场景：
 
@@ -135,7 +136,7 @@ img/marmot-ledger-2.png
 ### Status colors
 
 ```css
---success:          #10b981;
+--success:          #f97316;
 --warning:          #f59e0b;
 --error:            #ef4444;
 --info:             #3b82f6;
@@ -210,7 +211,7 @@ img/marmot-ledger-2.png
 - 高度：默认 `36px`，重要操作 `44px`
 - 圆角：`10px`
 
-不要用收入红色/支出绿色作为普通按钮色。
+不要用收入红色/支出橙色作为普通按钮色。
 
 ### Forms
 
@@ -273,7 +274,7 @@ img/marmot-ledger-2.png
 
 ```css
 --income-color:     #ef4444;
---expense-color:    #10b981;
+--expense-color:    #f97316;
 ```
 
 ---
@@ -300,7 +301,7 @@ img/marmot-ledger-2.png
 | Do | Don't |
 | --- | --- |
 | 使用暖白背景和白色卡片 | 纯白全屏或黑灰后台感 |
-| 收入红色、支出绿色 | 红支出、绿收入 |
+| 收入红色、支出橙色 | 红支出、绿收入 |
 | 金额使用 monospace | 金额使用花哨字体 |
 | 表格轻分割、轻 hover | 厚边框表格 |
 | 一个页面一个主操作 | 多个同级强按钮抢焦点 |
@@ -317,7 +318,7 @@ img/marmot-ledger-2.png
 1. 主背景使用暖白/米白：`#f7f5ef` 或接近色。
 2. 卡片白底、16px 圆角、轻阴影。
 3. 收入金额/标签使用红色 `#ef4444`。
-4. 支出金额/标签使用绿色 `#10b981`。
+4. 支出金额/标签使用绿色 `#f97316`。
 5. 主操作按钮使用蓝色 `#3b82f6`。
 6. 金额数字使用 monospace 并右对齐。
 7. 表格采用轻分割线和 hover，不做厚边框。

@@ -13,8 +13,6 @@ import (
 	"marmot-ledger/pkg/model"
 	"strings"
 	"time"
-
-	"github.com/shopspring/decimal"
 )
 
 func CreateBucket(userId int64, bucketInfo *bucket.Bucket) (*bucket.Bucket, error) {
@@ -72,9 +70,6 @@ func CreateBucket(userId int64, bucketInfo *bucket.Bucket) (*bucket.Bucket, erro
 		EventTime:           now,
 		Currency:            currency,
 		Amount:              initialBalance,
-		BaseCurrency:        currency,
-		BaseAmount:          initialBalance,
-		ExchangeRate:        decimal.NewFromInt(1),
 		IncludeInStatistics: false,
 		Source:              EventSourceManual,
 		Status:              EventStatusActive,

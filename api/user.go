@@ -42,6 +42,23 @@ func UserMount() *fiber.App {
 		})
 	})
 
+	app.Get("/role", func(ctx *fiber.Ctx) error {
+		userId := ctx.Locals("userId").(int64)
+		role, err := userdb.GetUserRoleById(userId)
+		if err != nil {
+			return ctx.JSON(&fiber.Map{
+				"success": false,
+				"error":   err.Error(),
+			})
+		}
+		return ctx.JSON(&fiber.Map{
+			"success": true,
+			"data": fiber.Map{
+				"role": role,
+			},
+		})
+	})
+
 	app.Get("/login", func(ctx *fiber.Ctx) error {
 		account := ctx.Query("account")
 		password := ctx.Query("password")
@@ -160,6 +177,30 @@ func UserMount() *fiber.App {
 			"error":   "token 已过期, 请重新登录",
 			"code":    401,
 		})
+	})
+
+	app.Post("/register", func(ctx *fiber.Ctx) error {
+		type RegisterRequest struct {
+			Account  string `json:"account"`
+			Password string `json:"password"`
+			Name     string `json:"name"`
+		}
+		req := &RegisterRequest{}
+		result := &myresult.MyResult[user.User]{}
+		if err := ctx.BodyParser(req); err != nil {
+			return ctx.JSON(result.Err(int(myerror.WrongParam), "请求参数错误"))
+		}
+
+		if req.Account == "" || req.Password == "" {
+			return ctx.JSON(result.Err(int(myerror.WrongParam), "账号和密码不能为空"))
+		}
+
+		userInfo, err := service.RegisterUser(req.Account, req.Password, req.Name)
+		if err != nil {
+			return ctx.JSON(result.Err(int(myerror.InternalError), err.Error()))
+		}
+
+		return ctx.JSON(result.OK(*userInfo))
 	})
 
 	app.Put("", func(ctx *fiber.Ctx) error {

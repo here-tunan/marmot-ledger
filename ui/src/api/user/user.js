@@ -13,6 +13,10 @@ export function getLoginUserInfo() {
     return request.get('/user/info')
 }
 
+export function getCurrentUserRole() {
+    return request.get('/user/role')
+}
+
 // 更新用户信息
 export function putUser(param) {
     return request.put('/user', param)

@@ -10,21 +10,16 @@ import (
 )
 
 type Account struct {
-	Id                int64           `json:"id" xorm:"pk autoincr 'id'"`
-	UserId            int64           `json:"userId" xorm:"'user_id'"`
-	Name              string          `json:"name" xorm:"'name'"`
-	Type              string          `json:"type" xorm:"'type'"`
-	ProviderCode      string          `json:"providerCode" xorm:"'provider_code'"`
-	AccountGroupKey   string          `json:"accountGroupKey" xorm:"'account_group_key'"`
-	StandardAccountId *int64          `json:"standardAccountId" xorm:"'standard_account_id'"`
-	BankCode          string          `json:"bankCode" xorm:"'bank_code'"`
-	DisplayName       string          `json:"displayName" xorm:"'display_name'"`
-	Icon              string          `json:"icon" xorm:"'icon'"`
-	Color             string          `json:"color" xorm:"'color'"`
-	IsActive          bool            `json:"isActive" xorm:"'is_active'"`
-	IsDeleted         bool            `json:"isDeleted" xorm:"'is_deleted'"`
-	CreatedAt         model.LocalTime `json:"createdAt" xorm:"created 'created_at'"`
-	UpdatedAt         model.LocalTime `json:"updatedAt" xorm:"updated 'updated_at'"`
+	Id        int64           `json:"id" xorm:"pk autoincr 'id'"`
+	UserId    int64           `json:"userId" xorm:"'user_id'"`
+	Name      string          `json:"name" xorm:"'name'"`
+	Type      string          `json:"type" xorm:"'type'"`
+	Icon      string          `json:"icon" xorm:"'icon'"`
+	Color     string          `json:"color" xorm:"'color'"`
+	IsActive  bool            `json:"isActive" xorm:"'is_active'"`
+	IsDeleted bool            `json:"isDeleted" xorm:"'is_deleted'"`
+	CreatedAt model.LocalTime `json:"createdAt" xorm:"created 'created_at'"`
+	UpdatedAt model.LocalTime `json:"updatedAt" xorm:"updated 'updated_at'"`
 }
 
 type AccountQuery struct {
@@ -78,7 +73,7 @@ func GetAccount(id int64, userId int64) (*Account, error) {
 func UpdateAccount(account *Account) error {
 	_, err := infrastructure.Mysql.
 		Where("id = ? AND user_id = ? AND is_deleted = ?", account.Id, account.UserId, 0).
-		Cols("name", "type", "provider_code", "account_group_key", "standard_account_id", "bank_code", "display_name", "icon", "color", "is_active").
+		Cols("name", "type", "icon", "color", "is_active").
 		Update(account)
 	return err
 }
