@@ -708,8 +708,9 @@ onActivated(refreshAll)
 }
 
 .edit-selected-action {
-  background: rgba(59, 130, 246, 0.1);
-  color: #2563eb;
+  background: #f4efe6;
+  color: #6b5b49;
+  box-shadow: none;
 }
 
 .adjust-selected-action {
@@ -936,9 +937,9 @@ onActivated(refreshAll)
 }
 
 .primary-action {
-  background: #3b82f6;
+  background: #2f7d5c;
   color: #ffffff;
-  box-shadow: 0 10px 24px rgba(59, 130, 246, 0.22);
+  box-shadow: 0 10px 24px rgba(47, 125, 92, 0.20);
 }
 
 .primary-action:disabled {
@@ -986,6 +987,11 @@ onActivated(refreshAll)
 }
 
 @media (hover: hover) {
+  .edit-selected-action:hover {
+    background: #ece2d2;
+    color: #4b3f33;
+  }
+
   .bucket-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 3px 8px rgba(15, 23, 42, 0.12), 0 16px 34px rgba(15, 23, 42, 0.06);

@@ -36,12 +36,12 @@
               <p>{{ item.providerCode }} · {{ accountTypeLabel(item.type) }}</p>
             </div>
             <div class="template-status">
-              <span :class="['status-badge', { active: item.enabled }]">
+              <span :class="['management-status-tag', { active: item.enabled }]">
                 {{ item.enabled ? '启用' : '禁用' }}
               </span>
             </div>
             <div class="template-actions">
-              <button class="ghost-action tiny" @click="openAccountDialog(item)">编辑</button>
+              <button class="text-action tiny" @click="openAccountDialog(item)">编辑</button>
             </div>
           </div>
         </div>
@@ -62,12 +62,12 @@
               <p>{{ item.channelCode }} · {{ item.providerCode }}</p>
             </div>
             <div class="template-status">
-              <span :class="['status-badge', { active: item.enabled }]">
+              <span :class="['management-status-tag', { active: item.enabled }]">
                 {{ item.enabled ? '启用' : '禁用' }}
               </span>
             </div>
             <div class="template-actions">
-              <button class="ghost-action tiny" @click="openChannelDialog(item)">编辑</button>
+              <button class="text-action tiny" @click="openChannelDialog(item)">编辑</button>
             </div>
           </div>
         </div>
@@ -88,12 +88,12 @@
               <p>{{ item.templateCode }} · {{ item.type === 'income' ? '收入' : '支出' }}</p>
             </div>
             <div class="template-status">
-              <span :class="['status-badge', { active: item.enabled }]">
+              <span :class="['management-status-tag', { active: item.enabled }]">
                 {{ item.enabled ? '启用' : '禁用' }}
               </span>
             </div>
             <div class="template-actions">
-              <button class="ghost-action tiny" @click="openCategoryDialog(item)">编辑</button>
+              <button class="text-action tiny" @click="openCategoryDialog(item)">编辑</button>
             </div>
           </div>
         </div>
@@ -242,7 +242,7 @@ const accountIconOptions = [
   { label: '集合', value: 'Collection' },
   { label: '其他', value: 'More' },
 ]
-const accountColors = ['#2f7d5c', '#3b82f6', '#1f2933', '#f59e0b', '#ef4444', '#f97316', '#22c55e', '#06b6d4', '#8b5cf6', '#ec4899', '#1677ff']
+const accountColors = ['#2f7d5c', '#2f7d5c', '#1f2933', '#f59e0b', '#ef4444', '#f97316', '#22c55e', '#06b6d4', '#8b5cf6', '#ec4899', '#1677ff']
 
 const accountDialog = reactive({
   visible: false,
@@ -344,7 +344,7 @@ function defaultAccountIcon(type) {
 function defaultAccountColor(type) {
   switch (String(type || '').toLowerCase()) {
     case 'cash': return '#f59e0b'
-    case 'bank': return '#3b82f6'
+    case 'bank': return '#2f7d5c'
     case 'credit': return '#ef4444'
     case 'investment': return '#1f2933'
     case 'liability': return '#f97316'
@@ -581,20 +581,6 @@ async function saveCategoryTemplate() {
   color: #64748b;
 }
 
-.status-badge {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  background: #e2e8f0;
-  color: #64748b;
-}
-
-.status-badge.active {
-  background: #dcfce7;
-  color: #166534;
-}
-
 .primary-action,
 .ghost-action {
   min-height: 40px;
@@ -607,19 +593,39 @@ async function saveCategoryTemplate() {
 }
 
 .primary-action {
-  background: #3b82f6;
+  background: #2f7d5c;
   color: #fff;
   box-shadow: 0 10px 24px rgba(59, 130, 246, .22);
 }
 
 .primary-action:hover {
-  background: #2563eb;
+  background: #256f53;
   transform: translateY(-1px);
 }
 
 .ghost-action {
-  background: #f8faf7;
-  color: #1e293b;
+  background: #ffffff;
+  color: #334155;
+  box-shadow: inset 0 0 0 1px rgba(100, 116, 139, .16);
+}
+
+.text-action {
+  min-height: 32px;
+  border: 0;
+  border-radius: 10px;
+  padding: 0 12px;
+  background: #f4efe6;
+  color: #6b5b49;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition-property: transform, color;
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.text-action:active {
+  transform: scale(0.96);
 }
 
 .ghost-action:hover {
@@ -630,6 +636,13 @@ async function saveCategoryTemplate() {
   min-height: 28px;
   padding: 0 10px;
   font-size: 12px;
+}
+
+@media (hover: hover) {
+  .text-action:hover {
+    background: #ece2d2;
+    color: #4b3f33;
+  }
 }
 
 @keyframes revealUp {

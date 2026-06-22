@@ -1,13 +1,10 @@
 <template>
   <main class="family-page">
-    <section class="page-hero reveal-block">
-      <div>
-        <p class="eyebrow">{{ t('family.hero.eyebrow') }}</p>
-        <h1>{{ t('family.hero.title') }}</h1>
-        <p>{{ t('family.hero.subtitle') }}</p>
-      </div>
-      <button class="primary-action" @click="openCreate">{{ t('family.actions.new') }}</button>
-    </section>
+    <ManagementPageHeader :eyebrow="t('family.hero.eyebrow')" :title="t('family.hero.title')" :subtitle="t('family.hero.subtitle')">
+      <template #actions>
+        <button class="management-primary-action" @click="openCreate">{{ t('family.actions.new') }}</button>
+      </template>
+    </ManagementPageHeader>
 
     <section class="family-layout reveal-block delay-1">
       <aside class="family-list">
@@ -54,7 +51,7 @@
             <div class="invite-form">
               <el-input v-model="inviteForm.account" :placeholder="t('family.fields.account')" />
               <el-input v-model="inviteForm.displayName" :placeholder="t('family.fields.displayName')" />
-              <button class="primary-action" @click="inviteMember">{{ t('family.actions.invite') }}</button>
+              <button class="primary-action invite-action" @click="inviteMember">{{ t('family.actions.invite') }}</button>
             </div>
 
             <h3>{{ t('family.sections.members') }}</h3>
@@ -91,17 +88,17 @@
               <div v-for="group in filteredGroups" :key="group.id" class="group-card">
                 <div class="group-header">
                   <div class="group-info">
-                    <span class="group-icon" :style="{ background: group.color || '#3b82f6' }">
+                    <span class="group-icon" :style="{ background: group.color || '#2f7d5c' }">
                       {{ group.icon || '📁' }}
                     </span>
                     <div>
                       <h3>{{ group.name }}</h3>
-                      <span class="group-count">{{ (groupMembers[group.id] || []).length }} 个分类</span>
+                      <span class="management-meta-tag">{{ (groupMembers[group.id] || []).length }} 个分类</span>
                     </div>
                   </div>
                   <div class="group-actions">
-                    <button class="ghost-action tiny" @click="openEditGroup(group)">编辑</button>
-                    <button class="ghost-action tiny danger" @click="handleDeleteGroup(group)">删除</button>
+                    <button class="text-action" @click="openEditGroup(group)">{{ t('common.actions.edit') }}</button>
+                    <button class="danger-action" @click="handleDeleteGroup(group)">{{ t('common.actions.delete') }}</button>
                   </div>
                 </div>
 
@@ -217,6 +214,7 @@ import {
   getGroupCategoryIds
 } from '@/api/familyCategoryGroup'
 import IconColorPicker from '@/components/IconColorPicker.vue'
+import ManagementPageHeader from '@/components/management/ManagementPageHeader.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -502,21 +500,11 @@ onActivated(refreshAll)
   animation-delay: 90ms;
 }
 
-.page-hero,
 .family-list,
 .family-detail {
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 1px 3px rgba(15, 23, 42, .1), 0 12px 30px rgba(15, 23, 42, .04);
-}
-
-.page-hero {
-  display: flex;
-  justify-content: space-between;
-  gap: 24px;
-  margin-bottom: 18px;
-  padding: 26px;
-  background: linear-gradient(135deg, #fffaf0 0%, #fff 70%);
 }
 
 .eyebrow {
@@ -526,19 +514,6 @@ onActivated(refreshAll)
   font-weight: 800;
   letter-spacing: .08em;
   text-transform: uppercase;
-}
-
-.page-hero h1 {
-  margin: 0;
-  font-size: 30px;
-  line-height: 1.16;
-  letter-spacing: -.022em;
-}
-
-.page-hero p:last-child {
-  margin: 12px 0 0;
-  color: #64748b;
-  line-height: 1.7;
 }
 
 .family-layout {
@@ -597,46 +572,57 @@ onActivated(refreshAll)
 }
 
 .primary-action,
-.ghost-action {
-  min-height: 40px;
+.ghost-action,
+.text-action,
+.danger-action {
+  min-height: 32px;
   border: 0;
-  border-radius: 12px;
-  padding: 0 16px;
-  font-weight: 800;
+  border-radius: 10px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition-property: transform, box-shadow, background-color, color;
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  touch-action: manipulation;
+}
+
+.primary-action:active,
+.ghost-action:active,
+.text-action:active,
+.danger-action:active {
+  transform: scale(0.96);
 }
 
 .primary-action {
-  background: #3b82f6;
+  min-height: 36px;
+  background: #2f7d5c;
   color: #fff;
-  box-shadow: 0 10px 24px rgba(59, 130, 246, .22);
+  box-shadow: 0 8px 20px rgba(47, 125, 92, .18);
 }
 
-.primary-action:hover {
-  background: #2563eb;
-  transform: translateY(-1px);
-}
-
-.primary-action:active {
-  transform: translateY(0);
+.invite-action,
+.section-head .primary-action {
+  min-height: 40px;
 }
 
 .ghost-action {
-  background: #f8faf7;
-  color: #1e293b;
+  background: #ffffff;
+  color: #334155;
+  box-shadow: inset 0 0 0 1px rgba(100, 116, 139, .16);
 }
 
-.ghost-action:hover {
-  background: #f0f4f0;
+.text-action {
+  background: #f4efe6;
+  color: #6b5b49;
+  box-shadow: none;
+  padding: 0 12px;
 }
 
-.ghost-action.danger {
+.danger-action {
+  background: rgba(239, 68, 68, .1);
   color: #ef4444;
-}
-
-.ghost-action.danger:hover {
-  background: #fef2f2;
 }
 
 .small {
@@ -748,15 +734,29 @@ onActivated(refreshAll)
   gap: 16px;
 }
 
-.group-card {
-  background: #f8faf7;
-  border-radius: 14px;
-  padding: 16px;
-  transition: all 0.2s ease;
+@media (hover: hover) {
+  .text-action:hover {
+    background: #ece2d2;
+    color: #4b3f33;
+  }
 }
 
-.group-card:hover {
-  box-shadow: 0 2px 8px rgba(15, 23, 42, .08);
+.group-card {
+  display: grid;
+  gap: 0;
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, .1), 0 12px 30px rgba(15, 23, 42, .04);
+  transition-property: transform, box-shadow;
+  transition-duration: 180ms;
+}
+
+@media (hover: hover) {
+  .group-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(15, 23, 42, .12), 0 16px 34px rgba(15, 23, 42, .06);
+  }
 }
 
 .group-header {
@@ -788,10 +788,6 @@ onActivated(refreshAll)
   margin: 0 0 4px 0;
 }
 
-.group-count {
-  font-size: 12px;
-  color: #64748b;
-}
 
 .group-actions {
   display: flex;

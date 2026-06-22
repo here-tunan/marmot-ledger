@@ -1,17 +1,12 @@
 <template>
   <main class="channel-page">
     <section class="channel-workbench reveal-block">
-      <header class="channel-head">
-        <div>
-          <p class="eyebrow">{{ t('channels.hero.eyebrow') }}</p>
-          <h1>{{ t('channels.hero.title') }}</h1>
-          <p>{{ t('channels.hero.subtitle') }}</p>
-        </div>
-        <div class="channel-head-actions">
+      <ManagementPageHeader :eyebrow="t('channels.hero.eyebrow')" :title="t('channels.hero.title')" :subtitle="t('channels.hero.subtitle')">
+        <template #actions>
           <span class="channel-count-pill">{{ t('channels.summary.total', { count: allChannels.length }) }}</span>
-          <button class="primary-action" type="button" @click="openCreate">{{ t('channels.actions.new') }}</button>
-        </div>
-      </header>
+          <button class="management-primary-action" type="button" @click="openCreate">{{ t('channels.actions.new') }}</button>
+        </template>
+      </ManagementPageHeader>
 
       <div class="channel-board">
         <aside class="channel-rail" :aria-label="t('channels.filters.typePlaceholder')">
@@ -41,7 +36,7 @@
                 <el-option :label="t('common.status.enabled')" :value="true" />
                 <el-option :label="t('common.status.disabled')" :value="false" />
               </el-select>
-              <button class="ghost-action" type="button" @click="loadChannels">{{ t('common.actions.refresh') }}</button>
+              <button class="management-ghost-action" type="button" @click="loadChannels">{{ t('common.actions.refresh') }}</button>
             </div>
           </div>
 
@@ -51,30 +46,29 @@
               <div class="channel-copy">
                 <div class="channel-title-line">
                   <h2>{{ item.name }}</h2>
-                  <span :class="['status-tag', { active: item.isActive }]">{{ item.isActive ? t('common.status.enabled') : t('common.status.disabled') }}</span>
+                  <span :class="['management-status-tag', { active: item.isActive }]">{{ item.isActive ? t('common.status.enabled') : t('common.status.disabled') }}</span>
                 </div>
                 <div class="channel-meta-line">
-                  <span>{{ typeLabel(item.channelType) }}</span>
-                  <span>{{ item.providerCode || t('channels.summary.noProvider') }}</span>
-                  <span>{{ t('channels.fields.sort') }} {{ item.sort || 0 }}</span>
+                  <span class="channel-type-tag">{{ typeLabel(item.channelType) }}</span>
+                  <span class="channel-meta-tag">{{ item.providerCode || t('channels.summary.noProvider') }}</span>
+                  <span class="channel-meta-tag">{{ t('channels.fields.sort') }} {{ item.sort || 0 }}</span>
                 </div>
                 <div class="event-pill-row">
-                  <span v-for="event in splitEvents(item.supportedEventTypes)" :key="`${item.id}-${event}`" class="event-pill">{{ eventLabel(event) }}</span>
+                  <span v-for="event in splitEvents(item.supportedEventTypes)" :key="`${item.id}-${event}`" class="channel-event-tag">{{ eventLabel(event) }}</span>
                 </div>
               </div>
               <div class="channel-actions">
-                <button class="text-action" type="button" @click="openEdit(item)">{{ t('common.actions.edit') }}</button>
-                <button class="danger-action" type="button" @click="handleDelete(item)">{{ t('common.actions.delete') }}</button>
+                <button class="management-text-action" type="button" @click="openEdit(item)">{{ t('common.actions.edit') }}</button>
+                <button class="management-danger-action" type="button" @click="handleDelete(item)">{{ t('common.actions.delete') }}</button>
               </div>
             </article>
           </div>
 
-          <div v-else-if="!loading" class="channel-empty">
-            <img :src="marmotOne" :alt="t('channels.empty.alt')" width="112" height="112" />
-            <h2>{{ t('channels.empty.title') }}</h2>
-            <p>{{ t('channels.empty.text') }}</p>
-            <button class="primary-action" type="button" @click="openCreate">{{ t('channels.actions.new') }}</button>
-          </div>
+          <ManagementEmptyState v-else-if="!loading" :image="marmotOne" :alt="t('channels.empty.alt')" :title="t('channels.empty.title')" :text="t('channels.empty.text')">
+            <template #action>
+              <button class="management-primary-action" type="button" @click="openCreate">{{ t('channels.actions.new') }}</button>
+            </template>
+          </ManagementEmptyState>
         </section>
       </div>
     </section>
@@ -105,8 +99,8 @@
         <el-form-item v-if="editingId" :label="t('common.status.status')"><el-switch v-model="form.isActive" :active-text="t('common.status.enabled')" :inactive-text="t('common.status.disabled')" /></el-form-item>
       </el-form>
       <template #footer>
-        <button class="ghost-action" type="button" @click="dialogVisible = false">{{ t('common.actions.cancel') }}</button>
-        <button class="primary-action" type="button" @click="submitForm">{{ t('common.actions.save') }}</button>
+        <button class="management-ghost-action" type="button" @click="dialogVisible = false">{{ t('common.actions.cancel') }}</button>
+        <button class="management-primary-action" type="button" @click="submitForm">{{ t('common.actions.save') }}</button>
       </template>
     </el-dialog>
   </main>
@@ -118,6 +112,8 @@ import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { createChannel, deleteChannel, listChannels, updateChannel, checkChannelUsage } from '@/api/channel/channel'
 import { listChannelTemplates } from '@/api/channelTemplate'
+import ManagementPageHeader from '@/components/management/ManagementPageHeader.vue'
+import ManagementEmptyState from '@/components/management/ManagementEmptyState.vue'
 import marmotOne from '../../../img/marmot-ledger-1.png'
 
 const { t } = useI18n()
@@ -260,38 +256,6 @@ onActivated(refreshAll)
   margin: 0 auto;
 }
 
-.channel-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 24px;
-  align-items: flex-end;
-  margin-bottom: 18px;
-}
-
-.channel-head h1 {
-  margin: 0;
-  color: #21362d;
-  font-size: clamp(28px, 4vw, 42px);
-  line-height: 1;
-  letter-spacing: -0.022em;
-  text-wrap: balance;
-}
-
-.channel-head p:not(.eyebrow) {
-  max-width: 620px;
-  margin: 10px 0 0;
-  color: #6f6254;
-  text-wrap: pretty;
-}
-
-.channel-head-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
 .channel-count-pill {
   min-height: 36px;
   display: inline-flex;
@@ -314,9 +278,9 @@ onActivated(refreshAll)
 
 .channel-rail,
 .channel-main-panel {
-  border-radius: 24px;
-  background: #fffaf1;
-  box-shadow: 0 18px 48px rgba(90, 68, 39, 0.11), 0 1px 3px rgba(68, 52, 32, 0.10);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, .1), 0 12px 30px rgba(15, 23, 42, .04);
 }
 
 .channel-rail {
@@ -327,9 +291,9 @@ onActivated(refreshAll)
 
 .rail-item {
   width: 100%;
-  min-height: 46px;
+  min-height: 40px;
   border: 0;
-  border-radius: 16px;
+  border-radius: 10px;
   background: transparent;
   display: grid;
   grid-template-columns: 32px 1fr auto;
@@ -345,7 +309,7 @@ onActivated(refreshAll)
 
 .rail-item + .rail-item { margin-top: 4px; }
 .rail-item:active { transform: scale(0.96); }
-.rail-item.active { background: #e6f1ea; color: #245f48; }
+.rail-item.active { background: #dce9df; color: #245f48; }
 .rail-icon { font-size: 18px; text-align: center; }
 .rail-item em { font-style: normal; color: #9a8a76; font-variant-numeric: tabular-nums; }
 .rail-item.active em { color: #2f7d5c; }
@@ -372,9 +336,11 @@ onActivated(refreshAll)
   gap: 14px;
   align-items: center;
   padding: 14px;
-  border-radius: 20px;
-  background: #fffdf8;
-  box-shadow: 0 1px 3px rgba(68, 52, 32, 0.10);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, .1), 0 12px 30px rgba(15, 23, 42, .04);
+  transition-property: transform, box-shadow;
+  transition-duration: 180ms;
 }
 .channel-row.inactive { opacity: 0.64; }
 .channel-symbol {
@@ -388,83 +354,40 @@ onActivated(refreshAll)
 .channel-copy { min-width: 0; }
 .channel-title-line { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .channel-title-line h2 { margin: 0; color: #21362d; font-size: 18px; letter-spacing: -0.012em; }
-.channel-meta-line { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; color: #8a7a67; font-size: 13px; }
-.channel-meta-line span:not(:last-child)::after { content: '·'; margin-left: 8px; color: #c4b49f; }
+.channel-meta-line { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px; color: #8a7a67; font-size: 13px; }
 .event-pill-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
-.event-pill { padding: 4px 8px; border-radius: 999px; background: #f3eadc; color: #6f6254; font-size: 12px; font-weight: 800; }
+
+.channel-type-tag,
+.channel-meta-tag,
+.channel-event-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  border-radius: 999px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.channel-type-tag {
+  background: rgba(47, 125, 92, 0.10);
+  color: #2f7d5c;
+}
+
+.channel-meta-tag {
+  background: #f7f3eb;
+  color: #7c6c5a;
+}
+
+.channel-event-tag {
+  background: rgba(100, 116, 139, 0.08);
+  color: #64748b;
+}
 .channel-actions {
   display: flex;
   gap: 6px;
   align-items: center;
-}
-
-.channel-empty {
-  min-height: 360px;
-  display: grid;
-  place-items: center;
-  text-align: center;
-  color: #6f6254;
-}
-.channel-empty h2 { margin: 10px 0 4px; color: #21362d; }
-.channel-empty p { max-width: 360px; margin: 0 0 16px; }
-
-.primary-action,
-.ghost-action,
-.text-action,
-.danger-action,
-.template-chip,
-.shelf-head {
-  min-height: 36px;
-  border-radius: 10px;
-  font-weight: 700;
-  cursor: pointer;
-  transition-property: transform, box-shadow, background-color, color;
-  transition-duration: 160ms;
-  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-  touch-action: manipulation;
-}
-.primary-action:active,
-.ghost-action:active,
-.text-action:active,
-.danger-action:active,
-.template-chip:active,
-.shelf-head:active { transform: scale(0.96); }
-
-.primary-action {
-  min-height: 44px;
-  border: 0;
-  padding: 0 18px;
-  background: #3b82f6;
-  color: #ffffff;
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.18);
-}
-
-.ghost-action {
-  border: 1px solid #e5e7eb;
-  padding: 0 14px;
-  background: #ffffff;
-  color: #1e293b;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-}
-
-.text-action,
-.danger-action {
-  min-height: 32px;
-  border: 0;
-  padding: 0 12px;
-  font-size: 13px;
-}
-
-.text-action {
-  background: #f8faf7;
-  color: #1e293b;
-  box-shadow: none;
-}
-
-.danger-action {
-  background: rgba(239, 68, 68, 0.10);
-  color: #ef4444;
-  box-shadow: none;
 }
 
 .template-shelf {
@@ -510,9 +433,12 @@ onActivated(refreshAll)
 .channel-form-grid .wide { grid-column: 1 / -1; }
 
 @media (hover: hover) {
-  .rail-item:hover { background: #f4eddf; }
-  .rail-item.active:hover { background: #e0ecdf; }
-  .channel-row:hover { box-shadow: 0 10px 24px rgba(90, 68, 39, 0.10), 0 1px 3px rgba(68, 52, 32, 0.10); }
+  .rail-item:hover { background: #f8faf7; }
+  .rail-item.active:hover { background: #dce9df; }
+  .channel-row:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(15, 23, 42, .12), 0 16px 34px rgba(15, 23, 42, .06);
+  }
 }
 
 @media (max-width: 760px) {

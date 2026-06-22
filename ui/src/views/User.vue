@@ -291,9 +291,9 @@ const submitPasswordForm = async (formEl) => {
 }
 
 .primary-action {
-  background: #3b82f6;
+  background: #2f7d5c;
   color: #ffffff;
-  box-shadow: 0 10px 24px rgba(59, 130, 246, 0.22);
+  box-shadow: 0 10px 24px rgba(47, 125, 92, 0.20);
 }
 
 .primary-action:disabled {

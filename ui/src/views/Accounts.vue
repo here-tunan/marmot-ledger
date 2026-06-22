@@ -1,15 +1,12 @@
 <template>
   <main class="ledger-page">
-    <section class="page-hero reveal-block">
-      <div>
-        <p class="eyebrow">{{ t('accounts.hero.eyebrow') }}</p>
-        <h1>{{ t('accounts.hero.title') }}</h1>
-        <p>{{ t('accounts.hero.subtitle') }}</p>
-      </div>
-      <button class="primary-action" @click="openCreate">{{ t('accounts.actions.new') }}</button>
-    </section>
+    <ManagementPageHeader :eyebrow="t('accounts.hero.eyebrow')" :title="t('accounts.hero.title')" :subtitle="t('accounts.hero.subtitle')">
+      <template #actions>
+        <button class="management-primary-action" @click="openCreate">{{ t('accounts.actions.new') }}</button>
+      </template>
+    </ManagementPageHeader>
 
-    <section class="toolbar reveal-block delay-1">
+    <ManagementToolbar class="reveal-block delay-1">
       <el-select v-model="filters.type" clearable :placeholder="t('accounts.filters.typePlaceholder')" class="filter-control" @change="loadAccounts">
         <el-option v-for="item in accountTypes" :key="item.value" :label="item.label.value || item.label" :value="item.value" />
       </el-select>
@@ -17,12 +14,12 @@
         <el-option :label="t('common.status.enabled')" :value="true" />
         <el-option :label="t('common.status.disabled')" :value="false" />
       </el-select>
-      <button class="ghost-action" @click="loadAccounts">{{ t('common.actions.refresh') }}</button>
-    </section>
+      <button class="management-ghost-action" @click="loadAccounts">{{ t('common.actions.refresh') }}</button>
+    </ManagementToolbar>
 
-    <section v-loading="loading" class="account-grid reveal-block delay-2">
+    <section v-loading="loading" class="account-grid management-grid reveal-block delay-2">
       <article v-for="(item, index) in accounts" :key="item.id" class="account-card" :style="{ animationDelay: `${index * 55}ms` }">
-        <div class="account-marker" :style="{ background: item.color || '#3b82f6' }"></div>
+        <div class="account-marker" :style="{ background: item.color || '#2f7d5c' }"></div>
         <div class="account-main">
           <div class="account-head">
             <div class="account-title-row">
@@ -34,25 +31,25 @@
                 <p>{{ getTypeLabel(item.type) }}</p>
               </div>
             </div>
-            <span class="status-pill" :class="{ inactive: !item.isActive }">{{ item.isActive ? t('common.status.enabled') : t('common.status.disabled') }}</span>
+            <span :class="['management-status-tag', { active: item.isActive }]">{{ item.isActive ? t('common.status.enabled') : t('common.status.disabled') }}</span>
           </div>
           <div class="account-meta">
-            <span>{{ item.icon || defaultIconByType(item.type) }}</span>
-            <span>{{ item.color || defaultColorByType(item.type) }}</span>
+            <span :class="['management-type-tag', item.type || 'other']">{{ getTypeLabel(item.type) }}</span>
+            <span class="management-meta-tag">{{ item.icon || defaultIconByType(item.type) }}</span>
+            <span class="management-meta-tag">{{ item.color || defaultColorByType(item.type) }}</span>
           </div>
           <div class="card-actions">
-            <button class="text-action" @click="openEdit(item)">{{ t('common.actions.edit') }}</button>
-            <button class="danger-action" @click="handleDelete(item)">{{ t('common.actions.delete') }}</button>
+            <button class="management-text-action" @click="openEdit(item)">{{ t('common.actions.edit') }}</button>
+            <button class="management-danger-action" @click="handleDelete(item)">{{ t('common.actions.delete') }}</button>
           </div>
         </div>
       </article>
 
-      <div v-if="!loading && !accounts.length" class="empty-state">
-        <img :src="marmotOne" :alt="t('accounts.empty.alt')" width="112" height="112" />
-        <h2>{{ t('accounts.empty.title') }}</h2>
-        <p>{{ t('accounts.empty.text') }}</p>
-        <button class="primary-action" @click="openCreate">{{ t('accounts.actions.new') }}</button>
-      </div>
+      <ManagementEmptyState v-if="!loading && !accounts.length" :image="marmotOne" :alt="t('accounts.empty.alt')" :title="t('accounts.empty.title')" :text="t('accounts.empty.text')">
+        <template #action>
+          <button class="management-primary-action" @click="openCreate">{{ t('accounts.actions.new') }}</button>
+        </template>
+      </ManagementEmptyState>
     </section>
 
     <el-dialog v-model="dialogVisible" :title="editingId ? t('accounts.dialog.editTitle') : t('accounts.dialog.createTitle')" width="680px" class="marmot-dialog">
@@ -121,8 +118,8 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <button class="ghost-action" @click="dialogVisible = false">{{ t('common.actions.cancel') }}</button>
-        <button class="primary-action" @click="submitForm">{{ t('common.actions.save') }}</button>
+        <button class="management-ghost-action" @click="dialogVisible = false">{{ t('common.actions.cancel') }}</button>
+        <button class="management-primary-action" @click="submitForm">{{ t('common.actions.save') }}</button>
       </template>
     </el-dialog>
   </main>
@@ -134,6 +131,9 @@ import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { createAccount, deleteAccount, listAccounts, updateAccount } from '@/api/account/account'
 import { listAccountTemplates } from '@/api/accountTemplate'
+import ManagementPageHeader from '@/components/management/ManagementPageHeader.vue'
+import ManagementToolbar from '@/components/management/ManagementToolbar.vue'
+import ManagementEmptyState from '@/components/management/ManagementEmptyState.vue'
 import marmotOne from '../../../img/marmot-ledger-1.png'
 
 const { t } = useI18n()
@@ -170,7 +170,7 @@ const accountIconOptions = [
   { label: computed(() => t('accounts.icons.collection')), value: 'Collection' },
   { label: computed(() => t('accounts.icons.other')), value: 'More' },
 ]
-const colors = ['#2f7d5c', '#3b82f6', '#1f2933', '#f59e0b', '#ef4444', '#f97316', '#22c55e', '#06b6d4', '#8b5cf6', '#ec4899', '#78716c', '#1677ff']
+const colors = ['#2f7d5c', '#2f7d5c', '#1f2933', '#f59e0b', '#ef4444', '#f97316', '#22c55e', '#06b6d4', '#8b5cf6', '#ec4899', '#78716c', '#1677ff']
 const rules = {
   name: [{ required: true, message: t('accounts.validation.nameRequired'), trigger: 'blur' }],
   type: [{ required: true, message: t('accounts.validation.typeRequired'), trigger: 'change' }],
@@ -209,7 +209,7 @@ function defaultIconByType(type) {
 function defaultColorByType(type) {
   switch (String(type || '').toLowerCase()) {
     case 'cash': return '#f59e0b'
-    case 'bank': return '#3b82f6'
+    case 'bank': return '#2f7d5c'
     case 'credit': return '#ef4444'
     case 'investment': return '#1f2933'
     case 'liability': return '#f97316'
@@ -363,56 +363,10 @@ onActivated(() => {
   animation-delay: 160ms;
 }
 
-.page-hero,
-.toolbar,
-.account-card,
-.empty-state {
+.account-card {
   background: #ffffff;
   border-radius: 16px;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1), 0 12px 30px rgba(15, 23, 42, 0.04);
-}
-
-.page-hero {
-  display: flex;
-  justify-content: space-between;
-  gap: 24px;
-  align-items: flex-start;
-  margin-bottom: 18px;
-  padding: 26px;
-  background: linear-gradient(135deg, #fffaf0 0%, #ffffff 70%);
-}
-
-.eyebrow {
-  margin: 0 0 8px;
-  color: #2f7d5c;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.page-hero h1 {
-  max-width: 680px;
-  margin: 0;
-  font-size: 30px;
-  line-height: 1.16;
-  letter-spacing: -0.022em;
-  text-wrap: balance;
-}
-
-.page-hero p:last-child {
-  max-width: 620px;
-  margin: 12px 0 0;
-  color: #64748b;
-  line-height: 1.7;
-}
-
-.toolbar {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin-bottom: 18px;
-  padding: 14px;
 }
 
 .filter-control {
@@ -481,24 +435,6 @@ onActivated(() => {
 
 .account-head p {
   margin: 6px 0 0;
-  color: #64748b;
-}
-
-.status-pill,
-.account-meta span {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  border-radius: 999px;
-  padding: 0 10px;
-  background: rgba(47, 125, 92, 0.1);
-  color: #2f7d5c;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.status-pill.inactive {
-  background: rgba(100, 116, 139, 0.12);
   color: #64748b;
 }
 
@@ -625,72 +561,10 @@ onActivated(() => {
   box-shadow: 0 10px 24px rgba(47, 125, 92, 0.1);
 }
 
-.primary-action,
-.ghost-action,
-.text-action,
-.danger-action {
-  min-height: 40px;
-  border: 0;
-  border-radius: 12px;
-  padding: 0 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition-property: transform, box-shadow, background-color, color;
-  transition-duration: 160ms;
-  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-  touch-action: manipulation;
-}
-
-.primary-action:active,
-.ghost-action:active,
-.text-action:active,
-.danger-action:active,
 .color-dot:active,
 .icon-option:active,
 .template-chip:active {
   transform: scale(0.96);
-}
-
-.primary-action {
-  background: #3b82f6;
-  color: #ffffff;
-  box-shadow: 0 10px 24px rgba(59, 130, 246, 0.22);
-}
-
-.ghost-action,
-.text-action {
-  background: #f8faf7;
-  color: #1e293b;
-}
-
-.danger-action {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-}
-
-.empty-state {
-  grid-column: 1 / -1;
-  display: grid;
-  place-items: center;
-  gap: 12px;
-  padding: 40px 24px;
-  text-align: center;
-  color: #64748b;
-}
-
-.empty-state img {
-  border-radius: 22px;
-}
-
-.empty-state h2 {
-  margin: 0;
-  color: #1e293b;
-}
-
-.empty-state p {
-  max-width: 420px;
-  margin: 0;
-  line-height: 1.7;
 }
 
 .full-width {
@@ -731,12 +605,6 @@ onActivated(() => {
 }
 
 @media (max-width: 820px) {
-  .page-hero,
-  .toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
   .account-grid,
   .template-grid-mini {
     grid-template-columns: 1fr;
@@ -748,14 +616,6 @@ onActivated(() => {
 }
 
 @media (max-width: 520px) {
-  .page-hero {
-    padding: 20px;
-  }
-
-  .page-hero h1 {
-    font-size: 24px;
-  }
-
   .account-head {
     flex-direction: column;
   }

@@ -1,15 +1,12 @@
 <template>
   <main class="ledger-page">
-    <section class="page-hero reveal-block">
-      <div>
-        <p class="eyebrow">{{ t('categories.hero.eyebrow') }}</p>
-        <h1>{{ t('categories.hero.title') }}</h1>
-        <p>{{ t('categories.hero.subtitle') }}</p>
-      </div>
-      <button class="primary-action" @click="openCreate">{{ t('categories.actions.new') }}</button>
-    </section>
+    <ManagementPageHeader :eyebrow="t('categories.hero.eyebrow')" :title="t('categories.hero.title')" :subtitle="t('categories.hero.subtitle')">
+      <template #actions>
+        <button class="management-primary-action" @click="openCreate">{{ t('categories.actions.new') }}</button>
+      </template>
+    </ManagementPageHeader>
 
-    <section class="toolbar reveal-block delay-1">
+    <ManagementToolbar class="reveal-block delay-1">
       <el-select v-model="filters.type" clearable :placeholder="t('categories.fields.type')" class="filter-control" @change="loadCategories">
         <el-option :label="t('domain.expense')" value="expense" />
         <el-option :label="t('domain.income')" value="income" />
@@ -18,10 +15,10 @@
         <el-option :label="t('common.status.enabled')" :value="true" />
         <el-option :label="t('common.status.disabled')" :value="false" />
       </el-select>
-      <button class="ghost-action" @click="loadCategories">{{ t('common.actions.refresh') }}</button>
-    </section>
+      <button class="management-ghost-action" @click="loadCategories">{{ t('common.actions.refresh') }}</button>
+    </ManagementToolbar>
 
-    <section v-loading="loading" class="category-grid reveal-block delay-2">
+    <section v-loading="loading" class="category-grid management-grid reveal-block delay-2">
       <article v-for="item in categories" :key="item.id" class="category-card">
         <!-- 左侧颜色条 -->
         <div
@@ -46,27 +43,26 @@
 
           <!-- 底部标签 -->
           <div class="category-footer">
-            <span :class="['type-tag', item.type]">
+            <span :class="['management-type-tag', item.type]">
               {{ item.type === 'income' ? t('domain.income') : t('domain.expense') }}
             </span>
-            <span :class="['status-tag', { active: item.isActive }]">
+            <span :class="['management-status-tag', { active: item.isActive }]">
               {{ item.isActive ? t('common.status.enabled') : t('common.status.disabled') }}
             </span>
           </div>
         </div>
 
         <div class="card-actions">
-          <button class="text-action" @click="openEdit(item)">{{ t('common.actions.edit') }}</button>
-          <button class="danger-action" @click="handleDelete(item)">{{ t('common.actions.delete') }}</button>
+          <button class="management-text-action" @click="openEdit(item)">{{ t('common.actions.edit') }}</button>
+          <button class="management-danger-action" @click="handleDelete(item)">{{ t('common.actions.delete') }}</button>
         </div>
       </article>
 
-      <div v-if="!loading && !categories.length" class="empty-state">
-        <img :src="marmotOne" :alt="t('categories.empty.alt')" width="112" height="112" />
-        <h2>{{ t('categories.empty.title') }}</h2>
-        <p>{{ t('categories.empty.text') }}</p>
-        <button class="primary-action" @click="openCreate">{{ t('categories.actions.new') }}</button>
-      </div>
+      <ManagementEmptyState v-if="!loading && !categories.length" :image="marmotOne" :alt="t('categories.empty.alt')" :title="t('categories.empty.title')" :text="t('categories.empty.text')">
+        <template #action>
+          <button class="management-primary-action" @click="openCreate">{{ t('categories.actions.new') }}</button>
+        </template>
+      </ManagementEmptyState>
     </section>
 
     <el-dialog v-model="dialogVisible" :title="editingId ? t('categories.dialog.editTitle') : t('categories.dialog.createTitle')" width="640px" class="marmot-dialog category-dialog">
@@ -166,8 +162,8 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <button class="ghost-action" @click="dialogVisible = false">{{ t('common.actions.cancel') }}</button>
-        <button class="primary-action" @click="submitForm">{{ t('common.actions.save') }}</button>
+        <button class="management-ghost-action" @click="dialogVisible = false">{{ t('common.actions.cancel') }}</button>
+        <button class="management-primary-action" @click="submitForm">{{ t('common.actions.save') }}</button>
       </template>
     </el-dialog>
   </main>
@@ -183,6 +179,9 @@ import { listCategoryTemplates } from '@/api/categoryTemplate'
 import { listFamilies } from '@/api/family/family'
 import { listFamilyCategoryGroups } from '@/api/familyCategoryGroup'
 import IconColorPicker from '@/components/IconColorPicker.vue'
+import ManagementPageHeader from '@/components/management/ManagementPageHeader.vue'
+import ManagementToolbar from '@/components/management/ManagementToolbar.vue'
+import ManagementEmptyState from '@/components/management/ManagementEmptyState.vue'
 import marmotOne from '../../../img/marmot-ledger-1.png'
 
 const { t } = useI18n()
@@ -378,66 +377,14 @@ onActivated(refreshAll)
   animation-delay: 160ms;
 }
 
-.page-hero,
-.toolbar,
-.category-card,
-.empty-state {
+.category-card {
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 1px 3px rgba(15, 23, 42, .1), 0 12px 30px rgba(15, 23, 42, .04);
 }
 
-.page-hero {
-  display: flex;
-  justify-content: space-between;
-  gap: 24px;
-  align-items: flex-start;
-  margin-bottom: 18px;
-  padding: 26px;
-  background: linear-gradient(135deg, #fffaf0 0%, #fff 70%);
-}
-
-.eyebrow {
-  margin: 0 0 8px;
-  color: #2f7d5c;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-
-.page-hero h1 {
-  max-width: 720px;
-  margin: 0;
-  font-size: 30px;
-  line-height: 1.16;
-  letter-spacing: -.022em;
-}
-
-.page-hero p:last-child {
-  max-width: 680px;
-  margin: 12px 0 0;
-  color: #64748b;
-  line-height: 1.7;
-}
-
-.toolbar {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin-bottom: 18px;
-  padding: 14px;
-}
-
 .filter-control {
   width: 180px;
-}
-
-/* 优化分类网格 - 改为三列，卡片更紧凑 */
-.category-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
 }
 
 .category-card {
@@ -519,100 +466,11 @@ onActivated(refreshAll)
   align-items: center;
 }
 
-.type-tag,
-.status-tag {
-  display: inline-flex;
-  align-items: center;
-  height: 20px;
-  border-radius: 999px;
-  padding: 0 8px;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.type-tag.income {
-  color: #ef4444;
-  background: rgba(239, 68, 68, .1);
-}
-
-.type-tag.expense {
-  color: #f97316;
-  background: rgba(249, 115, 22, .1);
-}
-
-.status-tag {
-  color: #64748b;
-  background: rgba(100, 116, 139, .1);
-}
-
-.status-tag.active {
-  color: #22c55e;
-  background: rgba(34, 197, 94, .1);
-}
-
 .card-actions {
   display: flex;
   gap: 6px;
   align-items: center;
   padding-right: 14px;
-}
-
-.primary-action,
-.ghost-action,
-.text-action,
-.danger-action {
-  min-height: 32px;
-  border: 0;
-  border-radius: 10px;
-  padding: 0 12px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition-property: transform, box-shadow, background-color, color;
-  transition-duration: 160ms;
-}
-
-.primary-action:active,
-.ghost-action:active,
-.text-action:active,
-.danger-action:active {
-  transform: scale(.96);
-}
-
-.primary-action {
-  background: #3b82f6;
-  color: #fff;
-  box-shadow: 0 10px 24px rgba(59, 130, 246, .22);
-}
-
-.ghost-action,
-.text-action {
-  background: #f8faf7;
-  color: #1e293b;
-}
-
-.danger-action {
-  background: rgba(239, 68, 68, .1);
-  color: #ef4444;
-}
-
-.empty-state {
-  grid-column: 1 / -1;
-  display: grid;
-  place-items: center;
-  gap: 12px;
-  padding: 40px 24px;
-  text-align: center;
-  color: #64748b;
-}
-
-.empty-state img {
-  border-radius: 22px;
-}
-
-.empty-state h2 {
-  margin: 0;
-  color: #1e293b;
 }
 
 .full-width {

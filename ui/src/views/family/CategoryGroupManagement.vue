@@ -495,12 +495,35 @@ async function removeMember(groupId, categoryId) {
   margin-bottom: 20px;
 }
 
+.text-action {
+  min-height: 32px;
+  border: 0;
+  border-radius: 10px;
+  padding: 0 12px;
+  background: #f4efe6;
+  color: #6b5b49;
+  box-shadow: none;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition-property: transform, background-color, color;
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.text-action:active {
+  transform: scale(0.96);
+}
+
 .small {
   padding: 6px 12px;
   font-size: 13px;
 }
 
+.text-action.danger,
 .danger {
+  background: rgba(239, 68, 68, .1);
   color: #ef4444;
+  box-shadow: none;
 }
 </style>

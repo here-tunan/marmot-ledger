@@ -1308,7 +1308,7 @@ onActivated(async () => {
 .scenario-card.active.refund,
 .scenario-card.active.exchange {
   background: rgba(59, 130, 246, 0.12);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.18);
+  box-shadow: 0 0 0 2px rgba(47, 125, 92, 0.18);
 }
 
 .scenario-card.active.paired {
@@ -1762,11 +1762,11 @@ onActivated(async () => {
   border: 0;
   border-radius: 12px;
   padding: 0 18px;
-  background: #3b82f6;
+  background: #2f7d5c;
   color: #ffffff;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 10px 24px rgba(59, 130, 246, 0.22);
+  box-shadow: 0 10px 24px rgba(47, 125, 92, 0.20);
   transition-property: transform, box-shadow, background-color, color;
   transition-duration: 160ms;
 }
