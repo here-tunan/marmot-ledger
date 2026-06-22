@@ -10,18 +10,16 @@ import (
 )
 
 type Category struct {
-	Id              int64           `json:"id" xorm:"pk autoincr 'id'"`
-	UserId          int64           `json:"userId" xorm:"'user_id'"`
-	Name            string          `json:"name" xorm:"'name'"`
-	Type            string          `json:"type" xorm:"'type'"`
-	CategoryGroupId int64           `json:"categoryGroupId" xorm:"'category_group_id'"`
-	TemplateId      int64           `json:"templateId" xorm:"'template_id'"`
-	Icon            string          `json:"icon" xorm:"'icon'"`
-	Color           string          `json:"color" xorm:"'color'"`
-	IsActive        bool            `json:"isActive" xorm:"'is_active'"`
-	IsDeleted       bool            `json:"isDeleted" xorm:"'is_deleted'"`
-	CreatedAt       model.LocalTime `json:"createdAt" xorm:"created 'created_at'"`
-	UpdatedAt       model.LocalTime `json:"updatedAt" xorm:"updated 'updated_at'"`
+	Id        int64           `json:"id" xorm:"pk autoincr 'id'"`
+	UserId    int64           `json:"userId" xorm:"'user_id'"`
+	Name      string          `json:"name" xorm:"'name'"`
+	Type      string          `json:"type" xorm:"'type'"`
+	Icon      string          `json:"icon" xorm:"'icon'"`
+	Color     string          `json:"color" xorm:"'color'"`
+	IsActive  bool            `json:"isActive" xorm:"'is_active'"`
+	IsDeleted bool            `json:"isDeleted" xorm:"'is_deleted'"`
+	CreatedAt model.LocalTime `json:"createdAt" xorm:"created 'created_at'"`
+	UpdatedAt model.LocalTime `json:"updatedAt" xorm:"updated 'updated_at'"`
 }
 
 type CategoryView struct {
@@ -84,7 +82,7 @@ func GetCategory(id int64, userId int64) (*CategoryView, error) {
 func UpdateCategory(category *Category) error {
 	_, err := infrastructure.Mysql.
 		Where("id = ? AND user_id = ? AND is_deleted = ?", category.Id, category.UserId, 0).
-		Cols("name", "type", "category_group_id", "icon", "color", "is_active").
+		Cols("name", "type", "icon", "color", "is_active").
 		Update(category)
 	return err
 }

@@ -19,9 +19,7 @@ type FinancialEvent struct {
 	EventType               string          `json:"eventType" xorm:"'event_type'"`
 	Description             string          `json:"description" xorm:"'description'"`
 	CategoryId              *int64          `json:"categoryId" xorm:"'category_id'"`
-	CategoryGroupId         *int64          `json:"categoryGroupId" xorm:"'category_group_id'"`
-	ChannelType             *string         `json:"channelType" xorm:"'channel_type'"`
-	ChannelAccountId        *int64          `json:"channelAccountId" xorm:"'channel_account_id'"`
+	ChannelId               *int64          `json:"channelId" xorm:"'channel_id'"`
 	EventTime               model.LocalTime `json:"eventTime" xorm:"'event_time'"`
 	Currency                string          `json:"currency" xorm:"'currency'"`
 	Amount                  decimal.Decimal `json:"amount" xorm:"'amount'"`
@@ -40,7 +38,7 @@ type FinancialEventQuery struct {
 	EndTime             string
 	Currency            string
 	CategoryId          int64
-	CategoryGroupId     int64
+	ChannelId           int64
 	BucketId            int64
 	Keyword             string
 	IncludeInStatistics *bool
@@ -152,7 +150,7 @@ func GetFinancialEventForUpdate(session *xorm.Session, id int64, userId int64) (
 func UpdateFinancialEvent(session *xorm.Session, event *FinancialEvent) error {
 	_, err := session.
 		Where("id = ? AND user_id = ? AND is_deleted = ?", event.Id, event.UserId, 0).
-		Cols("event_type", "description", "category_id", "category_group_id", "event_time", "currency", "amount", "include_in_statistics", "source", "status", "remark", "related_financial_event_id").
+		Cols("event_type", "description", "category_id", "channel_id", "event_time", "currency", "amount", "include_in_statistics", "source", "status", "remark", "related_financial_event_id").
 		Update(event)
 	return err
 }
@@ -292,8 +290,8 @@ func applyFinancialEventQuery(session *xorm.Session, query FinancialEventQuery, 
 	if query.CategoryId != 0 {
 		session.And("category_id = ?", query.CategoryId)
 	}
-	if query.CategoryGroupId != 0 {
-		session.And("category_group_id = ?", query.CategoryGroupId)
+	if query.ChannelId != 0 {
+		session.And("channel_id = ?", query.ChannelId)
 	}
 	if query.BucketId != 0 {
 		inClause, params := userIdsInClause(userIds)

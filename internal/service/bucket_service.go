@@ -53,7 +53,6 @@ func CreateBucket(userId int64, bucketInfo *bucket.Bucket) (*bucket.Bucket, erro
 		InitialBalance: initialBalance,
 		BucketType:     strings.TrimSpace(bucketInfo.BucketType),
 		BucketNature:   strings.TrimSpace(bucketInfo.BucketNature),
-		BucketGroupKey: strings.TrimSpace(bucketInfo.BucketGroupKey),
 		IsActive:       true,
 		IsDeleted:      false,
 	}
@@ -141,13 +140,12 @@ func UpdateBucket(userId int64, id int64, bucketInfo *bucket.Bucket) (*bucket.Bu
 	}
 
 	bucketDb := &bucketdb.Bucket{
-		Id:             id,
-		UserId:         userId,
-		Name:           strings.TrimSpace(bucketInfo.Name),
-		BucketType:     strings.TrimSpace(bucketInfo.BucketType),
-		BucketNature:   strings.TrimSpace(bucketInfo.BucketNature),
-		BucketGroupKey: strings.TrimSpace(bucketInfo.BucketGroupKey),
-		IsActive:       bucketInfo.IsActive,
+		Id:           id,
+		UserId:       userId,
+		Name:         strings.TrimSpace(bucketInfo.Name),
+		BucketType:   strings.TrimSpace(bucketInfo.BucketType),
+		BucketNature: strings.TrimSpace(bucketInfo.BucketNature),
+		IsActive:     bucketInfo.IsActive,
 	}
 	if err := bucketdb.UpdateBucket(bucketDb); err != nil {
 		return nil, err
@@ -218,7 +216,6 @@ func toBucketEntity(bucketDb *bucketdb.Bucket) *bucket.Bucket {
 		InitialBalance: bucketDb.InitialBalance,
 		BucketType:     bucketDb.BucketType,
 		BucketNature:   bucketDb.BucketNature,
-		BucketGroupKey: bucketDb.BucketGroupKey,
 		IsActive:       bucketDb.IsActive,
 	}
 }

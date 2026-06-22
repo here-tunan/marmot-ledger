@@ -108,7 +108,6 @@ func CreateSplitRecord(userId int64, req *record.RecordRequest) (*record.RecordR
 		entryRoleCash := EntryRoleCashLeg
 		includeStats := false
 		var catId *int64
-		var catGroupId *int64
 
 		if share.IsSelf {
 			eventType = EventTypeExpense
@@ -116,7 +115,6 @@ func CreateSplitRecord(userId int64, req *record.RecordRequest) (*record.RecordR
 			includeStats = true
 			if categoryView != nil {
 				catId = &categoryView.Id
-				catGroupId = &categoryView.CategoryGroupId
 			}
 		}
 
@@ -135,7 +133,6 @@ func CreateSplitRecord(userId int64, req *record.RecordRequest) (*record.RecordR
 			EventType:           eventType,
 			Description:         desc,
 			CategoryId:          catId,
-			CategoryGroupId:     catGroupId,
 			EventTime:           eventTime,
 			Currency:            currency,
 			Amount:              share.Amount,

@@ -146,12 +146,11 @@ func ImportTemplatesForUser(userId int64, templateIds []int64) ([]category.Categ
 		}
 
 		categoryInfo := &category.Category{
-			Name:       t.Name,
-			Type:       t.Type,
-			TemplateId: t.Id,
-			Icon:       t.Icon,
-			Color:      t.Color,
-			IsActive:   true,
+			Name:     t.Name,
+			Type:     t.Type,
+			Icon:     t.Icon,
+			Color:    t.Color,
+			IsActive: true,
 		}
 
 		created, err := CreateCategory(userId, categoryInfo)

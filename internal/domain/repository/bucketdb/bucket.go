@@ -20,7 +20,6 @@ type Bucket struct {
 	InitialBalance decimal.Decimal `json:"initialBalance" xorm:"'initial_balance'"`
 	BucketType     string          `json:"bucketType" xorm:"'bucket_type'"`
 	BucketNature   string          `json:"bucketNature" xorm:"'bucket_nature'"`
-	BucketGroupKey string          `json:"bucketGroupKey" xorm:"'bucket_group_key'"`
 	IsActive       bool            `json:"isActive" xorm:"'is_active'"`
 	IsDeleted      bool            `json:"isDeleted" xorm:"'is_deleted'"`
 	CreatedAt      model.LocalTime `json:"createdAt" xorm:"created 'created_at'"`
@@ -101,7 +100,7 @@ func GetBucket(id int64, userId int64) (*Bucket, error) {
 func UpdateBucket(bucket *Bucket) error {
 	_, err := infrastructure.Mysql.
 		Where("id = ? AND user_id = ? AND is_deleted = ?", bucket.Id, bucket.UserId, 0).
-		Cols("name", "bucket_type", "bucket_nature", "bucket_group_key", "is_active").
+		Cols("name", "bucket_type", "bucket_nature", "is_active").
 		Update(bucket)
 	return err
 }

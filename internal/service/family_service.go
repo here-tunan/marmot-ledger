@@ -161,7 +161,7 @@ func GetFamilyStatisticsCategoryGroup(userId int64, familyId int64, query statis
 	if err != nil {
 		return nil, err
 	}
-	return statisticsdb.GetCategoryGroupStatsByUserIds(userIds, query)
+	return statisticsdb.GetFamilyCategoryGroupStatsByUserIds(familyId, userIds, query)
 }
 
 func GetFamilyStatisticsSummaries(userId int64, familyId int64, query statisticsdb.StatisticsQuery) ([]statistics.Summary, error) {
@@ -177,7 +177,7 @@ func GetFamilyStatisticsCategoryGroups(userId int64, familyId int64, query stati
 	if err != nil {
 		return nil, err
 	}
-	return statisticsdb.GetCategoryGroupStatsListByUserIds(userIds, query)
+	return statisticsdb.GetFamilyCategoryGroupStatsListByUserIds(familyId, userIds, query)
 }
 
 func GetFamilyNetWorthTrend(userId int64, familyId int64, query statisticsdb.StatisticsQuery, granularity string) ([]statistics.NetWorthTrendPoint, error) {
@@ -209,7 +209,7 @@ func ListFamilyFinancialEvents(userId int64, familyId int64, query financialeven
 		EndTime:             query.EndTime,
 		Currency:            query.Currency,
 		CategoryId:          query.CategoryId,
-		CategoryGroupId:     query.CategoryGroupId,
+		ChannelId:           query.ChannelId,
 		BucketId:            query.BucketId,
 		Keyword:             query.Keyword,
 		IncludeInStatistics: query.IncludeInStatistics,

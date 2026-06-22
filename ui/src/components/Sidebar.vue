@@ -79,6 +79,11 @@ const baseItems = [
     titleKey: 'routes.categories',
   },
   {
+    icon: 'Connection',
+    index: '/channels',
+    titleKey: 'routes.channels',
+  },
+  {
     icon: 'Box',
     index: '/buckets',
     titleKey: 'routes.buckets',

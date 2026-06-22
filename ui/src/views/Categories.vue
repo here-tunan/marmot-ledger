@@ -40,7 +40,7 @@
             </div>
             <div class="category-text">
               <h2 class="category-name">{{ item.name }}</h2>
-              <p class="category-group">{{ item.categoryGroupName || item.categoryGroupCode || '未分组' }}</p>
+              <p class="category-group">{{ item.type === 'income' ? t('domain.income') : t('domain.expense') }}</p>
             </div>
           </div>
 

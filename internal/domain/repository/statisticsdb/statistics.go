@@ -103,22 +103,22 @@ func GetCategoryGroupStatsByUserIds(userIds []int64, query StatisticsQuery) (*st
 
 	sql := `
 SELECT
-  COALESCE(cg.id, 0) AS category_group_id,
-  COALESCE(cg.group_code, 'UNCATEGORIZED') AS category_group_code,
-  COALESCE(cg.name, '未分类') AS category_group_name,
+  COALESCE(c.id, 0) AS category_group_id,
+  CASE WHEN c.id IS NULL THEN 'UNCATEGORIZED' ELSE CONCAT('CATEGORY_', c.id) END AS category_group_code,
+  COALESCE(c.name, '未分类') AS category_group_name,
   ? AS type,
   ` + amountExpr + ` AS amount,
   COUNT(*) AS count,
-  COALESCE(cg.color, '') AS color,
-  COALESCE(cg.icon, '') AS icon
+  COALESCE(c.color, '') AS color,
+  COALESCE(c.icon, '') AS icon
 FROM financial_event fe
-LEFT JOIN category_group cg ON fe.category_group_id = cg.id
+LEFT JOIN category c ON fe.category_id = c.id
 WHERE fe.user_id IN (` + inClause + `)
   AND fe.is_deleted = 0
   AND fe.status = 'active'
   AND fe.include_in_statistics = 1
   AND fe.currency = ?` + eventWhere + timeWhere + `
-GROUP BY cg.id, cg.group_code, cg.name, cg.color, cg.icon
+GROUP BY c.id, c.name, c.color, c.icon
 ORDER BY amount DESC, count DESC`
 
 	items := make([]statistics.CategoryGroupItem, 0)
@@ -139,34 +139,129 @@ func GetCategoryGroupStatsListByUserIds(userIds []int64, query StatisticsQuery) 
 	params = append(params, timeParams...)
 	eventWhere, amountExpr := categoryEventWhereAndAmount(statsType)
 
-	type row struct {
-		Currency                     string `xorm:"'currency'"`
-		statistics.CategoryGroupItem `xorm:"extends"`
-	}
-	rows := make([]row, 0)
+	rows := make([]categoryStatsRow, 0)
 	sql := `
 SELECT
   fe.currency AS currency,
-  COALESCE(cg.id, 0) AS category_group_id,
-  COALESCE(cg.group_code, 'UNCATEGORIZED') AS category_group_code,
-  COALESCE(cg.name, '未分类') AS category_group_name,
+  COALESCE(c.id, 0) AS category_group_id,
+  CASE WHEN c.id IS NULL THEN 'UNCATEGORIZED' ELSE CONCAT('CATEGORY_', c.id) END AS category_group_code,
+  COALESCE(c.name, '未分类') AS category_group_name,
   ? AS type,
   ` + amountExpr + ` AS amount,
   COUNT(*) AS count,
-  COALESCE(cg.color, '') AS color,
-  COALESCE(cg.icon, '') AS icon
+  COALESCE(c.color, '') AS color,
+  COALESCE(c.icon, '') AS icon
 FROM financial_event fe
-LEFT JOIN category_group cg ON fe.category_group_id = cg.id
+LEFT JOIN category c ON fe.category_id = c.id
 WHERE fe.user_id IN (` + inClause + `)
   AND fe.is_deleted = 0
   AND fe.status = 'active'
   AND fe.include_in_statistics = 1` + currencyWhere + eventWhere + timeWhere + `
-GROUP BY fe.currency, cg.id, cg.group_code, cg.name, cg.color, cg.icon
+GROUP BY fe.currency, c.id, c.name, c.color, c.icon
 ORDER BY fe.currency ASC, amount DESC, count DESC`
 	if err := infrastructure.Mysql.SQL(sql, params...).Find(&rows); err != nil {
 		return nil, err
 	}
 
+	return groupCategoryStatsRows(statsType, rows), nil
+}
+
+func GetFamilyCategoryGroupStatsByUserIds(familyId int64, userIds []int64, query StatisticsQuery) (*statistics.CategoryGroupStats, error) {
+	currency := normalizeCurrency(query.Currency)
+	statsType := normalizeStatsType(query.Type)
+
+	inClause, userParams := userIdsInClause(userIds)
+	params := append([]any{statsType, familyId, statsType}, userParams...)
+	params = append(params, currency)
+	timeWhere, timeParams := buildTimeWhere(query, "fe")
+	params = append(params, timeParams...)
+	eventWhere, amountExpr := categoryEventWhereAndAmount(statsType)
+
+	sql := `
+SELECT
+  COALESCE(fcg.id, 0) AS category_group_id,
+  CASE WHEN fcg.id IS NULL THEN 'UNCATEGORIZED' ELSE CONCAT('FAMILY_GROUP_', fcg.id) END AS category_group_code,
+  COALESCE(fcg.name, '未分类') AS category_group_name,
+  ? AS type,
+  ` + amountExpr + ` AS amount,
+  COUNT(*) AS count,
+  COALESCE(fcg.color, '') AS color,
+  COALESCE(fcg.icon, '') AS icon
+FROM financial_event fe
+LEFT JOIN (
+  SELECT fcgm.category_id, MIN(fcg.id) AS family_group_id
+  FROM family_category_group_member fcgm
+  JOIN family_category_group fcg ON fcg.id = fcgm.family_group_id
+  WHERE fcg.family_id = ? AND fcg.type = ? AND fcg.is_deleted = 0 AND fcg.is_active = 1
+  GROUP BY fcgm.category_id
+) fmap ON fmap.category_id = fe.category_id
+LEFT JOIN family_category_group fcg ON fcg.id = fmap.family_group_id
+WHERE fe.user_id IN (` + inClause + `)
+  AND fe.is_deleted = 0
+  AND fe.status = 'active'
+  AND fe.include_in_statistics = 1
+  AND fe.currency = ?` + eventWhere + timeWhere + `
+GROUP BY fcg.id, fcg.name, fcg.color, fcg.icon
+ORDER BY amount DESC, count DESC`
+
+	items := make([]statistics.CategoryGroupItem, 0)
+	err := infrastructure.Mysql.SQL(sql, params...).Find(&items)
+	return &statistics.CategoryGroupStats{Currency: currency, Type: statsType, Items: items}, err
+}
+
+func GetFamilyCategoryGroupStatsListByUserIds(familyId int64, userIds []int64, query StatisticsQuery) ([]statistics.CategoryGroupStats, error) {
+	statsType := normalizeStatsType(query.Type)
+	inClause, userParams := userIdsInClause(userIds)
+	params := append([]any{statsType, familyId, statsType}, userParams...)
+	currencyWhere := ""
+	if strings.TrimSpace(query.Currency) != "" {
+		currencyWhere = " AND fe.currency = ?"
+		params = append(params, strings.ToUpper(strings.TrimSpace(query.Currency)))
+	}
+	timeWhere, timeParams := buildTimeWhere(query, "fe")
+	params = append(params, timeParams...)
+	eventWhere, amountExpr := categoryEventWhereAndAmount(statsType)
+
+	rows := make([]categoryStatsRow, 0)
+	sql := `
+SELECT
+  fe.currency AS currency,
+  COALESCE(fcg.id, 0) AS category_group_id,
+  CASE WHEN fcg.id IS NULL THEN 'UNCATEGORIZED' ELSE CONCAT('FAMILY_GROUP_', fcg.id) END AS category_group_code,
+  COALESCE(fcg.name, '未分类') AS category_group_name,
+  ? AS type,
+  ` + amountExpr + ` AS amount,
+  COUNT(*) AS count,
+  COALESCE(fcg.color, '') AS color,
+  COALESCE(fcg.icon, '') AS icon
+FROM financial_event fe
+LEFT JOIN (
+  SELECT fcgm.category_id, MIN(fcg.id) AS family_group_id
+  FROM family_category_group_member fcgm
+  JOIN family_category_group fcg ON fcg.id = fcgm.family_group_id
+  WHERE fcg.family_id = ? AND fcg.type = ? AND fcg.is_deleted = 0 AND fcg.is_active = 1
+  GROUP BY fcgm.category_id
+) fmap ON fmap.category_id = fe.category_id
+LEFT JOIN family_category_group fcg ON fcg.id = fmap.family_group_id
+WHERE fe.user_id IN (` + inClause + `)
+  AND fe.is_deleted = 0
+  AND fe.status = 'active'
+  AND fe.include_in_statistics = 1` + currencyWhere + eventWhere + timeWhere + `
+GROUP BY fe.currency, fcg.id, fcg.name, fcg.color, fcg.icon
+ORDER BY fe.currency ASC, amount DESC, count DESC`
+	if err := infrastructure.Mysql.SQL(sql, params...).Find(&rows); err != nil {
+		return nil, err
+	}
+
+	return groupCategoryStatsRows(statsType, rows), nil
+}
+
+type categoryStatsRow struct {
+	Currency                     string `xorm:"'currency'"`
+	statistics.CategoryGroupItem `xorm:"extends"`
+}
+
+func groupCategoryStatsRows(statsType string, rows []categoryStatsRow) []statistics.CategoryGroupStats {
 	result := make([]statistics.CategoryGroupStats, 0)
 	index := make(map[string]int)
 	for _, item := range rows {
@@ -178,7 +273,7 @@ ORDER BY fe.currency ASC, amount DESC, count DESC`
 		}
 		result[pos].Items = append(result[pos].Items, item.CategoryGroupItem)
 	}
-	return result, nil
+	return result
 }
 
 type trendPeriod struct {

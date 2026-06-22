@@ -10,6 +10,7 @@ import Record from "@/views/Record.vue";
 import Records from "@/views/Records.vue";
 import Outstanding from "@/views/Outstanding.vue";
 import Categories from "@/views/Categories.vue";
+import Channels from "@/views/Channels.vue";
 import Family from "@/views/Family.vue";
 import TemplateManagement from "@/views/admin/TemplateManagement.vue"
 
@@ -58,6 +59,14 @@ const router = createRouter({
                         titleKey: 'routes.categories',
                     },
                     component: Categories,
+                },
+                {
+                    path: '/channels',
+                    name: 'channels',
+                    meta: {
+                        titleKey: 'routes.channels',
+                    },
+                    component: Channels,
                 },
                 {
                     path: '/buckets',

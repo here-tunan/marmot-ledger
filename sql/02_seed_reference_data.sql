@@ -71,18 +71,18 @@ ON DUPLICATE KEY UPDATE
 
 INSERT INTO `channel_template` (`channel_code`, `name`, `channel_type`, `provider_code`, `supported_event_types`, `icon`, `sort`, `enabled`, `remark`)
 VALUES
-  ('WECHAT', '微信', 'wallet', 'WECHAT', 'income,expense', '', 10, 1, '微信收款/微信支付，由事件类型区分'),
-  ('ALIPAY', '支付宝', 'wallet', 'ALIPAY', 'income,expense', '', 20, 1, '支付宝收款/支付宝支付，由事件类型区分'),
-  ('BANK_TRANSFER', '银行转账', 'bank', NULL, 'income,expense,transfer', '', 30, 1, ''),
-  ('BANK_CARD', '银行卡刷卡', 'card', NULL, 'expense', '', 40, 1, ''),
-  ('CREDIT_CARD', '信用卡', 'card', NULL, 'expense', '', 50, 1, ''),
-  ('UNIONPAY', '云闪付', 'card', 'UNIONPAY', 'income,expense', '', 60, 1, ''),
-  ('CASH', '现金', 'cash', 'CASH', 'income,expense', '', 70, 1, ''),
-  ('AUTO_DEBIT', '自动扣款', 'system', NULL, 'expense', '', 80, 1, ''),
-  ('REFUND_ORIGINAL', '原路退回', 'system', NULL, 'refund', '', 90, 1, ''),
-  ('POS', 'POS刷卡', 'card', NULL, 'expense', '', 100, 1, ''),
-  ('QR_CODE', '收付款码', 'wallet', NULL, 'income,expense', '', 110, 1, ''),
-  ('OTHER', '其他', 'other', 'OTHER', 'income,expense', '', 999, 1, '')
+  ('WECHAT', '微信', 'wallet', 'WECHAT', 'income,expense,refund,transfer', '💬', 10, 1, '微信收款/微信支付，由事件类型区分'),
+  ('ALIPAY', '支付宝', 'wallet', 'ALIPAY', 'income,expense,refund,transfer', '🔵', 20, 1, '支付宝收款/支付宝支付，由事件类型区分'),
+  ('BANK_TRANSFER', '银行转账', 'bank', NULL, 'income,expense,refund,transfer', '🏦', 30, 1, ''),
+  ('BANK_CARD', '银行卡刷卡', 'card', NULL, 'expense,refund', '💳', 40, 1, ''),
+  ('CREDIT_CARD', '信用卡', 'card', NULL, 'expense,refund', '💳', 50, 1, ''),
+  ('UNIONPAY', '云闪付', 'card', 'UNIONPAY', 'income,expense,refund', '☁️', 60, 1, ''),
+  ('CASH', '现金', 'cash', 'CASH', 'income,expense,refund', '💵', 70, 1, ''),
+  ('AUTO_DEBIT', '自动扣款', 'system', NULL, 'expense', '🔁', 80, 1, ''),
+  ('REFUND_ORIGINAL', '原路退回', 'system', NULL, 'refund', '↩️', 90, 1, ''),
+  ('POS', 'POS刷卡', 'card', NULL, 'expense,refund', '🏧', 100, 1, ''),
+  ('QR_CODE', '收付款码', 'wallet', NULL, 'income,expense,refund', '🔳', 110, 1, ''),
+  ('OTHER', '其他', 'other', 'OTHER', 'income,expense,refund,transfer', '🔗', 999, 1, '')
 ON DUPLICATE KEY UPDATE
   `name` = VALUES(`name`),
   `channel_type` = VALUES(`channel_type`),

@@ -19,7 +19,6 @@ CREATE TABLE IF NOT EXISTS `category_template` (
   `template_code` VARCHAR(64) NOT NULL COMMENT '模板代码',
   `name` VARCHAR(64) NOT NULL COMMENT '模板分类名称',
   `type` VARCHAR(32) NOT NULL COMMENT 'income/expense',
-  `default_category_group_id` BIGINT NULL COMMENT '默认聚合分类ID',
   `icon` VARCHAR(255) NOT NULL DEFAULT '' COMMENT '图标',
   `color` VARCHAR(32) NOT NULL DEFAULT '' COMMENT '颜色',
   `sort` INT NOT NULL DEFAULT 0 COMMENT '排序',
@@ -28,19 +27,11 @@ CREATE TABLE IF NOT EXISTS `category_template` (
   `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_category_template_code` (`template_code`),
-  KEY `idx_category_template_type_enabled_sort` (`type`, `enabled`, `sort`),
-  CONSTRAINT `fk_category_template_default_group` FOREIGN KEY (`default_category_group_id`) REFERENCES `category_group` (`id`)
+  KEY `idx_category_template_type_enabled_sort` (`type`, `enabled`, `sort`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='分类模板';
 
 -- ============================================
--- 3. 分类表添加模板引用字段
--- ============================================
-ALTER TABLE `category` ADD COLUMN `template_id` BIGINT NULL COMMENT '来源分类模板ID' AFTER `category_group_id`;
-ALTER TABLE `category` ADD KEY `idx_category_template_id` (`template_id`);
-ALTER TABLE `category` ADD CONSTRAINT `fk_category_template` FOREIGN KEY (`template_id`) REFERENCES `category_template` (`id`);
-
--- ============================================
--- 4. 家庭分类组表（家庭维度自定义分组）
+-- 3. 家庭分类组表（家庭维度自定义分组）
 -- ============================================
 CREATE TABLE IF NOT EXISTS `family_category_group` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键',
@@ -63,7 +54,7 @@ CREATE TABLE IF NOT EXISTS `family_category_group` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='家庭分类组';
 
 -- ============================================
--- 5. 家庭分类组成员表（多对多关联）
+-- 4. 家庭分类组成员表（多对多关联）
 -- ============================================
 CREATE TABLE IF NOT EXISTS `family_category_group_member` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键',
@@ -80,44 +71,49 @@ CREATE TABLE IF NOT EXISTS `family_category_group_member` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='家庭分类组成员';
 
 -- ============================================
--- 6. 预置分类模板数据
+-- 5. 预置分类模板数据
 -- ============================================
-INSERT INTO `category_template` (`template_code`, `name`, `type`, `default_category_group_id`, `sort`) VALUES
+INSERT INTO `category_template` (`template_code`, `name`, `type`, `sort`) VALUES
 -- 收入类
-('SALARY', '工资', 'income', NULL, 1),
-('BONUS', '奖金', 'income', NULL, 2),
-('INVESTMENT_INCOME', '投资收益', 'income', NULL, 3),
-('SIDE_INCOME', '副业收入', 'income', NULL, 4),
-('REFUND', '退款', 'income', NULL, 5),
-('OTHER_INCOME', '其他收入', 'income', NULL, 10),
+('SALARY', '工资', 'income', 1),
+('BONUS', '奖金', 'income', 2),
+('INVESTMENT_INCOME', '投资收益', 'income', 3),
+('SIDE_INCOME', '副业收入', 'income', 4),
+('REFUND', '退款', 'income', 5),
+('OTHER_INCOME', '其他收入', 'income', 10),
 -- 支出类
-('FOOD', '餐饮', 'expense', NULL, 1),
-('TRANSPORT', '交通', 'expense', NULL, 2),
-('SHOPPING', '购物', 'expense', NULL, 3),
-('ENTERTAINMENT', '娱乐', 'expense', NULL, 4),
-('HOUSING', '居住', 'expense', NULL, 5),
-('UTILITIES', '水电燃气', 'expense', NULL, 6),
-('HEALTHCARE', '医疗健康', 'expense', NULL, 7),
-('EDUCATION', '教育学习', 'expense', NULL, 8),
-('FAMILY', '家人开支', 'expense', NULL, 9),
-('TRAVEL', '旅行', 'expense', NULL, 10),
-('OTHER_EXPENSE', '其他支出', 'expense', NULL, 20)
+('FOOD', '餐饮', 'expense', 1),
+('TRANSPORT', '交通', 'expense', 2),
+('SHOPPING', '购物', 'expense', 3),
+('ENTERTAINMENT', '娱乐', 'expense', 4),
+('HOUSING', '居住', 'expense', 5),
+('UTILITIES', '水电燃气', 'expense', 6),
+('HEALTHCARE', '医疗健康', 'expense', 7),
+('EDUCATION', '教育学习', 'expense', 8),
+('FAMILY', '家人开支', 'expense', 9),
+('TRAVEL', '旅行', 'expense', 10),
+('OTHER_EXPENSE', '其他支出', 'expense', 20)
 ON DUPLICATE KEY UPDATE `name` = VALUES(`name`);
 
 -- ============================================
--- 7. 补充 channel_template 预置数据
+-- 6. 补充 channel_template 预置数据
 -- ============================================
-INSERT INTO `channel_template` (`channel_code`, `name`, `channel_type`, `provider_code`, `supported_event_types`, `sort`) VALUES
-('WECHAT_PAY', '微信支付', 'PAYMENT', 'WECHAT', 'expense,refund', 1),
-('WECHAT_RECEIVE', '微信收款', 'RECEIPT', 'WECHAT', 'income', 2),
-('ALIPAY_PAY', '支付宝支付', 'PAYMENT', 'ALIPAY', 'expense,refund', 3),
-('ALIPAY_RECEIVE', '支付宝收款', 'RECEIPT', 'ALIPAY', 'income', 4),
-('CASH', '现金', 'CASH', 'CASH', 'income,expense,refund', 5),
-('BANK_TRANSFER', '银行转账', 'BANK', 'BANK', 'transfer,income,expense', 6)
-ON DUPLICATE KEY UPDATE `name` = VALUES(`name`);
+INSERT INTO `channel_template` (`channel_code`, `name`, `channel_type`, `provider_code`, `supported_event_types`, `icon`, `sort`, `remark`) VALUES
+('WECHAT', '微信', 'wallet', 'WECHAT', 'income,expense,refund,transfer', '💬', 1, '微信收款/微信支付，由事件类型区分'),
+('ALIPAY', '支付宝', 'wallet', 'ALIPAY', 'income,expense,refund,transfer', '🔵', 2, '支付宝收款/支付宝支付，由事件类型区分'),
+('CASH', '现金', 'cash', 'CASH', 'income,expense,refund', '💵', 3, ''),
+('BANK_TRANSFER', '银行转账', 'bank', 'BANK', 'transfer,income,expense,refund', '🏦', 4, '')
+ON DUPLICATE KEY UPDATE
+  `name` = VALUES(`name`),
+  `channel_type` = VALUES(`channel_type`),
+  `provider_code` = VALUES(`provider_code`),
+  `supported_event_types` = VALUES(`supported_event_types`),
+  `icon` = VALUES(`icon`),
+  `sort` = VALUES(`sort`),
+  `remark` = VALUES(`remark`);
 
 -- ============================================
--- 8. 补充 account_template 预置数据
+-- 7. 补充 account_template 预置数据
 -- ============================================
 INSERT INTO `account_template` (`provider_code`, `name`, `type`, `icon`, `color`, `sort`) VALUES
 ('WECHAT', '微信钱包', 'wallet', 'Wallet', '#22c55e', 1),

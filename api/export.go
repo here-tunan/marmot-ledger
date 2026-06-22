@@ -34,10 +34,10 @@ func ExportMount() *fiber.App {
 		for _, ev := range events {
 			rows = append(rows, []string{
 				strconv.FormatInt(ev.Id, 10), ev.EventTime, ev.EventType, ev.Description, ev.Currency, ev.Amount.String(), boolText(ev.IncludeInStatistics),
-				strconv.FormatInt(ev.CategoryId, 10), strconv.FormatInt(ev.CategoryGroupId, 10), strconv.FormatInt(ev.RelatedFinancialEventId, 10), strconv.FormatInt(ev.EventGroupId, 10), ev.Remark,
+				strconv.FormatInt(ev.CategoryId, 10), strconv.FormatInt(ev.ChannelId, 10), strconv.FormatInt(ev.RelatedFinancialEventId, 10), strconv.FormatInt(ev.EventGroupId, 10), ev.Remark,
 			})
 		}
-		return writeCSV(ctx, fileName("marmot-records"), []string{"ID", "时间", "类型", "描述", "币种", "金额", "计入统计", "分类ID", "聚合分类ID", "关联事件ID", "事件组ID", "备注"}, rows)
+		return writeCSV(ctx, fileName("marmot-records"), []string{"ID", "时间", "类型", "描述", "币种", "金额", "计入统计", "分类ID", "渠道ID", "关联事件ID", "事件组ID", "备注"}, rows)
 	})
 
 	app.Get("/buckets.csv", func(ctx *fiber.Ctx) error {

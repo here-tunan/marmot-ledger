@@ -6,6 +6,7 @@ import (
 	"marmot-ledger/internal/domain/entity/record"
 	"marmot-ledger/internal/domain/repository/bucketdb"
 	"marmot-ledger/internal/domain/repository/categorydb"
+	"marmot-ledger/internal/domain/repository/channeldb"
 	"marmot-ledger/internal/domain/repository/currencydb"
 	"marmot-ledger/internal/domain/repository/financialeventdb"
 	"marmot-ledger/internal/domain/repository/ledgerentrydb"
@@ -148,6 +149,10 @@ func buildRecordContext(session *xorm.Session, userId int64, req *record.RecordR
 	if err != nil {
 		return nil, err
 	}
+	channelId, err := resolveRecordChannel(userId, req.ChannelId, req.Scenario)
+	if err != nil {
+		return nil, err
+	}
 
 	eventTime := model.LocalTime(time.Now())
 	if strings.TrimSpace(req.EventTime) != "" {
@@ -156,7 +161,7 @@ func buildRecordContext(session *xorm.Session, userId int64, req *record.RecordR
 		}
 	}
 
-	return &RecordContext{UserId: userId, Request: req, Session: session, Amount: req.Amount, Currency: currency, EventTime: eventTime, Buckets: buckets, Category: categoryView}, nil
+	return &RecordContext{UserId: userId, Request: req, Session: session, Amount: req.Amount, Currency: currency, EventTime: eventTime, Buckets: buckets, Category: categoryView, ChannelId: channelId}, nil
 }
 
 func persistRecordBuildResult(session *xorm.Session, userId int64, buildResult *RecordBuildResult) error {
@@ -609,6 +614,33 @@ func resolveRecordCategory(session *xorm.Session, userId int64, categoryId int64
 	return categoryView, nil
 }
 
+func resolveRecordChannel(userId int64, channelId int64, scenario string) (*int64, error) {
+	if channelId == 0 {
+		return nil, nil
+	}
+	channelDb, err := channeldb.GetChannel(channelId, userId)
+	if err != nil {
+		return nil, err
+	}
+	if !channelDb.IsActive {
+		return nil, errors.New("channel is inactive")
+	}
+	eventType := strings.ToLower(strings.TrimSpace(scenario))
+	if eventType != "" && channelDb.SupportedEventTypes != "" && !supportsEventType(channelDb.SupportedEventTypes, eventType) {
+		return nil, errors.New("channel does not support this record type")
+	}
+	return &channelDb.Id, nil
+}
+
+func supportsEventType(supported string, eventType string) bool {
+	for _, item := range strings.Split(supported, ",") {
+		if strings.ToLower(strings.TrimSpace(item)) == eventType {
+			return true
+		}
+	}
+	return false
+}
+
 func buildRecordEvent(userId int64, req *record.RecordRequest, eventType string, currency string, includeInStatistics bool, categoryView *categorydb.CategoryView) *financialeventdb.FinancialEvent {
 	var relatedFinancialEventId *int64
 	if req.RelatedFinancialEventId != 0 {
@@ -620,10 +652,9 @@ func buildRecordEvent(userId int64, req *record.RecordRequest, eventType string,
 		remark = &trimmed
 	}
 
-	var channelType *string
-	if strings.TrimSpace(req.ChannelType) != "" {
-		trimmed := strings.TrimSpace(req.ChannelType)
-		channelType = &trimmed
+	var channelId *int64
+	if req.ChannelId > 0 {
+		channelId = &req.ChannelId
 	}
 
 	eventTime := model.LocalTime(time.Now())
@@ -644,7 +675,7 @@ func buildRecordEvent(userId int64, req *record.RecordRequest, eventType string,
 		EventType:               eventType,
 		Description:             strings.TrimSpace(req.Description),
 		CategoryId:              categoryId,
-		ChannelType:             channelType,
+		ChannelId:               channelId,
 		EventTime:               eventTime,
 		Currency:                currency,
 		Amount:                  req.Amount,

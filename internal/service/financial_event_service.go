@@ -35,7 +35,7 @@ func ListFinancialEvents(userId int64, query financialevent.FinancialEventQuery)
 		EndTime:             query.EndTime,
 		Currency:            query.Currency,
 		CategoryId:          query.CategoryId,
-		CategoryGroupId:     query.CategoryGroupId,
+		ChannelId:           query.ChannelId,
 		BucketId:            query.BucketId,
 		Keyword:             query.Keyword,
 		IncludeInStatistics: query.IncludeInStatistics,
@@ -77,7 +77,7 @@ func ListGroupedFinancialEvents(userId int64, query financialevent.FinancialEven
 		EndTime:             query.EndTime,
 		Currency:            query.Currency,
 		CategoryId:          query.CategoryId,
-		CategoryGroupId:     query.CategoryGroupId,
+		ChannelId:           query.ChannelId,
 		BucketId:            query.BucketId,
 		Keyword:             query.Keyword,
 		IncludeInStatistics: query.IncludeInStatistics,
@@ -195,7 +195,7 @@ func ExportFinancialEvents(userId int64, query financialevent.FinancialEventQuer
 		EndTime:             query.EndTime,
 		Currency:            query.Currency,
 		CategoryId:          query.CategoryId,
-		CategoryGroupId:     query.CategoryGroupId,
+		ChannelId:           query.ChannelId,
 		BucketId:            query.BucketId,
 		Keyword:             query.Keyword,
 		IncludeInStatistics: query.IncludeInStatistics,
@@ -242,17 +242,9 @@ func toFinancialEventEntity(eventDb *financialeventdb.FinancialEvent, entries []
 	if eventDb.CategoryId != nil {
 		categoryId = *eventDb.CategoryId
 	}
-	var categoryGroupId int64
-	if eventDb.CategoryGroupId != nil {
-		categoryGroupId = *eventDb.CategoryGroupId
-	}
-	var channelType string
-	if eventDb.ChannelType != nil {
-		channelType = *eventDb.ChannelType
-	}
-	var channelAccountId int64
-	if eventDb.ChannelAccountId != nil {
-		channelAccountId = *eventDb.ChannelAccountId
+	var channelId int64
+	if eventDb.ChannelId != nil {
+		channelId = *eventDb.ChannelId
 	}
 	var remark string
 	if eventDb.Remark != nil {
@@ -267,9 +259,7 @@ func toFinancialEventEntity(eventDb *financialeventdb.FinancialEvent, entries []
 		EventType:               eventDb.EventType,
 		Description:             eventDb.Description,
 		CategoryId:              categoryId,
-		CategoryGroupId:         categoryGroupId,
-		ChannelType:             channelType,
-		ChannelAccountId:        channelAccountId,
+		ChannelId:               channelId,
 		EventTime:               eventDb.EventTime.String(),
 		Currency:                eventDb.Currency,
 		Amount:                  eventDb.Amount,

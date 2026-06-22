@@ -125,12 +125,12 @@ func parseFinancialEventQuery(ctx *fiber.Ctx) (financialevent.FinancialEventQuer
 		}
 		query.CategoryId = parsed
 	}
-	if categoryGroupId := ctx.Query("categoryGroupId"); categoryGroupId != "" {
-		parsed, err := strconv.ParseInt(categoryGroupId, 10, 64)
+	if channelId := ctx.Query("channelId"); channelId != "" {
+		parsed, err := strconv.ParseInt(channelId, 10, 64)
 		if err != nil {
 			return query, err
 		}
-		query.CategoryGroupId = parsed
+		query.ChannelId = parsed
 	}
 	if bucketId := ctx.Query("bucketId"); bucketId != "" {
 		parsed, err := strconv.ParseInt(bucketId, 10, 64)

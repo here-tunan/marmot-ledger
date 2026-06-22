@@ -25,6 +25,7 @@ type RecordContext struct {
 	EventTime model.LocalTime
 	Buckets   map[int64]*bucketdb.Bucket
 	Category  *categorydb.CategoryView
+	ChannelId *int64
 }
 
 type RecordBuildResult struct {

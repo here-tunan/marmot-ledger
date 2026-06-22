@@ -10,6 +10,7 @@ type ChannelTemplate struct {
 	Icon                string `json:"icon"`
 	Sort                int    `json:"sort"`
 	Enabled             bool   `json:"enabled"`
+	Remark              string `json:"remark"`
 }
 
 type CreateTemplateRequest struct {
@@ -20,6 +21,7 @@ type CreateTemplateRequest struct {
 	SupportedEventTypes string `json:"supportedEventTypes"`
 	Icon                string `json:"icon"`
 	Sort                int    `json:"sort"`
+	Remark              string `json:"remark"`
 }
 
 type UpdateTemplateRequest struct {
@@ -30,4 +32,5 @@ type UpdateTemplateRequest struct {
 	Icon                string `json:"icon"`
 	Sort                int    `json:"sort"`
 	Enabled             *bool  `json:"enabled"`
+	Remark              string `json:"remark"`
 }

@@ -20,12 +20,6 @@
         </div>
       </div>
 
-      <div v-if="filters.categoryGroupId" class="filter-banner">
-        <span class="banner-label">{{ t('records.filters.categoryGroup') }}</span>
-        <strong>{{ filters.categoryGroupName || `#${filters.categoryGroupId}` }}</strong>
-        <button class="banner-clear" type="button" @click="clearCategoryGroup">×</button>
-      </div>
-
       <div class="filter-row">
         <span class="filter-label">{{ t('records.filters.timeRange') }}</span>
         <div class="filter-chip-rail" role="group" :aria-label="t('records.filters.timeRange')">
@@ -220,7 +214,7 @@ const advancedFiltersOpen = ref(false)
 const editingId = ref(0)
 const editableTypes = ['income', 'expense', 'transfer', 'refund']
 const eventFilterTypes = ['income', 'expense', 'refund', 'transfer', 'family_transfer', 'exchange', 'receivable_create', 'receivable_collect', 'deposit_create', 'deposit_refund', 'loan_out', 'loan_collect', 'investment_buy', 'investment_sell', 'investment_income', 'investment_revalue', 'balance_adjustment']
-const filters = reactive({ eventType: '', categoryId: '', categoryGroupId: '', categoryGroupName: '', currency: '', keyword: '', includeInStatistics: '', rangeMode: 'preset', rangePreset: 'thisMonth', customDateRange: [] })
+const filters = reactive({ eventType: '', categoryId: '', currency: '', keyword: '', includeInStatistics: '', rangeMode: 'preset', rangePreset: 'thisMonth', customDateRange: [] })
 const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
 const form = reactive({ scenario: 'expense', bucketId: '', fromBucketId: '', toBucketId: '', categoryId: '', amount: '', currency: 'CNY', description: '', eventTime: '', relatedFinancialEventId: '', remark: '' })
 
@@ -300,12 +294,6 @@ function selectEventType(type) {
   resetAndLoad()
 }
 
-function clearCategoryGroup() {
-  filters.categoryGroupId = ''
-  filters.categoryGroupName = ''
-  resetAndLoad()
-}
-
 function applyRouteQuery(query) {
   if (!query || typeof query !== 'object') return false
   let touched = false
@@ -335,11 +323,6 @@ function applyRouteQuery(query) {
     filters.categoryId = String(query.categoryId)
     touched = true
   }
-  if (query.categoryGroupId) {
-    filters.categoryGroupId = String(query.categoryGroupId)
-    filters.categoryGroupName = typeof query.categoryGroupName === 'string' ? query.categoryGroupName : ''
-    touched = true
-  }
   if (typeof query.keyword === 'string') {
     filters.keyword = query.keyword
     touched = true
@@ -348,7 +331,7 @@ function applyRouteQuery(query) {
   else if (query.includeInStatistics === 'false') { filters.includeInStatistics = false; touched = true }
   if (touched) {
     pagination.page = 1
-    if (filters.categoryId || filters.categoryGroupId || filters.includeInStatistics !== '' || filters.currency) {
+    if (filters.categoryId || filters.includeInStatistics !== '' || filters.currency) {
       advancedFiltersOpen.value = true
     }
   }
@@ -367,7 +350,6 @@ async function loadEvents() {
     const params = { page: pagination.page, pageSize: pagination.pageSize, groupMode: true }
     if (filters.eventType) params.eventType = filters.eventType
     if (filters.categoryId) params.categoryId = filters.categoryId
-    if (filters.categoryGroupId) params.categoryGroupId = filters.categoryGroupId
     if (filters.currency) params.currency = filters.currency
     Object.assign(params, recordTimeParams())
     if (filters.keyword) params.keyword = filters.keyword
@@ -389,7 +371,6 @@ function exportParams() {
   const params = {}
   if (filters.eventType) params.eventType = filters.eventType
   if (filters.categoryId) params.categoryId = filters.categoryId
-  if (filters.categoryGroupId) params.categoryGroupId = filters.categoryGroupId
   if (filters.currency) params.currency = filters.currency
   if (filters.keyword) params.keyword = filters.keyword
   if (filters.includeInStatistics !== '') params.includeInStatistics = filters.includeInStatistics

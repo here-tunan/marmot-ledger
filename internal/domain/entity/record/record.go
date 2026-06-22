@@ -30,7 +30,7 @@ type RecordRequest struct {
 	Description             string          `json:"description"`
 	EventTime               string          `json:"eventTime"`
 	RelatedFinancialEventId int64           `json:"relatedFinancialEventId"`
-	ChannelType             string          `json:"channelType"`
+	ChannelId               int64           `json:"channelId"`
 	Remark                  string          `json:"remark"`
 }
 

@@ -120,32 +120,25 @@ func validateCategory(categoryInfo *category.Category) error {
 }
 
 func toCategoryDb(userId int64, categoryInfo *category.Category) *categorydb.Category {
-	var templateId int64
-	if categoryInfo.TemplateId > 0 {
-		templateId = categoryInfo.TemplateId
-	}
-
 	return &categorydb.Category{
-		Id:         categoryInfo.Id,
-		UserId:     userId,
-		Name:       strings.TrimSpace(categoryInfo.Name),
-		Type:       strings.TrimSpace(categoryInfo.Type),
-		TemplateId: templateId,
-		Icon:       categoryInfo.Icon,
-		Color:      categoryInfo.Color,
-		IsActive:   categoryInfo.IsActive,
+		Id:       categoryInfo.Id,
+		UserId:   userId,
+		Name:     strings.TrimSpace(categoryInfo.Name),
+		Type:     strings.TrimSpace(categoryInfo.Type),
+		Icon:     categoryInfo.Icon,
+		Color:    categoryInfo.Color,
+		IsActive: categoryInfo.IsActive,
 	}
 }
 
 func toCategoryEntity(categoryDb *categorydb.CategoryView) category.Category {
 	return category.Category{
-		Id:         categoryDb.Id,
-		UserId:     categoryDb.UserId,
-		Name:       categoryDb.Name,
-		Type:       categoryDb.Type,
-		TemplateId: categoryDb.TemplateId,
-		Icon:       categoryDb.Icon,
-		Color:      categoryDb.Color,
-		IsActive:   categoryDb.IsActive,
+		Id:       categoryDb.Id,
+		UserId:   categoryDb.UserId,
+		Name:     categoryDb.Name,
+		Type:     categoryDb.Type,
+		Icon:     categoryDb.Icon,
+		Color:    categoryDb.Color,
+		IsActive: categoryDb.IsActive,
 	}
 }

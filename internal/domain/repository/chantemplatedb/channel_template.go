@@ -19,6 +19,7 @@ type ChannelTemplate struct {
 	Icon                string          `json:"icon" xorm:"'icon'"`
 	Sort                int             `json:"sort" xorm:"'sort'"`
 	Enabled             bool            `json:"enabled" xorm:"'enabled'"`
+	Remark              string          `json:"remark" xorm:"'remark'"`
 	CreatedAt           model.LocalTime `json:"createdAt" xorm:"created 'created_at'"`
 	UpdatedAt           model.LocalTime `json:"updatedAt" xorm:"updated 'updated_at'"`
 }

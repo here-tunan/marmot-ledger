@@ -318,6 +318,12 @@
             </el-select>
           </el-form-item>
 
+          <el-form-item v-if="showChannelSelect" :label="t('record.fields.channel')">
+            <el-select v-model="form.channelId" clearable class="full-width" filterable>
+              <el-option v-for="channel in filteredChannels" :key="channel.id" :label="channelLabel(channel)" :value="channel.id" />
+            </el-select>
+          </el-form-item>
+
           <el-row v-if="!isExchange && !isSplit && !isInvestmentSell" :gutter="12">
             <el-col :span="12">
               <el-form-item :label="t('record.fields.amount')">
@@ -399,6 +405,7 @@ import { listBuckets } from '@/api/bucket/bucket'
 import { listFinancialEvents, listOutstandingForBucket } from '@/api/financialEvent/financialEvent'
 import { createRecord } from '@/api/record/record'
 import { listCategories } from '@/api/category/category'
+import { listChannels } from '@/api/channel/channel'
 import { getFamilyAssets, listFamilies } from '@/api/family/family'
 import marmotOne from '../../../img/marmot-ledger-1.png'
 import { currencyOptions, getCurrencyLabel } from '@/utils/currency'
@@ -410,6 +417,7 @@ const route = useRoute()
 const config = useConfigStore()
 const buckets = ref([])
 const categories = ref([])
+const channels = ref([])
 const recentEvents = ref([])
 const families = ref([])
 const familyAssets = ref(null)
@@ -423,6 +431,7 @@ const form = reactive({
   fromBucketId: '',
   toBucketId: '',
   categoryId: '',
+  channelId: '',
   amount: '',
   currency: 'CNY',
   toAmount: '',
@@ -533,6 +542,8 @@ const investmentCashBuckets = computed(() => buckets.value.filter((b) => investC
 const investmentBuckets = computed(() => buckets.value.filter((b) => investmentBucketTypeList.includes(b.bucketType) && b.bucketNature === 'asset' && (!form.currency || b.currency === form.currency)))
 const sellInvestBucket = computed(() => buckets.value.find((b) => b.id === Number(sellForm.investBucketId)))
 const needsCategory = computed(() => form.scenario === 'income' || form.scenario === 'expense' || form.scenario === 'refund')
+const showChannelSelect = computed(() => ['income', 'expense', 'refund', 'transfer', 'exchange'].includes(form.scenario))
+const filteredChannels = computed(() => channels.value.filter((item) => !item.supportedEventTypes || item.supportedEventTypes.split(',').includes(form.scenario)))
 const includeInStatistics = computed(() => form.scenario === 'income' || form.scenario === 'expense')
 
 const splitAllocated = computed(() => splitForm.shares.reduce((sum, s) => sum + (Number(s.amount) || 0), 0))
@@ -697,6 +708,9 @@ function bucketDisplay(id) {
 function categoryLabel(category) {
   return category.categoryGroupName ? `${category.name} · ${category.categoryGroupName}` : category.name
 }
+function channelLabel(channel) {
+  return `${channel.icon || '🔗'} ${channel.name}`
+}
 
 function selectScenario(value) {
   form.scenario = value
@@ -751,6 +765,11 @@ async function loadBuckets() {
   if (res.success) buckets.value = res.data || []
 }
 
+async function loadChannels() {
+  const res = await listChannels({ isActive: true, eventType: form.scenario })
+  if (res.success) channels.value = res.data || []
+}
+
 async function loadCategories() {
   if (!needsCategory.value && form.scenario !== 'split') {
     categories.value = []
@@ -787,7 +806,7 @@ async function loadFamilyAssetsForTransfer() {
 }
 
 async function refreshAll() {
-  await Promise.all([loadBuckets(), loadCategories(), loadRecentEvents(), loadFamiliesForTransfer()])
+  await Promise.all([loadBuckets(), loadCategories(), loadChannels(), loadRecentEvents(), loadFamiliesForTransfer()])
 }
 
 function validateForm() {
@@ -991,6 +1010,7 @@ async function submitRecord() {
         currency: form.currency,
         amount: String(splitForm.totalAmount),
         categoryId: Number(form.categoryId || 0),
+        channelId: Number(form.channelId || 0),
         description: form.description,
         eventTime: form.eventTime,
         remark: form.remark,
@@ -1033,6 +1053,7 @@ async function submitRecord() {
         fromBucketId: Number(form.fromBucketId || 0),
         toBucketId: Number(form.toBucketId || 0),
         categoryId: Number(form.categoryId || 0),
+        channelId: Number(form.channelId || 0),
         relatedFinancialEventId: Number(form.relatedFinancialEventId || 0),
         amount: String(form.amount),
         toAmount: form.toAmount === '' ? '0' : String(form.toAmount),

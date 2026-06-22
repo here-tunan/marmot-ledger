@@ -55,14 +55,15 @@ func CreateChannelTemplate(req *chantemplate.CreateTemplateRequest) (*chantempla
 	}
 
 	templateDb := &chantemplatedb.ChannelTemplate{
-		ChannelCode:         strings.ToUpper(req.ChannelCode),
-		Name:                req.Name,
-		ChannelType:         req.ChannelType,
-		ProviderCode:        req.ProviderCode,
-		SupportedEventTypes: req.SupportedEventTypes,
-		Icon:                req.Icon,
+		ChannelCode:         strings.ToUpper(strings.TrimSpace(req.ChannelCode)),
+		Name:                strings.TrimSpace(req.Name),
+		ChannelType:         strings.ToLower(strings.TrimSpace(req.ChannelType)),
+		ProviderCode:        strings.TrimSpace(req.ProviderCode),
+		SupportedEventTypes: normalizeEventTypes(req.SupportedEventTypes),
+		Icon:                strings.TrimSpace(req.Icon),
 		Sort:                req.Sort,
 		Enabled:             true,
+		Remark:              strings.TrimSpace(req.Remark),
 	}
 
 	err = chantemplatedb.InsertChannelTemplate(templateDb)
@@ -82,23 +83,16 @@ func UpdateChannelTemplate(id int64, req *chantemplate.UpdateTemplateRequest) (*
 	}
 
 	if strings.TrimSpace(req.Name) != "" {
-		templateDb.Name = req.Name
+		templateDb.Name = strings.TrimSpace(req.Name)
 	}
 	if strings.TrimSpace(req.ChannelType) != "" {
-		templateDb.ChannelType = req.ChannelType
+		templateDb.ChannelType = strings.ToLower(strings.TrimSpace(req.ChannelType))
 	}
-	if req.ProviderCode != "" {
-		templateDb.ProviderCode = req.ProviderCode
-	}
-	if req.SupportedEventTypes != "" {
-		templateDb.SupportedEventTypes = req.SupportedEventTypes
-	}
-	if req.Icon != "" {
-		templateDb.Icon = req.Icon
-	}
-	if req.Sort != 0 {
-		templateDb.Sort = req.Sort
-	}
+	templateDb.ProviderCode = strings.TrimSpace(req.ProviderCode)
+	templateDb.SupportedEventTypes = normalizeEventTypes(req.SupportedEventTypes)
+	templateDb.Icon = strings.TrimSpace(req.Icon)
+	templateDb.Sort = req.Sort
+	templateDb.Remark = strings.TrimSpace(req.Remark)
 	if req.Enabled != nil {
 		templateDb.Enabled = *req.Enabled
 	}
@@ -122,6 +116,18 @@ func GetChannelTemplate(id int64) (*chantemplate.ChannelTemplate, error) {
 	return &entity, nil
 }
 
+func normalizeEventTypes(value string) string {
+	parts := strings.Split(value, ",")
+	result := make([]string, 0, len(parts))
+	for _, part := range parts {
+		trimmed := strings.ToLower(strings.TrimSpace(part))
+		if trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+	return strings.Join(result, ",")
+}
+
 func toChannelTemplateEntity(db *chantemplatedb.ChannelTemplate) chantemplate.ChannelTemplate {
 	return chantemplate.ChannelTemplate{
 		Id:                  db.Id,
@@ -133,5 +139,6 @@ func toChannelTemplateEntity(db *chantemplatedb.ChannelTemplate) chantemplate.Ch
 		Icon:                db.Icon,
 		Sort:                db.Sort,
 		Enabled:             db.Enabled,
+		Remark:              db.Remark,
 	}
 }

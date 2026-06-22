@@ -83,6 +83,7 @@ func Start() {
 	root.Mount("/statistics", StatisticsMount())
 	root.Mount("/family", FamilyMount())
 	root.Mount("/", FamilyCategoryGroupMount())
+	root.Mount("/channel", ChannelMount())
 	root.Mount("/channel-template", ChannelTemplateMount())
 
 	log.Fatal(app.Listen(":" + env.Prop.Port))

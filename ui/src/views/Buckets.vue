@@ -71,14 +71,19 @@
           </div>
         </div>
 
-        <div v-if="ledgerEntries.length" class="entry-list">
-          <div v-for="entry in ledgerEntries" :key="entry.id" class="entry-row">
-            <div>
-              <strong>{{ entryRoleLabel(entry.entryRole) }}</strong>
-              <span>{{ entry.createdAt }}</span>
+        <div v-if="ledgerEntries.length" class="entry-section">
+          <div class="entry-list" :class="{ expanded: ledgerExpanded }">
+            <div v-for="entry in visibleLedgerEntries" :key="entry.id" class="entry-row">
+              <div>
+                <strong>{{ entryRoleLabel(entry.entryRole) }}</strong>
+                <span>{{ entry.createdAt }}</span>
+              </div>
+              <div class="entry-amount">{{ entry.currency }} {{ formatAmount(entry.amount) }}</div>
             </div>
-            <div class="entry-amount">{{ entry.currency }} {{ formatAmount(entry.amount) }}</div>
           </div>
+          <button v-if="ledgerEntries.length > ledgerPreviewCount" class="entry-toggle" type="button" @click="ledgerExpanded = !ledgerExpanded">
+            {{ ledgerExpanded ? t('buckets.ledger.fold') : t('buckets.ledger.unfold', { count: ledgerEntries.length - ledgerPreviewCount }) }}
+          </button>
         </div>
         <div v-else class="empty-state compact">
           <img :src="marmotOne" :alt="t('buckets.ledger.emptyAlt')" width="88" height="88" />
@@ -207,6 +212,8 @@ const config = useConfigStore()
 const accounts = ref([])
 const buckets = ref([])
 const ledgerEntries = ref([])
+const ledgerExpanded = ref(false)
+const ledgerPreviewCount = 6
 const selectedBucket = ref(null)
 const loading = ref(false)
 const dialogVisible = ref(false)
@@ -291,6 +298,11 @@ const revalueDeltaHint = computed(() => {
   return revalueDelta.value > 0 ? t('buckets.revalueDialog.pnlGain') : t('buckets.revalueDialog.pnlLoss')
 })
 
+const visibleLedgerEntries = computed(() => {
+  if (ledgerExpanded.value) return ledgerEntries.value
+  return ledgerEntries.value.slice(0, ledgerPreviewCount)
+})
+
 function isInvestmentBucket(bucket) {
   if (!bucket) return false
   return bucket.bucketType === 'investment_asset' || bucket.bucketType === 'investment_cash'
@@ -304,7 +316,6 @@ function createEmptyForm() {
     initialBalance: '0.0000',
     bucketType: 'cash',
     bucketNature: 'asset',
-    bucketGroupKey: '',
     isActive: true,
   }
 }
@@ -361,6 +372,7 @@ async function loadBuckets() {
       if (selectedBucket.value && !buckets.value.some((item) => item.id === selectedBucket.value.id)) {
         selectedBucket.value = null
         ledgerEntries.value = []
+        ledgerExpanded.value = false
       }
     } else {
       ElMessage.error(res.error || t('buckets.messages.loadFailed'))
@@ -400,7 +412,6 @@ function openEdit(item) {
     initialBalance: String(item.initialBalance || '0.0000'),
     bucketType: item.bucketType,
     bucketNature: item.bucketNature,
-    bucketGroupKey: item.bucketGroupKey || '',
     isActive: item.isActive !== false,
   })
   dialogVisible.value = true
@@ -427,7 +438,6 @@ async function submitForm() {
       name: form.name,
       bucketType: form.bucketType,
       bucketNature: form.bucketNature,
-      bucketGroupKey: form.bucketGroupKey,
       isActive: form.isActive !== false,
     }
     const res = await updateBucket(editingId.value, payload)
@@ -464,6 +474,7 @@ async function submitForm() {
 
 async function selectBucket(item) {
   selectedBucket.value = item
+  ledgerExpanded.value = false
   const res = await listBucketLedgerEntries(item.id)
   if (res.success) {
     ledgerEntries.value = res.data || []
@@ -798,9 +809,22 @@ onActivated(refreshAll)
   font-size: 28px;
 }
 
+.entry-section {
+  margin-top: 18px;
+}
+
 .entry-list {
   display: grid;
   gap: 10px;
+  max-height: 396px;
+  overflow: hidden;
+}
+
+.entry-list.expanded {
+  max-height: 520px;
+  overflow-y: auto;
+  padding-right: 4px;
+  overscroll-behavior: contain;
 }
 
 .entry-row {
@@ -809,6 +833,27 @@ onActivated(refreshAll)
   border-radius: 12px;
   background: #ffffff;
   box-shadow: inset 0 0 0 1px rgba(100, 116, 139, 0.12);
+}
+
+.entry-toggle {
+  width: 100%;
+  min-height: 36px;
+  margin-top: 10px;
+  border: 0;
+  border-radius: 10px;
+  background: #f8faf7;
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition-property: transform, background-color, color;
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  touch-action: manipulation;
+}
+
+.entry-toggle:active {
+  transform: scale(0.96);
 }
 
 .entry-row strong,

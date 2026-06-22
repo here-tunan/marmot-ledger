@@ -12,7 +12,6 @@ type Bucket struct {
 	InitialBalance          decimal.Decimal `json:"initialBalance"`
 	BucketType              string          `json:"bucketType"`
 	BucketNature            string          `json:"bucketNature"`
-	BucketGroupKey          string          `json:"bucketGroupKey"`
 	IsActive                bool            `json:"isActive"`
 	InitialFinancialEventId int64           `json:"initialFinancialEventId,omitempty"`
 	InitialLedgerEntryId    int64           `json:"initialLedgerEntryId,omitempty"`

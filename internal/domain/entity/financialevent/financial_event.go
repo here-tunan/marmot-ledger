@@ -14,9 +14,10 @@ type FinancialEvent struct {
 	EventType               string                    `json:"eventType"`
 	Description             string                    `json:"description"`
 	CategoryId              int64                     `json:"categoryId"`
-	CategoryGroupId         int64                     `json:"categoryGroupId"`
+	ChannelId               int64                     `json:"channelId"`
+	ChannelName             string                    `json:"channelName"`
+	ChannelIcon             string                    `json:"channelIcon"`
 	ChannelType             string                    `json:"channelType"`
-	ChannelAccountId        int64                     `json:"channelAccountId"`
 	EventTime               string                    `json:"eventTime"`
 	Currency                string                    `json:"currency"`
 	Amount                  decimal.Decimal           `json:"amount"`
@@ -37,7 +38,7 @@ type FinancialEventQuery struct {
 	EndTime             string `json:"endTime"`
 	Currency            string `json:"currency"`
 	CategoryId          int64  `json:"categoryId"`
-	CategoryGroupId     int64  `json:"categoryGroupId"`
+	ChannelId           int64  `json:"channelId"`
 	BucketId            int64  `json:"bucketId"`
 	Keyword             string `json:"keyword"`
 	IncludeInStatistics *bool  `json:"includeInStatistics"`

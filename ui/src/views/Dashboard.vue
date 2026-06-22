@@ -940,8 +940,7 @@ function drillDownCategoryGroup(currency, item) {
   if (!item) return
   const query = { rangeMode: 'preset', rangePreset: statsRangePreset.value, eventType: categoryStatsType.value }
   if (currency) query.currency = currency
-  if (item.categoryGroupId) query.categoryGroupId = String(item.categoryGroupId)
-  if (item.categoryGroupName) query.categoryGroupName = item.categoryGroupName
+  if (item.categoryGroupId) query.categoryId = String(item.categoryGroupId)
   router.push({ path: '/records', query })
 }
 
