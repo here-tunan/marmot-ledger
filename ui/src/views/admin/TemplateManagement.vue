@@ -2,29 +2,29 @@
   <div class="template-management-page">
     <div class="page-hero reveal-block">
       <div>
-        <p class="eyebrow">SYSTEM TEMPLATES</p>
-        <h1>模板管理</h1>
-        <p>管理账户、渠道、分类系统模板</p>
+        <p class="eyebrow">{{ t('templateManagement.hero.eyebrow') }}</p>
+        <h1>{{ t('templateManagement.hero.title') }}</h1>
+        <p>{{ t('templateManagement.hero.subtitle') }}</p>
       </div>
     </div>
 
     <div class="content-card reveal-block delay-1">
       <div class="content-tabs">
         <button :class="['tab-btn', { active: activeTab === 'account' }]" @click="activeTab = 'account'">
-          账户模板
+          {{ t('templateManagement.tabs.account') }}
         </button>
         <button :class="['tab-btn', { active: activeTab === 'channel' }]" @click="activeTab = 'channel'">
-          渠道模板
+          {{ t('templateManagement.tabs.channel') }}
         </button>
         <button :class="['tab-btn', { active: activeTab === 'category' }]" @click="activeTab = 'category'">
-          分类模板
+          {{ t('templateManagement.tabs.category') }}
         </button>
       </div>
 
-      <!-- 账户模板 -->
+      <!-- Account templates -->
       <div v-if="activeTab === 'account'" class="tab-content">
         <div class="tab-actions">
-          <button class="primary-action" @click="openAccountDialog()">新增模板</button>
+          <button class="management-primary-action" @click="openAccountDialog()">{{ t('templateManagement.actions.new') }}</button>
         </div>
         <div class="template-grid">
           <div v-for="item in accountTemplates" :key="item.id" class="template-card">
@@ -37,25 +37,25 @@
             </div>
             <div class="template-status">
               <span :class="['management-status-tag', { active: item.enabled }]">
-                {{ item.enabled ? '启用' : '禁用' }}
+                {{ item.enabled ? t('common.status.enabled') : t('common.status.disabled') }}
               </span>
             </div>
             <div class="template-actions">
-              <button class="text-action tiny" @click="openAccountDialog(item)">编辑</button>
+              <button class="management-text-action" @click="openAccountDialog(item)">{{ t('common.actions.edit') }}</button>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 渠道模板 -->
+      <!-- Channel templates -->
       <div v-if="activeTab === 'channel'" class="tab-content">
         <div class="tab-actions">
-          <button class="primary-action" @click="openChannelDialog()">新增模板</button>
+          <button class="management-primary-action" @click="openChannelDialog()">{{ t('templateManagement.actions.new') }}</button>
         </div>
         <div class="template-grid">
           <div v-for="item in channelTemplates" :key="item.id" class="template-card">
-            <div class="template-icon" style="background: #8b5cf6">
-              🔗
+            <div class="template-icon channel-template-icon">
+              {{ item.icon || '🔗' }}
             </div>
             <div class="template-info">
               <h3>{{ item.name }}</h3>
@@ -63,164 +63,153 @@
             </div>
             <div class="template-status">
               <span :class="['management-status-tag', { active: item.enabled }]">
-                {{ item.enabled ? '启用' : '禁用' }}
+                {{ item.enabled ? t('common.status.enabled') : t('common.status.disabled') }}
               </span>
             </div>
             <div class="template-actions">
-              <button class="text-action tiny" @click="openChannelDialog(item)">编辑</button>
+              <button class="management-text-action" @click="openChannelDialog(item)">{{ t('common.actions.edit') }}</button>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 分类模板 -->
+      <!-- Category templates -->
       <div v-if="activeTab === 'category'" class="tab-content">
         <div class="tab-actions">
-          <button class="primary-action" @click="openCategoryDialog()">新增模板</button>
+          <button class="management-primary-action" @click="openCategoryDialog()">{{ t('templateManagement.actions.new') }}</button>
         </div>
         <div class="template-grid">
           <div v-for="item in categoryTemplates" :key="item.id" class="template-card">
-            <div class="template-icon" :style="{ background: item.color || (item.type === 'income' ? '#22c55e' : '#ef4444') }">
+            <div class="template-icon" :style="{ background: item.color || (item.type === 'income' ? '#ef4444' : '#f97316') }">
               {{ item.icon || (item.type === 'income' ? '💰' : '💸') }}
             </div>
             <div class="template-info">
               <h3>{{ item.name }}</h3>
-              <p>{{ item.templateCode }} · {{ item.type === 'income' ? '收入' : '支出' }}</p>
+              <p>{{ item.templateCode }} · {{ item.type === 'income' ? t('domain.income') : t('domain.expense') }}</p>
             </div>
             <div class="template-status">
               <span :class="['management-status-tag', { active: item.enabled }]">
-                {{ item.enabled ? '启用' : '禁用' }}
+                {{ item.enabled ? t('common.status.enabled') : t('common.status.disabled') }}
               </span>
             </div>
             <div class="template-actions">
-              <button class="text-action tiny" @click="openCategoryDialog(item)">编辑</button>
+              <button class="management-text-action" @click="openCategoryDialog(item)">{{ t('common.actions.edit') }}</button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 账户模板弹窗 -->
-    <el-dialog v-model="accountDialog.visible" :title="accountDialog.data?.id ? '编辑账户模板' : '新增账户模板'" width="500px">
-      <el-form :model="accountDialog.data" label-width="100px">
-        <el-form-item label="模板代码">
+    <!-- Account template dialog -->
+    <el-dialog v-model="accountDialog.visible" :title="accountDialog.data?.id ? t('templateManagement.dialog.account.editTitle') : t('templateManagement.dialog.account.createTitle')" width="560px" class="marmot-dialog template-dialog">
+      <el-form :model="accountDialog.data" label-position="top" class="template-form">
+        <el-form-item :label="t('templateManagement.fields.providerCode')">
           <el-input v-model="accountDialog.data.providerCode" :disabled="!!accountDialog.data?.id" />
         </el-form-item>
-        <el-form-item label="模板名称">
+        <el-form-item :label="t('templateManagement.fields.name')">
           <el-input v-model="accountDialog.data.name" />
         </el-form-item>
-        <el-form-item label="类型">
+        <el-form-item :label="t('templateManagement.fields.type')">
           <el-select v-model="accountDialog.data.type" style="width: 100%">
-            <el-option label="现金" value="cash" />
-            <el-option label="钱包" value="wallet" />
-            <el-option label="银行" value="bank" />
-            <el-option label="信用卡" value="credit" />
-            <el-option label="投资" value="investment" />
-            <el-option label="负债" value="liability" />
-            <el-option label="其他" value="other" />
+            <el-option v-for="opt in accountTypeOptions" :key="opt.value" :label="opt.label.value || opt.label" :value="opt.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="图标">
+        <el-form-item :label="t('templateManagement.fields.icon')">
           <el-select v-model="accountDialog.data.icon" style="width: 100%">
-            <el-option v-for="item in accountIconOptions" :key="item.value" :label="item.label" :value="item.value" />
+            <el-option v-for="item in accountIconOptions" :key="item.value" :label="item.label.value || item.label" :value="item.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="颜色">
+        <el-form-item :label="t('templateManagement.fields.color')">
           <div class="admin-color-row">
             <button v-for="color in accountColors" :key="color" type="button" :class="['admin-color-dot', { active: accountDialog.data.color === color }]" :style="{ background: color }" @click="accountDialog.data.color = color"></button>
             <el-input v-model="accountDialog.data.color" style="width: 130px" />
           </div>
         </el-form-item>
-        <el-form-item label="排序">
+        <el-form-item :label="t('templateManagement.fields.sort')">
           <el-input-number v-model="accountDialog.data.sort" :min="0" />
         </el-form-item>
-        <el-form-item label="状态" v-if="accountDialog.data?.id">
-          <el-switch v-model="accountDialog.data.enabled" active-text="启用" inactive-text="禁用" />
-        </el-form-item>
+        <StatusSwitchField v-if="accountDialog.data?.id" v-model="accountDialog.data.enabled" />
       </el-form>
       <template #footer>
-        <button class="ghost-action" @click="accountDialog.visible = false">取消</button>
-        <button class="primary-action" @click="saveAccountTemplate">保存</button>
+        <ManagementDialogFooter @cancel="accountDialog.visible = false" @submit="saveAccountTemplate" />
       </template>
     </el-dialog>
 
-    <!-- 渠道模板弹窗 -->
-    <el-dialog v-model="channelDialog.visible" :title="channelDialog.data?.id ? '编辑渠道模板' : '新增渠道模板'" width="500px">
-      <el-form :model="channelDialog.data" label-width="100px">
-        <el-form-item label="渠道代码">
+    <!-- Channel template dialog -->
+    <el-dialog v-model="channelDialog.visible" :title="channelDialog.data?.id ? t('templateManagement.dialog.channel.editTitle') : t('templateManagement.dialog.channel.createTitle')" width="560px" class="marmot-dialog template-dialog">
+      <el-form :model="channelDialog.data" label-position="top" class="template-form">
+        <el-form-item :label="t('templateManagement.fields.channelCode')">
           <el-input v-model="channelDialog.data.channelCode" :disabled="!!channelDialog.data?.id" />
         </el-form-item>
-        <el-form-item label="渠道名称">
+        <el-form-item :label="t('templateManagement.fields.channelName')">
           <el-input v-model="channelDialog.data.name" />
         </el-form-item>
-        <el-form-item label="渠道类型">
+        <el-form-item :label="t('templateManagement.fields.channelType')">
           <el-input v-model="channelDialog.data.channelType" />
         </el-form-item>
-        <el-form-item label="所属平台">
+        <el-form-item :label="t('templateManagement.fields.providerLabel')">
           <el-input v-model="channelDialog.data.providerCode" />
         </el-form-item>
-        <el-form-item label="支持事件">
-          <el-input v-model="channelDialog.data.supportedEventTypes" placeholder="如: income,expense" />
+        <el-form-item :label="t('templateManagement.fields.supportedEvents')">
+          <el-input v-model="channelDialog.data.supportedEventTypes" :placeholder="t('templateManagement.placeholders.supportedEvents')" />
         </el-form-item>
-        <el-form-item label="排序">
+        <el-form-item :label="t('templateManagement.fields.sort')">
           <el-input-number v-model="channelDialog.data.sort" :min="0" />
         </el-form-item>
-        <el-form-item label="状态" v-if="channelDialog.data?.id">
-          <el-switch v-model="channelDialog.data.enabled" active-text="启用" inactive-text="禁用" />
-        </el-form-item>
+        <StatusSwitchField v-if="channelDialog.data?.id" v-model="channelDialog.data.enabled" />
       </el-form>
       <template #footer>
-        <el-button @click="channelDialog.visible = false">取消</el-button>
-        <el-button type="primary" @click="saveChannelTemplate">保存</el-button>
+        <ManagementDialogFooter @cancel="channelDialog.visible = false" @submit="saveChannelTemplate" />
       </template>
     </el-dialog>
 
-    <!-- 分类模板弹窗 -->
-    <el-dialog v-model="categoryDialog.visible" :title="categoryDialog.data?.id ? '编辑分类模板' : '新增分类模板'" width="500px">
-      <el-form :model="categoryDialog.data" label-width="100px">
-        <el-form-item label="模板代码">
+    <!-- Category template dialog -->
+    <el-dialog v-model="categoryDialog.visible" :title="categoryDialog.data?.id ? t('templateManagement.dialog.category.editTitle') : t('templateManagement.dialog.category.createTitle')" width="560px" class="marmot-dialog template-dialog">
+      <el-form :model="categoryDialog.data" label-position="top" class="template-form">
+        <el-form-item :label="t('templateManagement.fields.templateCode')">
           <el-input v-model="categoryDialog.data.templateCode" :disabled="!!categoryDialog.data?.id" />
         </el-form-item>
-        <el-form-item label="分类名称">
+        <el-form-item :label="t('templateManagement.fields.categoryName')">
           <el-input v-model="categoryDialog.data.name" />
         </el-form-item>
-        <el-form-item label="收支类型">
+        <el-form-item :label="t('templateManagement.fields.eventType')">
           <el-select v-model="categoryDialog.data.type" style="width: 100%">
-            <el-option label="收入" value="income" />
-            <el-option label="支出" value="expense" />
+            <el-option :label="t('domain.income')" value="income" />
+            <el-option :label="t('domain.expense')" value="expense" />
           </el-select>
         </el-form-item>
-        <el-form-item label="图标与颜色">
+        <el-form-item :label="t('templateManagement.fields.iconAndColor')">
           <IconColorPicker
             v-model:icon-value="categoryDialog.data.icon"
             v-model:color-value="categoryDialog.data.color"
-            icon-label="图标"
-            color-label="颜色"
+            :icon-label="t('templateManagement.fields.icon')"
+            :color-label="t('templateManagement.fields.color')"
           />
         </el-form-item>
-        <el-form-item label="排序">
+        <el-form-item :label="t('templateManagement.fields.sort')">
           <el-input-number v-model="categoryDialog.data.sort" :min="0" />
         </el-form-item>
-        <el-form-item label="状态" v-if="categoryDialog.data?.id">
-          <el-switch v-model="categoryDialog.data.enabled" active-text="启用" inactive-text="禁用" />
-        </el-form-item>
+        <StatusSwitchField v-if="categoryDialog.data?.id" v-model="categoryDialog.data.enabled" />
       </el-form>
       <template #footer>
-        <el-button @click="categoryDialog.visible = false">取消</el-button>
-        <el-button type="primary" @click="saveCategoryTemplate">保存</el-button>
+        <ManagementDialogFooter @cancel="categoryDialog.visible = false" @submit="saveCategoryTemplate" />
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { listAccountTemplatesAdmin, createAccountTemplate, updateAccountTemplate } from '@/api/accountTemplate'
 import { listChannelTemplatesAdmin, createChannelTemplate, updateChannelTemplate } from '@/api/channelTemplate'
 import { listCategoryTemplatesAdmin, createCategoryTemplate, updateCategoryTemplate } from '@/api/categoryTemplate'
 import IconColorPicker from '@/components/IconColorPicker.vue'
+import ManagementDialogFooter from '@/components/management/ManagementDialogFooter.vue'
+import StatusSwitchField from '@/components/management/StatusSwitchField.vue'
 
+const { t } = useI18n()
 const activeTab = ref('account')
 const accountTemplates = ref([])
 const channelTemplates = ref([])
@@ -232,17 +221,27 @@ const loading = reactive({
   category: false
 })
 
-const accountIconOptions = [
-  { label: '钱包', value: 'Wallet' },
-  { label: '银行卡', value: 'CreditCard' },
-  { label: '现金', value: 'Money' },
-  { label: '投资', value: 'TrendCharts' },
-  { label: '银行', value: 'OfficeBuilding' },
-  { label: '家庭', value: 'House' },
-  { label: '集合', value: 'Collection' },
-  { label: '其他', value: 'More' },
+const accountTypeOptions = [
+  { value: 'cash', label: computed(() => t('templateManagement.accountTypes.cash')) },
+  { value: 'wallet', label: computed(() => t('templateManagement.accountTypes.wallet')) },
+  { value: 'bank', label: computed(() => t('templateManagement.accountTypes.bank')) },
+  { value: 'credit', label: computed(() => t('templateManagement.accountTypes.credit')) },
+  { value: 'investment', label: computed(() => t('templateManagement.accountTypes.investment')) },
+  { value: 'liability', label: computed(() => t('templateManagement.accountTypes.liability')) },
+  { value: 'other', label: computed(() => t('templateManagement.accountTypes.other')) },
 ]
-const accountColors = ['#2f7d5c', '#2f7d5c', '#1f2933', '#f59e0b', '#ef4444', '#f97316', '#22c55e', '#06b6d4', '#8b5cf6', '#ec4899', '#1677ff']
+
+const accountIconOptions = [
+  { label: computed(() => t('templateManagement.iconOptions.wallet')), value: 'Wallet' },
+  { label: computed(() => t('templateManagement.iconOptions.card')), value: 'CreditCard' },
+  { label: computed(() => t('templateManagement.iconOptions.money')), value: 'Money' },
+  { label: computed(() => t('templateManagement.iconOptions.investment')), value: 'TrendCharts' },
+  { label: computed(() => t('templateManagement.iconOptions.office')), value: 'OfficeBuilding' },
+  { label: computed(() => t('templateManagement.iconOptions.house')), value: 'House' },
+  { label: computed(() => t('templateManagement.iconOptions.collection')), value: 'Collection' },
+  { label: computed(() => t('templateManagement.iconOptions.other')), value: 'More' },
+]
+const accountColors = ['#2f7d5c', '#1f2933', '#f59e0b', '#ef4444', '#f97316', '#22c55e', '#06b6d4', '#8b5cf6', '#ec4899', '#1677ff']
 
 const accountDialog = reactive({
   visible: false,
@@ -273,7 +272,7 @@ async function loadAccountTemplates() {
       accountTemplates.value = res.data
     }
   } catch (e) {
-    ElMessage.error('加载账户模板失败')
+    ElMessage.error(t('templateManagement.messages.loadAccountFailed'))
   } finally {
     loading.account = false
   }
@@ -287,7 +286,7 @@ async function loadChannelTemplates() {
       channelTemplates.value = res.data
     }
   } catch (e) {
-    ElMessage.error('加载渠道模板失败')
+    ElMessage.error(t('templateManagement.messages.loadChannelFailed'))
   } finally {
     loading.channel = false
   }
@@ -301,7 +300,7 @@ async function loadCategoryTemplates() {
       categoryTemplates.value = res.data
     }
   } catch (e) {
-    ElMessage.error('加载分类模板失败')
+    ElMessage.error(t('templateManagement.messages.loadCategoryFailed'))
   } finally {
     loading.category = false
   }
@@ -326,9 +325,11 @@ function openCategoryDialog(row = null) {
 }
 
 function accountTypeLabel(type) {
-  const labels = { cash: '现金', wallet: '钱包', bank: '银行', credit: '信用卡', investment: '投资', liability: '负债', other: '其他' }
-  return labels[String(type || '').toLowerCase()] || type || '其他'
+  const key = String(type || '').toLowerCase()
+  return t(`templateManagement.accountTypes.${key in tCheck ? key : 'other'}`)
 }
+
+const tCheck = { cash: 1, wallet: 1, bank: 1, credit: 1, investment: 1, liability: 1, other: 1 }
 
 function defaultAccountIcon(type) {
   switch (String(type || '').toLowerCase()) {
@@ -373,15 +374,15 @@ async function saveAccountTemplate() {
     accountDialog.data.color = accountDialog.data.color || defaultAccountColor(accountDialog.data.type)
     if (accountDialog.data.id) {
       await updateAccountTemplate(accountDialog.data.id, accountDialog.data)
-      ElMessage.success('更新成功')
+      ElMessage.success(t('templateManagement.messages.updated'))
     } else {
       await createAccountTemplate(accountDialog.data)
-      ElMessage.success('创建成功')
+      ElMessage.success(t('templateManagement.messages.created'))
     }
     accountDialog.visible = false
     loadAccountTemplates()
   } catch (e) {
-    ElMessage.error(e.message || '操作失败')
+    ElMessage.error(e.message || t('templateManagement.messages.saveFailed'))
   }
 }
 
@@ -389,15 +390,15 @@ async function saveChannelTemplate() {
   try {
     if (channelDialog.data.id) {
       await updateChannelTemplate(channelDialog.data.id, channelDialog.data)
-      ElMessage.success('更新成功')
+      ElMessage.success(t('templateManagement.messages.updated'))
     } else {
       await createChannelTemplate(channelDialog.data)
-      ElMessage.success('创建成功')
+      ElMessage.success(t('templateManagement.messages.created'))
     }
     channelDialog.visible = false
     loadChannelTemplates()
   } catch (e) {
-    ElMessage.error(e.message || '操作失败')
+    ElMessage.error(e.message || t('templateManagement.messages.saveFailed'))
   }
 }
 
@@ -405,15 +406,15 @@ async function saveCategoryTemplate() {
   try {
     if (categoryDialog.data.id) {
       await updateCategoryTemplate(categoryDialog.data.id, categoryDialog.data)
-      ElMessage.success('更新成功')
+      ElMessage.success(t('templateManagement.messages.updated'))
     } else {
       await createCategoryTemplate(categoryDialog.data)
-      ElMessage.success('创建成功')
+      ElMessage.success(t('templateManagement.messages.created'))
     }
     categoryDialog.visible = false
     loadCategoryTemplates()
   } catch (e) {
-    ElMessage.error(e.message || '操作失败')
+    ElMessage.error(e.message || t('templateManagement.messages.saveFailed'))
   }
 }
 </script>
@@ -471,6 +472,37 @@ async function saveCategoryTemplate() {
 
 .content-card {
   padding: 22px;
+}
+
+.template-dialog :deep(.el-dialog__body) {
+  padding: 18px 24px 8px;
+}
+
+.template-dialog :deep(.el-dialog__footer) {
+  padding: 12px 24px 22px;
+}
+
+.template-form :deep(.el-form-item) {
+  margin-bottom: 16px;
+}
+
+.template-form :deep(.el-form-item__label) {
+  padding: 0 0 6px;
+  line-height: 1.4;
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  white-space: normal;
+}
+
+.template-form :deep(.el-form-item__content) {
+  line-height: 1.4;
+}
+
+.template-form :deep(.el-input__wrapper),
+.template-form :deep(.el-select),
+.template-form :deep(.el-input-number) {
+  width: 100%;
 }
 
 .content-tabs {

@@ -34,6 +34,12 @@ export default {
       noRemark: 'No remark',
       uncategorized: 'Uncategorized',
     },
+    templates: {
+      title: 'Quick template select',
+      expand: 'Expand',
+      collapse: 'Collapse',
+      empty: 'No templates available',
+    },
     filters: {
       enabledStatus: 'Status',
     },
@@ -57,6 +63,45 @@ export default {
     income: 'Income',
     expense: 'Expense',
   },
+  templateManagement: {
+    hero: { eyebrow: 'System templates', title: 'Template Management', subtitle: 'Manage account, channel, and category system templates.' },
+    tabs: { account: 'Account templates', channel: 'Channel templates', category: 'Category templates' },
+    actions: { new: 'New template' },
+    fields: {
+      providerCode: 'Provider code',
+      name: 'Template name',
+      categoryName: 'Category name',
+      type: 'Type',
+      eventType: 'Income / Expense',
+      icon: 'Icon',
+      color: 'Color',
+      iconAndColor: 'Icon and color',
+      sort: 'Sort',
+      channelCode: 'Channel code',
+      channelName: 'Channel name',
+      channelType: 'Channel type',
+      providerLabel: 'Provider',
+      supportedEvents: 'Supported events',
+      templateCode: 'Template code',
+    },
+    dialog: {
+      account: { createTitle: 'New account template', editTitle: 'Edit account template' },
+      channel: { createTitle: 'New channel template', editTitle: 'Edit channel template' },
+      category: { createTitle: 'New category template', editTitle: 'Edit category template' },
+    },
+    placeholders: { supportedEvents: 'e.g. income,expense' },
+    accountTypes: { cash: 'Cash', wallet: 'Wallet', bank: 'Bank', credit: 'Credit', investment: 'Investment', liability: 'Liability', other: 'Other' },
+    iconOptions: { wallet: 'Wallet', card: 'Card', money: 'Cash', investment: 'Investment', office: 'Bank', house: 'Home', collection: 'Collection', other: 'Other' },
+    messages: {
+      loadAccountFailed: 'Failed to load account templates',
+      loadChannelFailed: 'Failed to load channel templates',
+      loadCategoryFailed: 'Failed to load category templates',
+      saved: 'Saved',
+      updated: 'Updated',
+      created: 'Created',
+      saveFailed: 'Operation failed',
+    },
+  },
   channels: {
     hero: { eyebrow: 'Payment channels', title: 'Manage your personal payment channels', subtitle: 'Import common channels from templates, or create your own cash, wallet, card, or other channels.' },
     actions: { new: 'New channel' },
@@ -74,8 +119,8 @@ export default {
   auth: {
     welcome: 'Welcome back',
     cockpit: 'Family finance cockpit',
-    title: 'Keep every account, bucket, and balance change in a trustworthy ledger.',
-    subtitle: 'Start with accounts, create balance buckets, and Marmot Ledger will record initial balances as traceable events and entries.',
+    title: 'A calm home for everyday money, assets, and shared family finance.',
+    subtitle: 'Track accounts, Buckets, categories, channels, and family activity with a ledger that stays clear and auditable.',
     username: 'Account',
     usernamePlaceholder: 'Enter account',
     password: 'Password',
@@ -100,9 +145,9 @@ export default {
   },
   dashboard: {
     hero: {
-      eyebrow: 'Family finance cockpit',
-      title: 'Keep family accounts, balance buckets, and every change in one cockpit.',
-      subtitle: 'Start with accounts, then create buckets that hold real balances. Every initial balance leaves traceable financial events and entries.',
+      eyebrow: 'Finance overview',
+      title: 'Understand your money across accounts, Buckets, and family workspaces.',
+      subtitle: 'See balances, spending, refunds, investments, and family activity by original currency without losing the details.',
       createAccount: 'Create account',
       createBucket: 'Create bucket',
     },
@@ -112,15 +157,15 @@ export default {
       family: 'Family',
     },
     signal: {
-      label: 'Current stage',
-      title: 'Account / Bucket initialization flow',
-      description: 'The backend can now generate balance_adjustment and ledger_entry automatically.',
+      label: 'Ledger health',
+      title: 'Your money map is ready',
+      description: 'Use Accounts, Buckets, records, categories, and channels to keep daily finance organized.',
     },
     metrics: {
       accounts: { label: 'Accounts', hint: 'Platforms, institutions, and family finance groups' },
       buckets: { label: 'Buckets', hint: 'Asset/liability containers that hold real balances' },
       currencies: { label: 'Currencies', hint: 'Bucket currencies currently in use' },
-      initialEvents: { label: 'Init events', hint: 'Recent balance_adjustment records' },
+      initialEvents: { label: 'Recent records', hint: 'Latest ledger activity' },
     },
     financeOverview: {
       eyebrow: 'Finance snapshot',
@@ -230,7 +275,7 @@ export default {
       eyebrow: 'Recent ledger work',
       title: 'Recent financial events',
       emptyAlt: 'No financial events yet',
-      emptyText: 'After creating a bucket, its initial balance event will appear here.',
+      emptyText: 'Your latest records will appear here once you start using the ledger.',
     },
     images: {
       brandAlt: 'Marmot Ledger brand avatar',
@@ -239,8 +284,8 @@ export default {
   accounts: {
     hero: {
       eyebrow: 'Account groups',
-      title: 'Accounts are the entry point for family finance; they do not directly store balances.',
-      subtitle: 'Organize WeChat, Alipay, cash, banks, and investment platforms as accounts, then use buckets to track real balances.',
+      title: 'Organize the places where your money lives.',
+      subtitle: 'Create accounts for wallets, banks, cash, cards, and investment platforms so your finance workspace stays easy to browse.',
     },
     actions: { new: 'New account' },
     filters: { typePlaceholder: 'Account type' },
@@ -257,7 +302,7 @@ export default {
     empty: {
       alt: 'No accounts',
       title: 'Create your first account',
-      text: 'Accounts handle grouping; buckets hold balances. For example: “Cash account”, “WeChat”, “China Merchants Bank”.',
+      text: 'Start with familiar places like “Cash”, “WeChat”, or “China Merchants Bank”.',
     },
     validation: { nameRequired: 'Please enter an account name', typeRequired: 'Please select an account type' },
     messages: {
@@ -306,7 +351,7 @@ export default {
     hero: {
       eyebrow: 'Balance buckets',
       title: 'Buckets track real asset and liability balances.',
-      subtitle: 'Each bucket is linked to an account and currency. On creation, the system automatically generates an initial balance event and ledger entry.',
+      subtitle: 'Create Buckets for cash, bank cards, credit cards, investments, receivables, deposits, and other balances you want to track.',
     },
     actions: { new: 'New bucket', create: 'Create', adjustBalance: 'Adjust balance', revalue: 'Update market value' },
     filters: {
@@ -325,7 +370,7 @@ export default {
       selectBucketTitle: 'Select a bucket',
       emptyAlt: 'No entries',
       emptyForSelected: 'This bucket has no entries.',
-      emptyNoSelection: 'Select a bucket on the left to view initialization entries.',
+      emptyNoSelection: 'Select a Bucket on the left to view its balance history.',
       unfold: 'Show {count} more',
       fold: 'Fold history',
     },
@@ -360,7 +405,7 @@ export default {
       createFailed: 'Failed to create bucket',
       createAccountFirst: 'Please create an account first',
       loadEntriesFailed: 'Failed to load entries',
-      createdWithRefs: 'Bucket created. Event #{eventId}, entry #{entryId}.',
+      createdWithRefs: 'Bucket created.',
       updated: 'Bucket updated',
       updateFailed: 'Failed to update bucket',
       adjusted: 'Balance adjusted',
@@ -411,8 +456,8 @@ export default {
   record: {
     hero: {
       eyebrow: 'Scenario ledger',
-      title: 'Record by scenario; the system creates events and entries.',
-      subtitle: 'Income, expense, transfer, and refund are enabled first. Advanced scenarios are visible in the roadmap and marked Coming soon.',
+      title: 'Record money movement by real-life scenario.',
+      subtitle: 'Choose a scenario, fill in the amount and Bucket, and keep every record clear for later review.',
     },
     scenarios: {
       income: 'Income',
@@ -436,13 +481,13 @@ export default {
       investment_income: 'Investment income',
       investment_revalue: 'Investment revalue',
       balance_adjustment: 'Balance adjustment',
-      comingSoon: 'Coming soon',
+      comingSoon: 'Unavailable',
       groups: {
         core: 'Core scenarios',
         paired: 'Receivables · Deposits · Loans · Split',
         investment: 'Investment',
         family: 'Family',
-        future: 'Coming soon',
+        future: 'Other scenarios',
       },
     },
     placeholders: { selectCategory: 'Select category', splitDescription: 'e.g. 4-person dinner', shareDescription: 'Friend label' },
@@ -564,10 +609,20 @@ export default {
   },
 
   categories: {
-    hero: { eyebrow: 'Category mapping', title: 'Manage income and expense categories and map them to reporting groups.', subtitle: 'Personal categories can be named freely. Family reports and charts aggregate by CategoryGroup.' },
+    hero: { eyebrow: 'Categories', title: 'Shape categories around how you actually spend and earn.', subtitle: 'Keep personal categories flexible, then use family groups when shared reporting needs a common view.' },
     actions: { new: 'New category' },
-    fields: { name: 'Category name', type: 'Category type', categoryGroup: 'Category group' },
+    fields: { name: 'Category name', type: 'Category type', categoryGroup: 'Category group', icon: 'Icon', color: 'Color', iconAndColor: 'Icon and color' },
+    placeholders: { name: 'Enter a category name' },
     dialog: { createTitle: 'New category', editTitle: 'Edit category' },
+    templates: { title: 'Quick template select', expand: 'Expand', collapse: 'Collapse', empty: 'No templates available' },
+    families: {
+      title: 'Add to family groups',
+      hint: 'Categories belong to you, but you can opt-in to family groups for shared reporting.',
+      groupCount: '{count} groups',
+      emptyExpense: 'No expense groups yet',
+      emptyIncome: 'No income groups yet',
+      createGroup: '+ Create group',
+    },
     empty: { alt: 'No categories', title: 'Create your first category', text: 'For example, “Takeout” can map to “Food”, and “Groceries” can map to “Grocery”.' },
     validation: { nameRequired: 'Please enter a category name', typeRequired: 'Please select a category type', groupRequired: 'Please select a category group' },
     messages: { loadFailed: 'Failed to load categories', loadGroupsFailed: 'Failed to load category groups', saveFailed: 'Failed to save category', deleteFailed: 'Failed to delete category', created: 'Category created', updated: 'Category updated', deleted: 'Category deleted' },

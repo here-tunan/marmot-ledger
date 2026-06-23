@@ -66,38 +66,18 @@
     </section>
 
     <el-dialog v-model="dialogVisible" :title="editingId ? t('categories.dialog.editTitle') : t('categories.dialog.createTitle')" width="640px" class="marmot-dialog category-dialog">
-      <!-- 模板快速选择 -->
-      <div v-if="!editingId" class="template-quick-select">
-        <div class="section-header" @click="templateCollapsed = !templateCollapsed" style="cursor: pointer;">
-          <span class="section-icon">⚡</span>
-          <span class="section-title">快速选择模板</span>
-          <span class="toggle-icon">{{ templateCollapsed ? '展开' : '收起' }} {{ templateCollapsed ? '▶' : '▼' }}</span>
-        </div>
-        <template v-if="!templateCollapsed">
-          <div v-if="filteredTemplates.length === 0" class="no-templates">
-            <span>暂无该类型的模板</span>
-          </div>
-          <div v-else class="template-grid-compact">
-          <button
-            v-for="tpl in filteredTemplates"
-            :key="tpl.id"
-            :class="['template-item', { active: selectedTemplate?.id === tpl.id }]"
-            :style="{
-              background: selectedTemplate?.id === tpl.id ? (tpl.color || '#2f7d5c') : '#f5f7fa',
-              color: selectedTemplate?.id === tpl.id ? '#fff' : '#1e293b'
-            }"
-            @click="selectTemplate(tpl)"
-          >
-            <span class="item-icon">{{ tpl.icon || '📁' }}</span>
-            <span class="item-name">{{ tpl.name }}</span>
-          </button>
-        </div>
-        </template>
-      </div>
+      <TemplateQuickSelect
+        v-if="!editingId"
+        :title="t('categories.templates.title')"
+        :items="filteredTemplates"
+        :active-key="selectedTemplate?.id"
+        :empty-text="t('categories.templates.empty')"
+        @select="selectTemplate"
+      />
 
       <el-form ref="formRef" :model="form" label-position="top">
         <el-form-item :label="t('categories.fields.name')">
-          <el-input v-model="form.name" placeholder="请输入分类名称" />
+          <el-input v-model="form.name" :placeholder="t('categories.placeholders.name')" />
         </el-form-item>
         <el-form-item :label="t('categories.fields.type')">
           <el-select v-model="form.type" class="full-width" @change="handleTypeChange">
@@ -107,25 +87,25 @@
         </el-form-item>
 
         <!-- 使用通用图标颜色选择器 -->
-        <el-form-item label="图标与颜色">
+        <el-form-item :label="t('categories.fields.iconAndColor')">
           <IconColorPicker
             v-model:icon-value="form.icon"
             v-model:color-value="form.color"
-            icon-label="图标"
-            color-label="颜色"
+            :icon-label="t('categories.fields.icon')"
+            :color-label="t('categories.fields.color')"
           />
         </el-form-item>
 
         <!-- 家庭分组选择（如果有家庭） -->
-        <el-form-item v-if="families.length > 0" label="加入家庭分组" class="family-groups-section">
-          <p class="hint-text">分类归你所有，可以选择性加入家庭分组，方便联合统计</p>
+        <el-form-item v-if="families.length > 0" :label="t('categories.families.title')" class="family-groups-section">
+          <p class="hint-text">{{ t('categories.families.hint') }}</p>
 
           <!-- 家庭卡片网格布局 -->
           <div class="families-grid">
             <div v-for="fam in families" :key="fam.id" class="family-card">
               <div class="family-card-header">
                 <span class="family-name">{{ fam.name }}</span>
-                <span class="family-count">{{ getGroupsByFamily(fam.id).length }} 个分组</span>
+                <span class="family-count">{{ t('categories.families.groupCount', { count: getGroupsByFamily(fam.id).length }) }}</span>
               </div>
 
               <div class="family-card-content">
@@ -147,23 +127,20 @@
                 <!-- 无分组时显示引导 -->
                 <div v-else class="no-groups-placeholder">
                   <span class="placeholder-icon">📭</span>
-                  <span class="placeholder-text">暂无{{ form.type === 'expense' ? '支出' : '收入' }}类型分组</span>
-                  <el-button type="primary" size="small" @click="goToCreateGroup(fam.id)">
-                    + 创建分组
-                  </el-button>
+                  <span class="placeholder-text">{{ form.type === 'expense' ? t('categories.families.emptyExpense') : t('categories.families.emptyIncome') }}</span>
+                  <button type="button" class="management-primary-action small" @click="goToCreateGroup(fam.id)">
+                    {{ t('categories.families.createGroup') }}
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         </el-form-item>
 
-        <el-form-item v-if="editingId" :label="t('common.status.status')">
-          <el-switch v-model="form.isActive" :active-text="t('common.status.enabled')" :inactive-text="t('common.status.disabled')" />
-        </el-form-item>
+        <StatusSwitchField v-if="editingId" v-model="form.isActive" />
       </el-form>
       <template #footer>
-        <button class="management-ghost-action" @click="dialogVisible = false">{{ t('common.actions.cancel') }}</button>
-        <button class="management-primary-action" @click="submitForm">{{ t('common.actions.save') }}</button>
+        <ManagementDialogFooter @cancel="dialogVisible = false" @submit="submitForm" />
       </template>
     </el-dialog>
   </main>
@@ -182,6 +159,9 @@ import IconColorPicker from '@/components/IconColorPicker.vue'
 import ManagementPageHeader from '@/components/management/ManagementPageHeader.vue'
 import ManagementToolbar from '@/components/management/ManagementToolbar.vue'
 import ManagementEmptyState from '@/components/management/ManagementEmptyState.vue'
+import ManagementDialogFooter from '@/components/management/ManagementDialogFooter.vue'
+import StatusSwitchField from '@/components/management/StatusSwitchField.vue'
+import TemplateQuickSelect from '@/components/management/TemplateQuickSelect.vue'
 import marmotOne from '../../../img/marmot-ledger-1.png'
 
 const { t } = useI18n()
@@ -198,7 +178,6 @@ const filters = reactive({ type: '', isActive: '' })
 const form = reactive({ name: '', type: 'expense', icon: '📁', color: '', groupIds: [], isActive: true })
 const selectedTemplate = ref(null)
 const selectedGroupIds = ref([])
-const templateCollapsed = ref(false)
 
 const filteredTemplates = computed(() => templates.value.filter(tpl => tpl.type === form.type))
 

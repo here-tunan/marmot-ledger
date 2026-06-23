@@ -82,25 +82,28 @@ img/marmot-ledger-2.png
 --bg-main:          #f7f5ef;  /* 主背景：暖白/米白 */
 --bg-main-soft:     #f8faf7;  /* 备用浅背景 */
 --bg-card:          #ffffff;  /* 卡片/面板 */
---bg-sidebar:       #1e293b;  /* 侧栏深色 */
---bg-nav:           #ffffff;
+--bg-sidebar:       linear-gradient(180deg, #1f2933 0%, #111827 100%); /* 侧栏深色 */
+--bg-sidebar-solid: #1f2933;  /* tooltip / 单色场景 */
+--bg-nav:           #ffffff;  /* 顶部 Header */
 --bg-input:         #ffffff;
 --bg-hover:         rgba(0, 0, 0, 0.03);
 ```
 
 主页面不要使用纯白铺满；用暖白/米白作为底色，让财务产品更温和。
+侧栏保持深 slate，避免与主内容暖白底色抢层级；顶部 Header 保持白色，并使用 `rgba(47, 125, 92, 0.10)` 作为极轻的品牌底边描线。
 
 ### Brand colors
 
 ```css
---brand-green:      #2f7d5c;  /* 温和稳重的苔绿 */
+--brand-green:      #2f7d5c;  /* 苔绿 = 品牌 / focus / 主操作 */
 --brand-deep:       #1f2933;  /* 深层文字和深色背景 */
---brand-accent:     #3b82f6;  /* 主操作/链接色 */
+--brand-accent:     #2f7d5c;  /* 主操作 / 链接色（默认沿用苔绿） */
 --brand-warm:       #f4efe6;  /* 暖色点缀 */
---brand-moss:       #dce9df;  /* 柔和辅助色 */
+--brand-moss:       #dce9df;  /* 柔和辅助色 / Active 状态点 */
 ```
 
-主操作色使用蓝色 `#3b82f6`，不要使用收入/支出颜色做主按钮。
+主操作色统一使用苔绿 `#2f7d5c`；蓝色仅作为信息/链接辅助色，不再作为主 CTA 颜色。
+侧栏 active 项使用 `brand-moss` 的圆点 + 半透明 moss 背景，提示当前位置。
 
 ### Financial semantic colors
 
@@ -205,13 +208,14 @@ img/marmot-ledger-2.png
 
 ### Buttons
 
-- 主按钮：`brand-accent` 蓝色
-- 次按钮：白底 + 边框
-- 危险按钮：仅删除/危险操作使用红色
-- 高度：默认 `36px`，重要操作 `44px`
+- 主按钮：苔绿 `#2f7d5c`，用于创建、保存、确认等主操作。
+- 次按钮：白底 + 轻描边，用于取消、刷新、普通辅助动作。
+- 编辑按钮：暖中性色 `#f4efe6` 背景 + `#6b5b49` 文本，避免与主操作或危险操作抢层级。
+- 危险按钮：仅删除/危险操作使用红色 `#ef4444` 文本 + 浅红背景。
+- 高度：卡片内操作默认 `32–36px`，Header / Dialog 主操作 `40px`，重要 CTA 可用 `44px`。
 - 圆角：`10px`
 
-不要用收入红色/支出橙色作为普通按钮色。
+不要用收入红色/支出橙色作为普通按钮色；不要用蓝色作为管理模块主操作色。
 
 ### Forms
 

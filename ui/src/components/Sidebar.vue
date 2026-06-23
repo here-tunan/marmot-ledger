@@ -28,7 +28,7 @@
 
     <div class="sidebar-footer" v-show="!sidebar.collapse">
       <span>Calm Marmot</span>
-      <strong>© 2024</strong>
+      <strong>© 2026</strong>
     </div>
   </aside>
 </template>
@@ -74,6 +74,11 @@ const baseItems = [
     titleKey: 'routes.accounts',
   },
   {
+    icon: 'Box',
+    index: '/buckets',
+    titleKey: 'routes.buckets',
+  },
+  {
     icon: 'CollectionTag',
     index: '/categories',
     titleKey: 'routes.categories',
@@ -82,11 +87,6 @@ const baseItems = [
     icon: 'Connection',
     index: '/channels',
     titleKey: 'routes.channels',
-  },
-  {
-    icon: 'Box',
-    index: '/buckets',
-    titleKey: 'routes.buckets',
   },
   {
     icon: 'HomeFilled',
@@ -227,9 +227,9 @@ const navigateTo = (path) => {
 }
 
 .menu-item.active {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(220, 233, 223, 0.14);
   color: #ffffff;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 10px 22px rgba(0, 0, 0, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(220, 233, 223, 0.14), 0 10px 22px rgba(0, 0, 0, 0.12);
 }
 
 .menu-item.active::before {
@@ -279,7 +279,7 @@ const navigateTo = (path) => {
   top: 50%;
   transform: translateY(-50%);
   background: #1f2933;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.92);
   padding: 8px 12px;
   border-radius: 8px;
   font-size: 12px;

@@ -111,8 +111,9 @@ const collapseChange = () => {
   height: 70px;
   padding: 0 24px;
   color: #1e293b;
-  background: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1), 0 12px 28px rgba(15, 23, 42, 0.04);
+  background: #ffffff;
+  border-bottom: 1px solid rgba(47, 125, 92, 0.10);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.10), 0 12px 28px rgba(15, 23, 42, 0.04);
 }
 
 .header-left,
@@ -188,9 +189,9 @@ const collapseChange = () => {
 }
 
 .locale-switch button.active {
-  background: #1f2933;
-  color: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 8px 16px rgba(31, 41, 51, 0.14);
+  background: #2f7d5c;
+  color: #ffffff;
+  box-shadow: 0 8px 16px rgba(47, 125, 92, 0.20);
 }
 
 .user-trigger {

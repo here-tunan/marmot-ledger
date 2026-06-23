@@ -74,33 +74,33 @@
     </section>
 
     <el-dialog v-model="dialogVisible" :title="editingId ? t('channels.dialog.editTitle') : t('channels.dialog.createTitle')" width="680px" class="marmot-dialog channel-dialog">
-      <div v-if="!editingId" class="template-shelf">
-        <button class="shelf-head" type="button" @click="templateCollapsed = !templateCollapsed">
-          <span>⚡</span>
-          <strong>{{ t('channels.templates.title') }}</strong>
-          <em>{{ templateCollapsed ? t('channels.templates.expand') : t('channels.templates.collapse') }}</em>
-        </button>
-        <div v-if="!templateCollapsed" class="template-shelf-grid">
-          <p v-if="!templates.length" class="template-empty">{{ t('channels.templates.empty') }}</p>
-          <button v-for="tpl in templates" v-else :key="tpl.id" type="button" class="template-chip" :class="{ active: selectedTemplate?.id === tpl.id }" @click="selectTemplate(tpl)">
-            <span>{{ tpl.icon || channelTypeIcon(tpl.channelType) }}</span>
-            <strong>{{ tpl.name }}</strong>
-          </button>
-        </div>
-      </div>
+      <TemplateQuickSelect
+        v-if="!editingId"
+        :title="t('channels.templates.title')"
+        :items="templates"
+        :active-key="selectedTemplate?.id"
+        :empty-text="t('channels.templates.empty')"
+        @select="selectTemplate"
+      >
+        <template #chip="{ item }">
+          <span class="template-quick-chip-icon">{{ item.icon || channelTypeIcon(item.channelType) }}</span>
+          <strong>{{ item.name }}</strong>
+        </template>
+      </TemplateQuickSelect>
 
       <el-form :model="form" label-position="top" class="channel-form-grid">
         <el-form-item :label="t('channels.fields.name')"><el-input v-model="form.name" /></el-form-item>
         <el-form-item :label="t('channels.fields.type')"><el-select v-model="form.channelType" class="full-width"><el-option v-for="item in channelTypes" :key="item.value" :label="item.label.value || item.label" :value="item.value" /></el-select></el-form-item>
         <el-form-item :label="t('channels.fields.providerCode')"><el-input v-model="form.providerCode" /></el-form-item>
-        <el-form-item :label="t('channels.fields.icon')"><el-input v-model="form.icon" placeholder="💬" /></el-form-item>
+        <el-form-item :label="t('channels.fields.icon')">
+          <IconColorPicker v-model:icon-value="form.icon" icon-label="" :show-color="false" />
+        </el-form-item>
         <el-form-item class="wide" :label="t('channels.fields.supportedEvents')"><el-select v-model="supportedEvents" multiple class="full-width"><el-option v-for="item in eventTypes" :key="item.value" :label="item.label.value || item.label" :value="item.value" /></el-select></el-form-item>
         <el-form-item :label="t('channels.fields.sort')"><el-input-number v-model="form.sort" :min="0" /></el-form-item>
-        <el-form-item v-if="editingId" :label="t('common.status.status')"><el-switch v-model="form.isActive" :active-text="t('common.status.enabled')" :inactive-text="t('common.status.disabled')" /></el-form-item>
+        <StatusSwitchField v-if="editingId" v-model="form.isActive" />
       </el-form>
       <template #footer>
-        <button class="management-ghost-action" type="button" @click="dialogVisible = false">{{ t('common.actions.cancel') }}</button>
-        <button class="management-primary-action" type="button" @click="submitForm">{{ t('common.actions.save') }}</button>
+        <ManagementDialogFooter @cancel="dialogVisible = false" @submit="submitForm" />
       </template>
     </el-dialog>
   </main>
@@ -109,11 +109,16 @@
 <script setup>
 import { computed, onActivated, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { createChannel, deleteChannel, listChannels, updateChannel, checkChannelUsage } from '@/api/channel/channel'
 import { listChannelTemplates } from '@/api/channelTemplate'
 import ManagementPageHeader from '@/components/management/ManagementPageHeader.vue'
 import ManagementEmptyState from '@/components/management/ManagementEmptyState.vue'
+import ManagementDialogFooter from '@/components/management/ManagementDialogFooter.vue'
+import StatusSwitchField from '@/components/management/StatusSwitchField.vue'
+import TemplateQuickSelect from '@/components/management/TemplateQuickSelect.vue'
+import IconColorPicker from '@/components/IconColorPicker.vue'
+import { confirmDelete, isCancelError } from '@/components/management/confirmDelete'
 import marmotOne from '../../../img/marmot-ledger-1.png'
 
 const { t } = useI18n()
@@ -124,7 +129,6 @@ const loading = ref(false)
 const dialogVisible = ref(false)
 const editingId = ref(0)
 const selectedTemplate = ref(null)
-const templateCollapsed = ref(false)
 const supportedEvents = ref(['income', 'expense'])
 const filters = reactive({ channelType: '', eventType: '', isActive: '' })
 const form = reactive(createEmptyForm())
@@ -229,14 +233,14 @@ async function handleDelete(item) {
     const usageRes = await checkChannelUsage(item.id)
     const eventCount = usageRes.success ? usageRes.data.eventCount : 0
     const message = eventCount > 0 ? t('channels.delete.confirmUsed', { name: item.name, count: eventCount }) : t('channels.delete.confirm', { name: item.name })
-    await ElMessageBox.confirm(message, t('common.actions.delete'), { confirmButtonText: t('common.actions.delete'), cancelButtonText: t('common.actions.cancel'), type: 'warning' })
+    await confirmDelete({ message, title: t('common.actions.delete'), confirmText: t('common.actions.delete'), cancelText: t('common.actions.cancel') })
     const res = await deleteChannel(item.id)
     if (res.success) {
       ElMessage.success(t('channels.messages.deleted'))
       await loadChannels()
     } else ElMessage.error(res.error || t('channels.messages.deleteFailed'))
   } catch (err) {
-    if (err !== 'cancel') console.warn(err)
+    if (!isCancelError(err)) console.warn(err)
   }
 }
 
@@ -390,45 +394,6 @@ onActivated(refreshAll)
   align-items: center;
 }
 
-.template-shelf {
-  border-radius: 20px;
-  background: #fff8ec;
-  padding: 12px;
-  margin-bottom: 14px;
-  box-shadow: inset 0 0 0 1px rgba(120, 92, 56, 0.08);
-}
-.shelf-head {
-  width: 100%;
-  min-height: 40px;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: #21362d;
-  cursor: pointer;
-}
-.shelf-head em { font-style: normal; color: #857462; font-size: 13px; }
-.template-shelf-grid { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 10px; }
-.template-chip {
-  min-height: 36px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 0 12px;
-  background: #ffffff;
-  color: #4b3f33;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  cursor: pointer;
-}
-.template-chip.active {
-  border-color: rgba(47, 125, 92, 0.28);
-  background: #dce9df;
-  color: #245f48;
-}
-.template-empty { margin: 0; color: #857462; }
 .channel-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 14px; }
 .channel-form-grid .wide { grid-column: 1 / -1; }
 
