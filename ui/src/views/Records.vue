@@ -171,6 +171,7 @@
           <el-form-item :label="t('record.fields.toBucket')"><el-select v-model="form.toBucketId" class="full-width" filterable><el-option v-for="bucket in buckets" :key="bucket.id" :label="bucketLabel(bucket)" :value="bucket.id" /></el-select></el-form-item>
         </template>
         <el-form-item v-if="form.scenario !== 'transfer'" :label="t('record.fields.category')"><el-select v-model="form.categoryId" clearable class="full-width"><el-option v-for="item in filteredCategories" :key="item.id" :label="item.name" :value="item.id" /></el-select></el-form-item>
+        <el-form-item v-if="showChannelSelect" :label="t('record.fields.channel')"><el-select v-model="form.channelId" clearable filterable class="full-width"><el-option v-for="channel in filteredChannels" :key="channel.id" :label="channelLabel(channel)" :value="channel.id" /></el-select></el-form-item>
         <el-form-item :label="t('record.fields.description')"><el-input v-model="form.description" /></el-form-item>
         <el-form-item :label="t('record.fields.eventTime')"><el-input v-model="form.eventTime" /></el-form-item>
         <el-form-item :label="t('record.fields.remark')"><el-input v-model="form.remark" type="textarea" /></el-form-item>
@@ -193,6 +194,7 @@ import { listFinancialEvents, getFinancialEvent, getEventGroup } from '@/api/fin
 import { updateRecord, deleteRecord } from '@/api/record/record'
 import { listBuckets } from '@/api/bucket/bucket'
 import { listCategories } from '@/api/category/category'
+import { listChannels } from '@/api/channel/channel'
 import { currencyOptions, getCurrencyLabel } from '@/utils/currency'
 import { getBucketEmoji } from '@/utils/bucketEmoji'
 import { exportRecords } from '@/api/export/export'
@@ -208,6 +210,7 @@ const groupEvents = ref([])
 const expandedGroupKeys = ref([])
 const buckets = ref([])
 const categories = ref([])
+const channels = ref([])
 const loading = ref(false)
 const dialogVisible = ref(false)
 const advancedFiltersOpen = ref(false)
@@ -216,9 +219,11 @@ const editableTypes = ['income', 'expense', 'transfer', 'refund']
 const eventFilterTypes = ['income', 'expense', 'refund', 'transfer', 'family_transfer', 'exchange', 'receivable_create', 'receivable_collect', 'deposit_create', 'deposit_refund', 'loan_out', 'loan_collect', 'investment_buy', 'investment_sell', 'investment_income', 'investment_revalue', 'balance_adjustment']
 const filters = reactive({ eventType: '', categoryId: '', currency: '', keyword: '', includeInStatistics: '', rangeMode: 'preset', rangePreset: 'thisMonth', customDateRange: [] })
 const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
-const form = reactive({ scenario: 'expense', bucketId: '', fromBucketId: '', toBucketId: '', categoryId: '', amount: '', currency: 'CNY', description: '', eventTime: '', relatedFinancialEventId: '', remark: '' })
+const form = reactive({ scenario: 'expense', bucketId: '', fromBucketId: '', toBucketId: '', categoryId: '', channelId: '', amount: '', currency: 'CNY', description: '', eventTime: '', relatedFinancialEventId: '', remark: '' })
 
 const filteredCategories = computed(() => categories.value.filter((item) => form.scenario === 'income' ? item.type === 'income' : item.type === 'expense'))
+const showChannelSelect = computed(() => ['income', 'expense', 'refund', 'transfer'].includes(form.scenario))
+const filteredChannels = computed(() => channels.value.filter((item) => !item.supportedEventTypes || item.supportedEventTypes.split(',').includes(form.scenario)))
 const rangePresets = [
   { value: 'recentMonth', labelKey: 'statistics.rangePresets.recentMonth' },
   { value: 'thisMonth', labelKey: 'statistics.rangePresets.thisMonth' },
@@ -241,6 +246,7 @@ function bucketDisplay(id) {
 }
 function bucketLabel(bucket) { return `${getBucketEmoji(bucket.bucketType)} ${bucket.name} · ${bucket.currency} ${formatAmount(bucket.balance)}` }
 function categoryName(id) { return categories.value.find((item) => item.id === Number(id))?.name || '-' }
+function channelLabel(channel) { return `${channel.icon || '🔗'} ${channel.name}` }
 function canMutate(event) { return editableTypes.includes(event.eventType) }
 function padDatePart(value) { return String(value).padStart(2, '0') }
 function formatDateTime(date, endOfDay = false) {
@@ -339,9 +345,10 @@ function applyRouteQuery(query) {
 }
 
 async function loadBase() {
-  const [bucketRes, incomeCats, expenseCats] = await Promise.all([listBuckets(), listCategories({ type: 'income', isActive: true }), listCategories({ type: 'expense', isActive: true })])
+  const [bucketRes, incomeCats, expenseCats, channelRes] = await Promise.all([listBuckets(), listCategories({ type: 'income', isActive: true }), listCategories({ type: 'expense', isActive: true }), listChannels({ isActive: true })])
   if (bucketRes.success) buckets.value = bucketRes.data || []
   categories.value = [...(incomeCats.success ? incomeCats.data || [] : []), ...(expenseCats.success ? expenseCats.data || [] : [])]
+  if (channelRes.success) channels.value = channelRes.data || []
 }
 
 async function loadEvents() {
@@ -453,7 +460,7 @@ function openEdit(event) {
   if (!canMutate(event)) return ElMessage.warning(t('records.messages.unsupported'))
   editingId.value = event.id
   const entries = event.ledgerEntries || []
-  Object.assign(form, { scenario: event.eventType, bucketId: '', fromBucketId: '', toBucketId: '', categoryId: event.categoryId || '', amount: String(event.amount || ''), currency: event.currency, description: event.description, eventTime: event.eventTime, relatedFinancialEventId: event.relatedFinancialEventId || '', remark: event.remark || '' })
+  Object.assign(form, { scenario: event.eventType, bucketId: '', fromBucketId: '', toBucketId: '', categoryId: event.categoryId || '', channelId: event.channelId || '', amount: String(event.amount || ''), currency: event.currency, description: event.description, eventTime: event.eventTime, relatedFinancialEventId: event.relatedFinancialEventId || '', remark: event.remark || '' })
   if (event.eventType === 'transfer') {
     form.fromBucketId = entries.find((item) => item.entryRole === 'transfer_out')?.bucketId || ''
     form.toBucketId = entries.find((item) => item.entryRole === 'transfer_in')?.bucketId || ''
@@ -464,7 +471,7 @@ function openEdit(event) {
 }
 
 async function submitEdit() {
-  const payload = { ...form, bucketId: Number(form.bucketId || 0), fromBucketId: Number(form.fromBucketId || 0), toBucketId: Number(form.toBucketId || 0), categoryId: Number(form.categoryId || 0), relatedFinancialEventId: Number(form.relatedFinancialEventId || 0), amount: String(form.amount) }
+  const payload = { ...form, bucketId: Number(form.bucketId || 0), fromBucketId: Number(form.fromBucketId || 0), toBucketId: Number(form.toBucketId || 0), categoryId: Number(form.categoryId || 0), channelId: Number(form.channelId || 0), relatedFinancialEventId: Number(form.relatedFinancialEventId || 0), amount: String(form.amount) }
   const res = await updateRecord(editingId.value, payload)
   if (res.success) { ElMessage.success(t('records.messages.updated')); dialogVisible.value = false; await loadEvents(); await selectEvent(res.data.financialEvent) }
   else ElMessage.error(res.error || t('records.messages.updateFailed'))
