@@ -10,9 +10,6 @@ import (
 )
 
 func ListChannels(userId int64, query channel.ChannelQuery) ([]channel.Channel, error) {
-	if err := EnsureDefaultChannels(userId); err != nil {
-		return nil, err
-	}
 	channels, err := channeldb.ListChannels(userId, channeldb.ChannelQuery{ChannelType: query.ChannelType, EventType: query.EventType, IsActive: query.IsActive})
 	if err != nil {
 		return nil, err

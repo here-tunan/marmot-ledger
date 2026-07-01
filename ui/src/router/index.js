@@ -11,6 +11,8 @@ import Records from "@/views/Records.vue";
 import Outstanding from "@/views/Outstanding.vue";
 import Categories from "@/views/Categories.vue";
 import Channels from "@/views/Channels.vue";
+import ImportConfigs from "@/views/ImportConfigs.vue";
+import Import from "@/views/Import.vue";
 import Family from "@/views/Family.vue";
 import TemplateManagement from "@/views/admin/TemplateManagement.vue"
 
@@ -67,6 +69,22 @@ const router = createRouter({
                         titleKey: 'routes.channels',
                     },
                     component: Channels,
+                },
+                {
+                    path: '/import-configs',
+                    name: 'importConfigs',
+                    meta: {
+                        titleKey: 'routes.importConfigs',
+                    },
+                    component: ImportConfigs,
+                },
+                {
+                    path: '/import',
+                    name: 'import',
+                    meta: {
+                        titleKey: 'routes.import',
+                    },
+                    component: Import,
                 },
                 {
                     path: '/buckets',

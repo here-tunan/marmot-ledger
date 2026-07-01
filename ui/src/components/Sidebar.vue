@@ -89,6 +89,16 @@ const baseItems = [
     titleKey: 'routes.channels',
   },
   {
+    icon: 'UploadFilled',
+    index: '/import-configs',
+    titleKey: 'routes.importConfigs',
+  },
+  {
+    icon: 'Download',
+    index: '/import',
+    titleKey: 'routes.import',
+  },
+  {
     icon: 'HomeFilled',
     index: '/family',
     titleKey: 'routes.family',

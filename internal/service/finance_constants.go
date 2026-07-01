@@ -43,6 +43,7 @@ const (
 	EntryRoleFamilyTransferIn  = "family_transfer_in"
 
 	EventSourceManual = "manual"
+	EventSourceImport = "import"
 	EventStatusActive = "active"
 
 	BucketNatureAsset     = "asset"

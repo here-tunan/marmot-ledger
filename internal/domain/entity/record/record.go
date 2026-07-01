@@ -32,6 +32,7 @@ type RecordRequest struct {
 	RelatedFinancialEventId int64           `json:"relatedFinancialEventId"`
 	ChannelId               int64           `json:"channelId"`
 	Remark                  string          `json:"remark"`
+	Source                  string          `json:"source"` // 空则回退 manual；"import" 表示批量导入
 }
 
 type RecordResponse struct {

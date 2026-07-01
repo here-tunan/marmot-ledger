@@ -85,6 +85,7 @@ func Start() {
 	root.Mount("/", FamilyCategoryGroupMount())
 	root.Mount("/channel", ChannelMount())
 	root.Mount("/channel-template", ChannelTemplateMount())
+	root.Mount("/import-config", ImportConfigMount())
 
 	log.Fatal(app.Listen(":" + env.Prop.Port))
 }

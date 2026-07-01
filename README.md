@@ -25,6 +25,7 @@ Marmot Ledger is a finance ledger for people who want to understand everyday cas
 - **Dashboard** — view net worth, assets, liabilities, income/expense, refunds, trends, category statistics, and investment P/L by original currency.
 - **Family workspace** — invite members, aggregate active-member records, and keep family statistics without creating shared family accounts.
 - **Admin templates** — manage account, channel, and category system templates.
+- **Table import** — define per-platform import configs that map xlsx / csv statement columns to record fields; resolve category, channel, scenario, and bucket via default values plus conditional rules (`contains` / `equals` / `notContains` / `notEquals` / `containsAny` / `notContainsAny` / `equalsAny` / `notEqualsAny`); row filters (drop / keep) skip lines; the preview page is editable with per-row error highlighting, an "errors only" filter, and a "jump to next error" shortcut; committing is chunked (100 rows/HTTP, per-row transactions) with a live progress bar so bad rows never drag down neighbors.
 - **Bilingual UI** — Chinese and English i18n are built in.
 
 ---
@@ -225,7 +226,7 @@ User
 ## Post-MVP roadmap
 
 - Improve family-mode dashboard selection and member views.
-- Add import recognition and rule-learning workflows when the product needs import automation.
+- Idempotent import commits and batch-level undo (no dedup today, so a retry after a hung response can double-post; future work: request-id + server-side dedup table + `event_group_id`-scoped undo).
 - Continue polishing i18n and remove hardcoded UI copy.
 - Harden auth/token payloads so password fields are never exposed.
 - Introduce production migration tooling when the project has deployed databases that need incremental upgrades.

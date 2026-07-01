@@ -669,6 +669,11 @@ func buildRecordEvent(userId int64, req *record.RecordRequest, eventType string,
 		categoryId = &categoryView.Id
 	}
 
+	source := strings.TrimSpace(req.Source)
+	if source == "" {
+		source = EventSourceManual
+	}
+
 	return &financialeventdb.FinancialEvent{
 		UserId:                  userId,
 		RelatedFinancialEventId: relatedFinancialEventId,
@@ -680,7 +685,7 @@ func buildRecordEvent(userId int64, req *record.RecordRequest, eventType string,
 		Currency:                currency,
 		Amount:                  req.Amount,
 		IncludeInStatistics:     includeInStatistics,
-		Source:                  EventSourceManual,
+		Source:                  source,
 		Status:                  EventStatusActive,
 		Remark:                  remark,
 		IsDeleted:               false,

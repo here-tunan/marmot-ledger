@@ -326,6 +326,25 @@ CREATE TABLE IF NOT EXISTS `family_category_group_member` (
   CONSTRAINT `fk_family_category_group_member_adder` FOREIGN KEY (`added_by_user_id`) REFERENCES `user` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='家庭分类组成员';
 
+CREATE TABLE IF NOT EXISTS `import_config` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `user_id` BIGINT NOT NULL COMMENT '用户ID',
+  `name` VARCHAR(100) NOT NULL COMMENT '平台名，如微信支付账单',
+  `file_type` VARCHAR(10) NOT NULL DEFAULT 'xlsx' COMMENT '文件类型 xlsx/csv',
+  `sheet_name` VARCHAR(100) NOT NULL DEFAULT '' COMMENT 'xlsx 工作表名，空=第一个',
+  `header_row` INT NOT NULL DEFAULT 1 COMMENT '表头所在行，1-based',
+  `mappings` TEXT COMMENT '字段映射与规则，JSON',
+  `filters` TEXT COMMENT '行过滤规则，JSON',
+  `icon` VARCHAR(20) NOT NULL DEFAULT '' COMMENT '图标',
+  `sort` INT NOT NULL DEFAULT 0 COMMENT '排序',
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
+  `is_deleted` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否删除',
+  `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+  `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_import_config_user_active` (`user_id`, `is_deleted`, `is_active`, `sort`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='表格导入配置';
+
 -- Required reference data. Safe to rerun.
 
 INSERT INTO `currency` (`code`, `name`, `symbol`, `precision_digits`, `enabled`, `sort`)
